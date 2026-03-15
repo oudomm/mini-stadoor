@@ -1,0 +1,318 @@
+{
+  "info": {
+    "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
+    "name": "API Gateway Dynamic Routes Demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Demo collection for API Gateway with Dynamic Routes using gateway-service, route-management-service, and demo-api-service."
+  },
+  "variable": [
+    {
+      "key": "gatewayBaseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "routeManagementBaseUrl",
+      "value": "http://localhost:8085"
+    },
+    {
+      "key": "demoApiBaseUrl",
+      "value": "http://localhost:8082"
+    }
+  ],
+  "item": [
+    {
+      "name": "Gateway Demo Flow",
+      "item": [
+        {
+          "name": "1. Gateway Before Route Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/demo/hello",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "hello"
+              ]
+            },
+            "description": "Expected to fail before the dynamic route is added and refreshed."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Add Dynamic Route In Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/internal/routes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes"
+              ]
+            },
+            "description": "Stores the route in Postgres and activates it immediately in gateway-service."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Gateway After Route Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/demo/hello",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "hello"
+              ]
+            },
+            "description": "Should now proxy through gateway-service to demo-api-service and return the hello JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Refresh Gateway Routes (Optional Ops Step)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/actuator/gateway/refresh",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "gateway",
+                "refresh"
+              ]
+            },
+            "description": "Optional operational refresh. The main demo flow no longer requires this because route creation auto-activates the route."
+          },
+          "response": []
+        },
+        {
+          "name": "5. Inspect Active Gateway Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/actuator/gateway/routes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "actuator",
+                "gateway",
+                "routes"
+              ]
+            },
+            "description": "Shows stored routes and currently active gateway routes after refresh."
+          },
+          "response": []
+        },
+        {
+          "name": "6. List Stored Gateway Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/internal/routes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes"
+              ]
+            },
+            "description": "Lists routes managed through route-management-service and shows which ones are currently active in the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Update Dynamic Route In Gateway",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/internal/routes/demo-route",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes",
+                "demo-route"
+              ]
+            },
+            "description": "Updates a stored route through the gateway facade and immediately re-activates the current route set."
+          },
+          "response": []
+        },
+        {
+          "name": "8. Delete Dynamic Route In Gateway",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/internal/routes/demo-route",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes",
+                "demo-route"
+              ]
+            },
+            "description": "Deletes the route through the gateway facade and refreshes the active gateway routes."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Supporting Services",
+      "item": [
+        {
+          "name": "Demo API - Hello",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{demoApiBaseUrl}}/hello",
+              "host": [
+                "{{demoApiBaseUrl}}"
+              ],
+              "path": [
+                "hello"
+              ]
+            },
+            "description": "Direct call to the backend demo service."
+          },
+          "response": []
+        },
+        {
+          "name": "Route Management - Create Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
+            },
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/routes",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "routes"
+              ]
+            },
+            "description": "Optional supporting service request for the route-management-service demo."
+          },
+          "response": []
+        },
+        {
+          "name": "Route Management - List Routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/routes",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "routes"
+              ]
+            },
+            "description": "Optional supporting service request for listing routes in route-management-service."
+          },
+          "response": []
+        },
+        {
+          "name": "Route Management - Update Route",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
+            },
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/routes/demo-route",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "routes",
+                "demo-route"
+              ]
+            },
+            "description": "Updates an existing route directly in the control-plane service."
+          },
+          "response": []
+        },
+        {
+          "name": "Route Management - Delete Route",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/routes/demo-route",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "routes",
+                "demo-route"
+              ]
+            },
+            "description": "Deletes an existing route directly in the control-plane service."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

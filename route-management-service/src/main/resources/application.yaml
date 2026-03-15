@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: route-management-service
+  datasource:
+    url: jdbc:postgresql://localhost:5433/dynamic_routes_demo
+    username: demo_user
+    password: demo_pass
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+server:
+  port: 8085
