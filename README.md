@@ -114,5 +114,7 @@ Ready-to-import Postman collection:
 ## Notes
 
 - `route-management-service` registers developer services into Eureka by code
+- `route-management-service` stores external service registrations in Postgres
+- `route-management-service` sends scheduled Eureka heartbeats for stored external services
 - `gateway-service` resolves `lb://product-service` through Eureka
 - the route is created dynamically at runtime, not in `application.yml`

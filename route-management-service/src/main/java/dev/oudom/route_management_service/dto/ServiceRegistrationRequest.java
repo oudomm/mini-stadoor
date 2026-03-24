@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,5 +52,20 @@ public record ServiceRegistrationRequest(
         }
 
         return Map.of("tags", String.join(",", normalizedTags()));
+    }
+
+    public String tagsAsCsv() {
+        return String.join(",", normalizedTags());
+    }
+
+    public static List<String> tagsFromCsv(String tags) {
+        if (tags == null || tags.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(tags.split(","))
+            .map(String::trim)
+            .filter(value -> !value.isBlank())
+            .toList();
     }
 }
