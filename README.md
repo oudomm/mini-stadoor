@@ -10,6 +10,7 @@ It shows how developers can manage route definitions at runtime while end users 
   - Port: `8080`
   - Entry point for end users
   - Loads route definitions from `route-management-service`
+  - Uses Consul to discover backend services by name
   - Dynamically forwards requests to backend services
 
 - `route-management-service`
@@ -17,11 +18,17 @@ It shows how developers can manage route definitions at runtime while end users 
   - Control plane for route definitions
   - Supports create, list, update, and delete
   - Stores routes in Postgres
+  - Registers itself with Consul
 
 - `demo-api-service`
   - Port: `8082`
   - Simple backend service for routing demos
   - Exposes `GET /hello`
+  - Registers itself with Consul
+
+- `Consul`
+  - Port: `8500`
+  - Service discovery for the demo services
 
 - `Postgres`
   - Docker port: `5433`
@@ -34,6 +41,7 @@ It shows how developers can manage route definitions at runtime while end users 
 - Developers manage routes through `route-management-service`
 - `route-management-service` stores route definitions in Postgres
 - `gateway-service` reads those route definitions and builds its active routing table
+- `gateway-service` resolves service names through Consul and can route to `lb://...` targets
 - End users call the gateway, not the route-management service
 
 In platform terms:
@@ -49,7 +57,7 @@ If a developer creates this route:
 {
   "id": "demo-route",
   "path": "/demo/**",
-  "uri": "http://localhost:8082"
+  "uri": "lb://demo-api-service"
 }
 ```
 
@@ -149,7 +157,7 @@ curl -X POST http://localhost:8080/internal/routes \
   -d '{
     "id": "demo-route",
     "path": "/demo/**",
-    "uri": "http://localhost:8082"
+    "uri": "lb://demo-api-service"
   }'
 ```
 
@@ -173,7 +181,7 @@ curl -X PUT http://localhost:8080/internal/routes/demo-route \
   -d '{
     "id": "demo-route",
     "path": "/demo/**",
-    "uri": "http://localhost:8082"
+    "uri": "lb://demo-api-service"
   }'
 ```
 
@@ -193,5 +201,6 @@ Ready-to-import Postman collection:
 
 - `route-management-service` owns route persistence in Postgres
 - `route-management-service` is the owner of route data
-- `gateway-service` calls `route-management-service` and applies those routes dynamically
+- `gateway-service` discovers `route-management-service` through Consul instead of a fixed host:port
+- Dynamic route targets can now use service ids such as `lb://demo-api-service`
 - The actuator refresh endpoint still exists for operational use, even though route creation auto-activates routes

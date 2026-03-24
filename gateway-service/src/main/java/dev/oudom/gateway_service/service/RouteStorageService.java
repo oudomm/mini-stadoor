@@ -3,7 +3,7 @@ package dev.oudom.gateway_service.service;
 import dev.oudom.gateway_service.dto.RouteRequest;
 import dev.oudom.gateway_service.dto.RouteResponse;
 import dev.oudom.gateway_service.dto.RoutesResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -12,13 +12,16 @@ import org.springframework.web.client.RestClient;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class RouteStorageService {
 
     private final RestClient.Builder restClientBuilder;
 
     @Value("${route-management.base-url}")
     private String routeManagementBaseUrl;
+
+    public RouteStorageService(@Qualifier("loadBalancedRestClientBuilder") RestClient.Builder restClientBuilder) {
+        this.restClientBuilder = restClientBuilder;
+    }
 
     public synchronized RouteRequest save(RouteRequest routeRequest) {
         RouteResponse response = restClient().post()

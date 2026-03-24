@@ -1,6 +1,12 @@
 spring:
   application:
     name: gateway-service
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        prefer-ip-address: false
 server:
   port: 8080
 management:
@@ -9,4 +15,4 @@ management:
       exposure:
         include: health,info,gateway
 route-management:
-  base-url: http://localhost:8085
+  base-url: http://route-management-service

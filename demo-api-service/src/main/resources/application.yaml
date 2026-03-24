@@ -1,5 +1,16 @@
 spring:
   application:
     name: demo-api-service
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        prefer-ip-address: false
 server:
   port: 8082
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
