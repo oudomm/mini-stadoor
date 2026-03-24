@@ -15,6 +15,6 @@ eureka:
   instance:
     prefer-ip-address: false
 route-management:
-  base-url: http://gateway-service
+  base-url: http://gateway-management-service
 consumer-service:
   base-url: http://consumer-service

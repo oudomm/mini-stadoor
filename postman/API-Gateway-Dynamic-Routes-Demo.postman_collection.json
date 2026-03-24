@@ -3,7 +3,7 @@
     "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
     "name": "API Gateway Dynamic Routes Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Simple demo collection for dynamic service registration and route security using standard-gateway, gateway-service, consumer-service, and product-service."
+    "description": "Simple demo collection for dynamic service registration and route security using standard-gateway, gateway-management-service, consumer-service, and product-service."
   },
   "variable": [
     {
@@ -11,7 +11,7 @@
       "value": "http://localhost:8080"
     },
     {
-      "key": "gatewayServiceBaseUrl",
+      "key": "gatewayManagementServiceBaseUrl",
       "value": "http://localhost:8085"
     },
     {
@@ -38,9 +38,9 @@
               "raw": "{\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"]\n}"
             },
             "url": {
-              "raw": "{{gatewayServiceBaseUrl}}/services/register",
+              "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
               "host": [
-                "{{gatewayServiceBaseUrl}}"
+                "{{gatewayManagementServiceBaseUrl}}"
               ],
               "path": [
                 "services",

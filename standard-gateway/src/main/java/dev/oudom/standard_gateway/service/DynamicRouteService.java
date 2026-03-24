@@ -35,7 +35,7 @@ public class DynamicRouteService {
     public void loadRoutesFromDatabase() {
         refreshRoutesFromStorage()
             .doOnError(exception -> log.warn(
-                "Skipping initial route sync because gateway-service is unavailable or misconfigured: {}",
+                "Skipping initial route sync because gateway-management-service is unavailable or misconfigured: {}",
                 exception.getMessage()))
             .onErrorResume(exception -> {
                 activeRoutes.set(List.of());

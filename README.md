@@ -15,7 +15,7 @@ It shows how developers can manage route definitions at runtime while end users 
 - `standard-gateway`
   - Port: `8080`
   - Public runtime gateway
-  - Loads route definitions from `gateway-service`
+  - Loads route definitions from `gateway-management-service`
   - Delegates Basic Auth validation to `consumer-service` for protected routes
   - Resolves target services through Eureka
   - Forwards traffic dynamically to registered backend services
@@ -26,7 +26,7 @@ It shows how developers can manage route definitions at runtime while end users 
   - Validates Basic Auth credentials for `standard-gateway`
   - Will later grow to support API key and JWT validation
 
-- `gateway-service`
+- `gateway-management-service`
   - Port: `8085`
   - Platform API for developer onboarding
   - Registers developer services into Eureka by API
@@ -81,7 +81,7 @@ docker compose up -d
 Start these modules:
 
 - `eureka-server`
-- `gateway-service`
+- `gateway-management-service`
 - `standard-gateway`
 - `consumer-service`
 - `product-service`
@@ -91,7 +91,7 @@ Start these modules:
 Recommended startup order:
 
 1. `eureka-server`
-2. `gateway-service`
+2. `gateway-management-service`
 3. `standard-gateway`
 4. `consumer-service`
 5. `product-service`
@@ -258,9 +258,9 @@ Ready-to-import Postman collection:
 
 ## Notes
 
-- `gateway-service` registers developer services into Eureka by code
-- `gateway-service` stores external service registrations in Postgres
-- `gateway-service` sends scheduled Eureka heartbeats for stored external services
+- `gateway-management-service` registers developer services into Eureka by code
+- `gateway-management-service` stores external service registrations in Postgres
+- `gateway-management-service` sends scheduled Eureka heartbeats for stored external services
 - `consumer-service` is an internal validation service used by `standard-gateway`
 - the demo currently implements `BASIC` and `API_KEY`, with `JWT` left for later
 - `standard-gateway` resolves `lb://product-service` through Eureka
