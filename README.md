@@ -5,6 +5,7 @@ This project is a small Spring microservices demo for **developer service regist
 It now includes:
 - a Spring `product-service`
 - a non-Spring Express `inventory-service`
+- a non-Spring FastAPI `customer-service`
 
 It shows how developers can manage route definitions at runtime while end users access backend services through a single API gateway.
 
@@ -34,6 +35,12 @@ It shows how developers can manage route definitions at runtime while end users 
   - Express-based backend API for cross-language registration tests
   - Exposes inventory endpoints
   - Proves developer services do not have to be Spring Boot
+
+- `customer-service`
+  - Port: `8091`
+  - FastAPI-based backend API for cross-language registration tests
+  - Exposes customer endpoints
+  - Proves developer services do not have to be Node.js or Spring Boot
 
 - `eureka-server`
   - Port: `8761`
@@ -67,6 +74,8 @@ Start these modules:
 - `gateway-service`
 - `standard-gateway`
 - `product-service`
+- `inventory-service`
+- `customer-service`
 
 Recommended startup order:
 
@@ -157,6 +166,52 @@ Then test through the gateway:
 curl http://localhost:8080/api/inventory/items
 curl http://localhost:8080/api/inventory/items/i-100
 curl http://localhost:8080/api/inventory/items/low-stock
+```
+
+## FastAPI Example
+
+Start the FastAPI sample service:
+
+```bash
+cd /Users/oudom/Documents/itp/api-gateway-dynamic-routes-demo/customer-service
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8091
+```
+
+Register it in Eureka:
+
+```bash
+curl -X POST http://localhost:8085/services/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceId": "customer-service-manual-1",
+    "serviceName": "customer-service",
+    "address": "localhost",
+    "port": 8091,
+    "tags": ["fastapi", "manual-registration"]
+  }'
+```
+
+Create a dynamic route:
+
+```bash
+curl -X POST http://localhost:8080/internal/routes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "customer-route",
+    "path": "/api/customers/**",
+    "uri": "lb://customer-service"
+  }'
+```
+
+Then test through the gateway:
+
+```bash
+curl http://localhost:8080/api/customers
+curl http://localhost:8080/api/customers/c-100
+curl http://localhost:8080/api/customers/vip
 ```
 
 ## Postman

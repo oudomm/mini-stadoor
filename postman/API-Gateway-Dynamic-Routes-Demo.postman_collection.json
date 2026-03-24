@@ -25,6 +25,10 @@
     {
       "key": "inventoryServiceBaseUrl",
       "value": "http://localhost:8090"
+    },
+    {
+      "key": "customerServiceBaseUrl",
+      "value": "http://localhost:8091"
     }
   ],
   "item": [
@@ -275,6 +279,144 @@
               ]
             },
             "description": "Direct check that the Express service itself is running before routing through the gateway."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FastAPI Customer Flow",
+      "item": [
+        {
+          "name": "1. Register Customer Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"customer-service-manual-1\",\n  \"serviceName\": \"customer-service\",\n  \"address\": \"localhost\",\n  \"port\": 8091,\n  \"tags\": [\"fastapi\", \"manual-registration\"]\n}"
+            },
+            "url": {
+              "raw": "{{gatewayServiceBaseUrl}}/services/register",
+              "host": [
+                "{{gatewayServiceBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers the FastAPI customer service into Eureka at runtime."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Customer Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"customer-route\",\n  \"path\": \"/api/customers/**\",\n  \"uri\": \"lb://customer-service\"\n}"
+            },
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/internal/routes",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes"
+              ]
+            },
+            "description": "Creates a runtime route for the FastAPI customer service."
+          },
+          "response": []
+        },
+        {
+          "name": "3. End User - List Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/api/customers",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers"
+              ]
+            },
+            "description": "Calls the customer list endpoint through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "4. End User - Customer By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/api/customers/c-100",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "c-100"
+              ]
+            },
+            "description": "Calls a specific customer through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "5. End User - VIP Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/api/customers/vip",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "customers",
+                "vip"
+              ]
+            },
+            "description": "Calls the VIP customer endpoint through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Direct Customer Service (Optional)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{customerServiceBaseUrl}}/customers",
+              "host": [
+                "{{customerServiceBaseUrl}}"
+              ],
+              "path": [
+                "customers"
+              ]
+            },
+            "description": "Direct check that the FastAPI service itself is running before routing through the gateway."
           },
           "response": []
         }
