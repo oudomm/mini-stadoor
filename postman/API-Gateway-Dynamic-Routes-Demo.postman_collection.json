@@ -3,15 +3,15 @@
     "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
     "name": "API Gateway Dynamic Routes Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Demo collection for runtime service registration and dynamic routing using gateway-service, route-management-service, and product-service."
+    "description": "Demo collection for runtime service registration and dynamic routing using standard-gateway, gateway-service, and product-service."
   },
   "variable": [
     {
-      "key": "gatewayBaseUrl",
+      "key": "standardGatewayBaseUrl",
       "value": "http://localhost:8080"
     },
     {
-      "key": "routeManagementBaseUrl",
+      "key": "gatewayServiceBaseUrl",
       "value": "http://localhost:8085"
     },
     {
@@ -46,9 +46,9 @@
               "raw": "{\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"]\n}"
             },
             "url": {
-              "raw": "{{routeManagementBaseUrl}}/services/register",
+              "raw": "{{gatewayServiceBaseUrl}}/services/register",
               "host": [
-                "{{routeManagementBaseUrl}}"
+                "{{gatewayServiceBaseUrl}}"
               ],
               "path": [
                 "services",
@@ -74,9 +74,9 @@
               "raw": "{\n  \"id\": \"product-route\",\n  \"path\": \"/api/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
-              "raw": "{{gatewayBaseUrl}}/internal/routes",
+              "raw": "{{standardGatewayBaseUrl}}/internal/routes",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "internal",
@@ -93,9 +93,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gatewayBaseUrl}}/api/products",
+              "raw": "{{standardGatewayBaseUrl}}/api/products",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "api",
@@ -156,9 +156,9 @@
               "raw": "{\n  \"serviceId\": \"inventory-service-manual-1\",\n  \"serviceName\": \"inventory-service\",\n  \"address\": \"localhost\",\n  \"port\": 8090,\n  \"tags\": [\"express\", \"manual-registration\"]\n}"
             },
             "url": {
-              "raw": "{{routeManagementBaseUrl}}/services/register",
+              "raw": "{{gatewayServiceBaseUrl}}/services/register",
               "host": [
-                "{{routeManagementBaseUrl}}"
+                "{{gatewayServiceBaseUrl}}"
               ],
               "path": [
                 "services",
@@ -184,9 +184,9 @@
               "raw": "{\n  \"id\": \"inventory-route\",\n  \"path\": \"/api/inventory/**\",\n  \"uri\": \"lb://inventory-service\"\n}"
             },
             "url": {
-              "raw": "{{gatewayBaseUrl}}/internal/routes",
+              "raw": "{{standardGatewayBaseUrl}}/internal/routes",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "internal",
@@ -203,9 +203,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gatewayBaseUrl}}/api/inventory/items",
+              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "api",
@@ -223,9 +223,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gatewayBaseUrl}}/api/inventory/items/i-100",
+              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/i-100",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "api",
@@ -244,9 +244,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gatewayBaseUrl}}/api/inventory/items/low-stock",
+              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/low-stock",
               "host": [
-                "{{gatewayBaseUrl}}"
+                "{{standardGatewayBaseUrl}}"
               ],
               "path": [
                 "api",

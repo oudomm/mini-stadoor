@@ -1,65 +1,53 @@
 package dev.oudom.gateway_service.service;
 
 import dev.oudom.gateway_service.dto.RouteRequest;
-import dev.oudom.gateway_service.dto.RouteResponse;
-import dev.oudom.gateway_service.dto.RoutesResponse;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
+import dev.oudom.gateway_service.entity.RouteEntity;
+import dev.oudom.gateway_service.repository.RouteRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
+@RequiredArgsConstructor
 public class RouteStorageService {
 
-    private final WebClient webClient;
+    private final RouteRepository routeRepository;
 
-    public RouteStorageService(
-        @Qualifier("loadBalancedWebClientBuilder") WebClient.Builder webClientBuilder,
-        @Value("${route-management.base-url}") String routeManagementBaseUrl
-    ) {
-        this.webClient = webClientBuilder
-            .baseUrl(routeManagementBaseUrl)
-            .build();
+    public RouteRequest save(RouteRequest routeRequest) {
+        routeRepository.save(new RouteEntity(
+            routeRequest.id(),
+            routeRequest.path(),
+            routeRequest.uri()
+        ));
+        return routeRequest;
     }
 
-    public Mono<RouteRequest> save(RouteRequest routeRequest) {
-        return webClient.post()
-            .uri("/routes")
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(routeRequest)
-            .retrieve()
-            .bodyToMono(RouteResponse.class)
-            .map(RouteResponse::route);
+    public RouteRequest update(String id, RouteRequest routeRequest) {
+        RouteEntity routeEntity = routeRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Route not found: " + id));
+
+        routeEntity.setPath(routeRequest.path());
+        routeEntity.setUri(routeRequest.uri());
+        routeRepository.save(routeEntity);
+
+        return new RouteRequest(routeEntity.getId(), routeEntity.getPath(), routeEntity.getUri());
     }
 
-    public Mono<RouteRequest> update(String id, RouteRequest routeRequest) {
-        return webClient.put()
-            .uri("/routes/{id}", id)
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(routeRequest)
-            .retrieve()
-            .bodyToMono(RouteResponse.class)
-            .map(RouteResponse::route);
+    public void delete(String id) {
+        if (!routeRepository.existsById(id)) {
+            throw new ResponseStatusException(NOT_FOUND, "Route not found: " + id);
+        }
+
+        routeRepository.deleteById(id);
     }
 
-    public Mono<Void> delete(String id) {
-        return webClient.delete()
-            .uri("/routes/{id}", id)
-            .retrieve()
-            .toBodilessEntity()
-            .then();
-    }
-
-    public Flux<RouteRequest> findAll() {
-        return webClient.get()
-            .uri("/routes")
-            .retrieve()
-            .bodyToMono(RoutesResponse.class)
-            .flatMapMany(response -> response == null || response.routes() == null
-                ? Flux.empty()
-                : Flux.fromIterable(response.routes()));
+    public List<RouteRequest> findAll() {
+        return routeRepository.findAll().stream()
+            .map(route -> new RouteRequest(route.getId(), route.getPath(), route.getUri()))
+            .toList();
     }
 }

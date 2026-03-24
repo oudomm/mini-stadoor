@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: standard-gateway
+server:
+  port: 8080
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+route-management:
+  base-url: http://gateway-service

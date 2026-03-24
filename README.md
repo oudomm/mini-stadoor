@@ -10,14 +10,14 @@ It shows how developers can manage route definitions at runtime while end users 
 
 ## Services
 
-- `gateway-service`
+- `standard-gateway`
   - Port: `8080`
   - Entry point for end users
-  - Loads route definitions from `route-management-service`
+  - Loads route definitions from `gateway-service`
   - Resolves target services through Eureka
   - Forwards end-user traffic dynamically
 
-- `route-management-service`
+- `gateway-service`
   - Port: `8085`
   - Platform API for developer onboarding
   - Registers developer services into Eureka by API
@@ -64,15 +64,15 @@ docker compose up -d
 Start these modules:
 
 - `eureka-server`
-- `route-management-service`
 - `gateway-service`
+- `standard-gateway`
 - `product-service`
 
 Recommended startup order:
 
 1. `eureka-server`
-2. `route-management-service`
-3. `gateway-service`
+2. `gateway-service`
+3. `standard-gateway`
 4. `product-service`
 
 ## Main API Endpoints
@@ -167,8 +167,8 @@ Ready-to-import Postman collection:
 
 ## Notes
 
-- `route-management-service` registers developer services into Eureka by code
-- `route-management-service` stores external service registrations in Postgres
-- `route-management-service` sends scheduled Eureka heartbeats for stored external services
-- `gateway-service` resolves `lb://product-service` through Eureka
+- `gateway-service` registers developer services into Eureka by code
+- `gateway-service` stores external service registrations in Postgres
+- `gateway-service` sends scheduled Eureka heartbeats for stored external services
+- `standard-gateway` resolves `lb://product-service` through Eureka
 - the route is created dynamically at runtime, not in `application.yml`
