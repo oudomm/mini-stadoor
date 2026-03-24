@@ -7,63 +7,59 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-
-import java.util.List;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class RouteStorageService {
 
-    private final RestClient.Builder restClientBuilder;
+    private final WebClient webClient;
 
-    @Value("${route-management.base-url}")
-    private String routeManagementBaseUrl;
-
-    public RouteStorageService(@Qualifier("loadBalancedRestClientBuilder") RestClient.Builder restClientBuilder) {
-        this.restClientBuilder = restClientBuilder;
-    }
-
-    public synchronized RouteRequest save(RouteRequest routeRequest) {
-        RouteResponse response = restClient().post()
-            .uri("/routes")
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(routeRequest)
-            .retrieve()
-            .body(RouteResponse.class);
-
-        return response.route();
-    }
-
-    public synchronized RouteRequest update(String id, RouteRequest routeRequest) {
-        RouteResponse response = restClient().put()
-            .uri("/routes/{id}", id)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(routeRequest)
-            .retrieve()
-            .body(RouteResponse.class);
-
-        return response.route();
-    }
-
-    public synchronized void delete(String id) {
-        restClient().delete()
-            .uri("/routes/{id}", id)
-            .retrieve()
-            .toBodilessEntity();
-    }
-
-    public synchronized List<RouteRequest> findAll() {
-        RoutesResponse response = restClient().get()
-            .uri("/routes")
-            .retrieve()
-            .body(RoutesResponse.class);
-
-        return response == null || response.routes() == null ? List.of() : response.routes();
-    }
-
-    private RestClient restClient() {
-        return restClientBuilder
+    public RouteStorageService(
+        @Qualifier("loadBalancedWebClientBuilder") WebClient.Builder webClientBuilder,
+        @Value("${route-management.base-url}") String routeManagementBaseUrl
+    ) {
+        this.webClient = webClientBuilder
             .baseUrl(routeManagementBaseUrl)
             .build();
+    }
+
+    public Mono<RouteRequest> save(RouteRequest routeRequest) {
+        return webClient.post()
+            .uri("/routes")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(routeRequest)
+            .retrieve()
+            .bodyToMono(RouteResponse.class)
+            .map(RouteResponse::route);
+    }
+
+    public Mono<RouteRequest> update(String id, RouteRequest routeRequest) {
+        return webClient.put()
+            .uri("/routes/{id}", id)
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(routeRequest)
+            .retrieve()
+            .bodyToMono(RouteResponse.class)
+            .map(RouteResponse::route);
+    }
+
+    public Mono<Void> delete(String id) {
+        return webClient.delete()
+            .uri("/routes/{id}", id)
+            .retrieve()
+            .toBodilessEntity()
+            .then();
+    }
+
+    public Flux<RouteRequest> findAll() {
+        return webClient.get()
+            .uri("/routes")
+            .retrieve()
+            .bodyToMono(RoutesResponse.class)
+            .flatMapMany(response -> response == null || response.routes() == null
+                ? Flux.empty()
+                : Flux.fromIterable(response.routes()));
     }
 }

@@ -1,12 +1,4 @@
 services:
-  consul:
-    image: hashicorp/consul:1.21
-    container_name: dynamic-routes-consul
-    command: agent -dev -client=0.0.0.0
-    ports:
-      - "8500:8500"
-      - "8600:8600/udp"
-
   postgres:
     image: postgres:17.5-bullseye
     container_name: dynamic-routes-postgres

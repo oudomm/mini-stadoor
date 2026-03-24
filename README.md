@@ -1,6 +1,6 @@
 # API Gateway Dynamic Routes Demo
 
-This project is a small Spring microservices demo for **API Gateway with Dynamic Routes**.
+This project is a small Spring microservices demo for **developer service registration + dynamic gateway routing**.
 
 It shows how developers can manage route definitions at runtime while end users access backend services through a single API gateway.
 
@@ -10,24 +10,23 @@ It shows how developers can manage route definitions at runtime while end users 
   - Port: `8080`
   - Entry point for end users
   - Loads route definitions from `route-management-service`
-  - Uses Consul to discover backend services by name
-  - Dynamically forwards requests to backend services
+  - Resolves target services through Eureka
+  - Forwards end-user traffic dynamically
 
 - `route-management-service`
   - Port: `8085`
-  - Control plane for route definitions
-  - Supports create, list, update, and delete
-  - Stores routes in Postgres
-  - Registers itself with Consul
+  - Platform API for developer onboarding
+  - Registers developer services into Eureka by API
+  - Stores dynamic routes in Postgres
 
-- `demo-api-service`
+- `product-service`
   - Port: `8082`
-  - Simple backend service for routing demos
-  - Exposes `GET /hello`
-  - Registers itself with Consul
+  - Plain backend API used for routing demos
+  - Exposes product endpoints
+  - Runs as a plain backend service and is registered through the platform API during the demo
 
-- `Consul`
-  - Port: `8500`
+- `eureka-server`
+  - Port: `8761`
   - Service discovery for the demo services
 
 - `Postgres`
@@ -36,48 +35,11 @@ It shows how developers can manage route definitions at runtime while end users 
   - User: `demo_user`
   - Password: `demo_pass`
 
-## Architecture
+## What This Demo Proves
 
-- Developers manage routes through `route-management-service`
-- `route-management-service` stores route definitions in Postgres
-- `gateway-service` reads those route definitions and builds its active routing table
-- `gateway-service` resolves service names through Consul and can route to `lb://...` targets
-- End users call the gateway, not the route-management service
-
-In platform terms:
-
-- `route-management-service` = control plane
-- `gateway-service` = data plane
-
-## Example Flow
-
-If a developer creates this route:
-
-```json
-{
-  "id": "demo-route",
-  "path": "/demo/**",
-  "uri": "lb://demo-api-service"
-}
-```
-
-Then an end user can call:
-
-```bash
-GET http://localhost:8080/demo/hello
-```
-
-And the gateway forwards the request to:
-
-```bash
-http://localhost:8082/hello
-```
-
-The backend responds with:
-
-```json
-{"message":"Hello from demo service"}
-```
+1. A developer service can be registered at runtime by platform code.
+2. A route can be created dynamically instead of being hardcoded in `application.yml`.
+3. End users access only the gateway URL, not the backend service directly.
 
 ## Run the Project
 
@@ -91,104 +53,56 @@ docker compose up -d
 
 Start these modules:
 
+- `eureka-server`
 - `route-management-service`
 - `gateway-service`
-- `demo-api-service`
+- `product-service`
 
 Recommended startup order:
 
-1. `route-management-service`
-2. `gateway-service`
-3. `demo-api-service`
+1. `eureka-server`
+2. `route-management-service`
+3. `gateway-service`
+4. `product-service`
 
 ## Main API Endpoints
 
-### Gateway Service
+- `POST http://localhost:8085/services/register`
+- `POST http://localhost:8080/internal/routes`
+- `GET http://localhost:8080/api/products`
 
-- `GET /internal/routes`
-- `POST /internal/routes`
-- `PUT /internal/routes/{id}`
-- `DELETE /internal/routes/{id}`
-- `GET /actuator/gateway/routes`
-- `POST /actuator/gateway/refresh`
+## Demo Flow
 
-Base URL:
-
-```text
-http://localhost:8080
-```
-
-### Route Management Service
-
-- `GET /routes`
-- `POST /routes`
-- `PUT /routes/{id}`
-- `DELETE /routes/{id}`
-
-Base URL:
-
-```text
-http://localhost:8085
-```
-
-### Demo API Service
-
-- `GET /hello`
-
-Base URL:
-
-```text
-http://localhost:8082
-```
-
-## Demo Commands
-
-### Call the gateway before the route exists
+### 1. Register a developer service in Eureka
 
 ```bash
-curl -i http://localhost:8080/demo/hello
+curl -X POST http://localhost:8085/services/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceId": "product-service-manual-1",
+    "serviceName": "product-service",
+    "address": "localhost",
+    "port": 8082,
+    "tags": ["manual-registration", "proof"]
+  }'
 ```
 
-### Create a route through the gateway facade
+### 2. Create a dynamic gateway route
 
 ```bash
 curl -X POST http://localhost:8080/internal/routes \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "demo-route",
-    "path": "/demo/**",
-    "uri": "lb://demo-api-service"
+    "id": "product-route",
+    "path": "/api/products/**",
+    "uri": "lb://product-service"
   }'
 ```
 
-### Call the gateway after the route exists
+### 3. Call the gateway as an end user
 
 ```bash
-curl -i http://localhost:8080/demo/hello
-```
-
-### List routes from route-management-service
-
-```bash
-curl http://localhost:8085/routes
-```
-
-### Update a route through the gateway facade
-
-```bash
-curl -X PUT http://localhost:8080/internal/routes/demo-route \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "demo-route",
-    "path": "/demo/**",
-    "uri": "lb://demo-api-service"
-  }'
-```
-
-### Delete a route through the gateway facade
-
-```bash
-curl -X DELETE http://localhost:8080/internal/routes/demo-route
+curl -i http://localhost:8080/api/products
 ```
 
 ## Postman
@@ -199,8 +113,6 @@ Ready-to-import Postman collection:
 
 ## Notes
 
-- `route-management-service` owns route persistence in Postgres
-- `route-management-service` is the owner of route data
-- `gateway-service` discovers `route-management-service` through Consul instead of a fixed host:port
-- Dynamic route targets can now use service ids such as `lb://demo-api-service`
-- The actuator refresh endpoint still exists for operational use, even though route creation auto-activates routes
+- `route-management-service` registers developer services into Eureka by code
+- `gateway-service` resolves `lb://product-service` through Eureka
+- the route is created dynamically at runtime, not in `application.yml`

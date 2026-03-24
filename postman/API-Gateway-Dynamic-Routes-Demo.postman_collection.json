@@ -3,7 +3,7 @@
     "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
     "name": "API Gateway Dynamic Routes Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Demo collection for API Gateway with Dynamic Routes using gateway-service, route-management-service, and demo-api-service."
+    "description": "Demo collection for runtime service registration and dynamic routing using gateway-service, route-management-service, and product-service."
   },
   "variable": [
     {
@@ -15,35 +15,20 @@
       "value": "http://localhost:8085"
     },
     {
-      "key": "demoApiBaseUrl",
+      "key": "productServiceBaseUrl",
       "value": "http://localhost:8082"
+    },
+    {
+      "key": "eurekaBaseUrl",
+      "value": "http://localhost:8761"
     }
   ],
   "item": [
     {
-      "name": "Gateway Demo Flow",
+      "name": "Developer To End User Flow",
       "item": [
         {
-          "name": "1. Gateway Before Route Exists",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/demo/hello",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "demo",
-                "hello"
-              ]
-            },
-            "description": "Expected to fail before the dynamic route is added and refreshed."
-          },
-          "response": []
-        },
-        {
-          "name": "2. Add Dynamic Route In Gateway",
+          "name": "1. Register Developer Service",
           "request": {
             "method": "POST",
             "header": [
@@ -54,7 +39,35 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
+              "raw": "{\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"]\n}"
+            },
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/services/register",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Platform-managed runtime registration of a developer service into Eureka."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Dynamic Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"product-route\",\n  \"path\": \"/api/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayBaseUrl}}/internal/routes",
@@ -66,249 +79,56 @@
                 "routes"
               ]
             },
-            "description": "Stores the route in Postgres and activates it immediately in gateway-service."
+            "description": "Creates a runtime gateway route that resolves the registered product service through Eureka."
           },
           "response": []
         },
         {
-          "name": "3. Gateway After Route Exists",
+          "name": "3. End User Calls Gateway",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{gatewayBaseUrl}}/demo/hello",
+              "raw": "{{gatewayBaseUrl}}/api/products",
               "host": [
                 "{{gatewayBaseUrl}}"
               ],
               "path": [
-                "demo",
-                "hello"
+                "api",
+                "products"
               ]
             },
-            "description": "Should now proxy through gateway-service to demo-api-service and return the hello JSON."
-          },
-          "response": []
-        },
-        {
-          "name": "4. Refresh Gateway Routes (Optional Ops Step)",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/actuator/gateway/refresh",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "actuator",
-                "gateway",
-                "refresh"
-              ]
-            },
-            "description": "Optional operational refresh. The main demo flow no longer requires this because route creation auto-activates the route."
-          },
-          "response": []
-        },
-        {
-          "name": "5. Inspect Active Gateway Routes",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/actuator/gateway/routes",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "actuator",
-                "gateway",
-                "routes"
-              ]
-            },
-            "description": "Shows stored routes and currently active gateway routes after refresh."
-          },
-          "response": []
-        },
-        {
-          "name": "6. List Stored Gateway Routes",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/internal/routes",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "internal",
-                "routes"
-              ]
-            },
-            "description": "Lists routes managed through route-management-service and shows which ones are currently active in the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "7. Update Dynamic Route In Gateway",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
-            },
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/internal/routes/demo-route",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "internal",
-                "routes",
-                "demo-route"
-              ]
-            },
-            "description": "Updates a stored route through the gateway facade and immediately re-activates the current route set."
-          },
-          "response": []
-        },
-        {
-          "name": "8. Delete Dynamic Route In Gateway",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{gatewayBaseUrl}}/internal/routes/demo-route",
-              "host": [
-                "{{gatewayBaseUrl}}"
-              ],
-              "path": [
-                "internal",
-                "routes",
-                "demo-route"
-              ]
-            },
-            "description": "Deletes the route through the gateway facade and refreshes the active gateway routes."
+            "description": "End users access only the gateway URL. The gateway resolves the registered product service dynamically and forwards the request."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Supporting Services",
+      "name": "Discovery Check",
       "item": [
         {
-          "name": "Demo API - Hello",
+          "name": "1. Query Eureka App Instances",
           "request": {
             "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{demoApiBaseUrl}}/hello",
-              "host": [
-                "{{demoApiBaseUrl}}"
-              ],
-              "path": [
-                "hello"
-              ]
-            },
-            "description": "Direct call to the backend demo service."
-          },
-          "response": []
-        },
-        {
-          "name": "Route Management - Create Route",
-          "request": {
-            "method": "POST",
             "header": [
               {
-                "key": "Content-Type",
+                "key": "Accept",
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
-            },
             "url": {
-              "raw": "{{routeManagementBaseUrl}}/routes",
+              "raw": "{{eurekaBaseUrl}}/eureka/apps/PRODUCT-SERVICE",
               "host": [
-                "{{routeManagementBaseUrl}}"
+                "{{eurekaBaseUrl}}"
               ],
               "path": [
-                "routes"
+                "eureka",
+                "apps",
+                "PRODUCT-SERVICE"
               ]
             },
-            "description": "Optional supporting service request for the route-management-service demo."
-          },
-          "response": []
-        },
-        {
-          "name": "Route Management - List Routes",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{routeManagementBaseUrl}}/routes",
-              "host": [
-                "{{routeManagementBaseUrl}}"
-              ],
-              "path": [
-                "routes"
-              ]
-            },
-            "description": "Optional supporting service request for listing routes in route-management-service."
-          },
-          "response": []
-        },
-        {
-          "name": "Route Management - Update Route",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"demo-route\",\n  \"path\": \"/demo/**\",\n  \"uri\": \"http://localhost:8082\"\n}"
-            },
-            "url": {
-              "raw": "{{routeManagementBaseUrl}}/routes/demo-route",
-              "host": [
-                "{{routeManagementBaseUrl}}"
-              ],
-              "path": [
-                "routes",
-                "demo-route"
-              ]
-            },
-            "description": "Updates an existing route directly in the control-plane service."
-          },
-          "response": []
-        },
-        {
-          "name": "Route Management - Delete Route",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{routeManagementBaseUrl}}/routes/demo-route",
-              "host": [
-                "{{routeManagementBaseUrl}}"
-              ],
-              "path": [
-                "routes",
-                "demo-route"
-              ]
-            },
-            "description": "Deletes an existing route directly in the control-plane service."
+            "description": "Shows Eureka has the registered product-service instance."
           },
           "response": []
         }
