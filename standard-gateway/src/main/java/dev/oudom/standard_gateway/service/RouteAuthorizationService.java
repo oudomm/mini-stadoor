@@ -26,7 +26,7 @@ public class RouteAuthorizationService {
         this.consumerAuthService = consumerAuthService;
     }
 
-    public Mono<Void> authorize(String requestPath, String authorizationHeader) {
+    public Mono<Void> authorize(String requestPath, String authorizationHeader, String apiKey) {
         Optional<RouteRequest> matchingRoute = dynamicRouteService.getActiveRoutes().stream()
             .filter(route -> pathMatcher.match(route.path(), requestPath))
             .findFirst();
@@ -43,6 +43,16 @@ public class RouteAuthorizationService {
             }
 
             return consumerAuthService.validateBasic(authorizationHeader).then();
+        }
+
+        if (matchingRoute.get().authType() == AuthType.API_KEY) {
+            if (apiKey == null || apiKey.isBlank()) {
+                return Mono.error(new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "API key is required"));
+            }
+
+            return consumerAuthService.validateApiKey(apiKey).then();
         }
 
         return Mono.error(new ResponseStatusException(

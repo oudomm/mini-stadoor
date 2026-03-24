@@ -3,7 +3,7 @@
     "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
     "name": "API Gateway Dynamic Routes Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Demo collection for runtime service registration and dynamic routing using standard-gateway, gateway-service, and product-service."
+    "description": "Simple demo collection for dynamic service registration and route security using standard-gateway, gateway-service, consumer-service, and product-service."
   },
   "variable": [
     {
@@ -15,28 +15,16 @@
       "value": "http://localhost:8085"
     },
     {
-      "key": "productServiceBaseUrl",
-      "value": "http://localhost:8082"
-    },
-    {
       "key": "eurekaBaseUrl",
       "value": "http://localhost:8761"
-    },
-    {
-      "key": "inventoryServiceBaseUrl",
-      "value": "http://localhost:8090"
-    },
-    {
-      "key": "customerServiceBaseUrl",
-      "value": "http://localhost:8091"
     }
   ],
   "item": [
     {
-      "name": "Developer To End User Flow",
+      "name": "Non Auth",
       "item": [
         {
-          "name": "1. Register Developer Service",
+          "name": "1. Register Product Service",
           "request": {
             "method": "POST",
             "header": [
@@ -59,12 +47,12 @@
                 "register"
               ]
             },
-            "description": "Platform-managed runtime registration of a developer service into Eureka."
+            "description": "Registers product-service into Eureka by platform API."
           },
           "response": []
         },
         {
-          "name": "2. Create Dynamic Route",
+          "name": "2. Create Non Auth Route",
           "request": {
             "method": "POST",
             "header": [
@@ -75,7 +63,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"product-route\",\n  \"path\": \"/api/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"BASIC\"\n}"
+              "raw": "{\n  \"id\": \"product-route-open\",\n  \"path\": \"/open/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"NONE\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -87,81 +75,36 @@
                 "routes"
               ]
             },
-            "description": "Creates a runtime gateway route that resolves the registered product service through Eureka."
+            "description": "Creates an open route with no auth."
           },
           "response": []
         },
         {
-          "name": "3. End User Calls Standard Gateway",
+          "name": "3. Call Open Route",
           "request": {
             "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
             "header": [],
             "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/products",
+              "raw": "{{standardGatewayBaseUrl}}/open/products",
               "host": [
                 "{{standardGatewayBaseUrl}}"
               ],
               "path": [
-                "api",
+                "open",
                 "products"
               ]
             },
-            "description": "End users call standard-gateway directly. standard-gateway delegates Basic Auth validation to consumer-service, then resolves the registered product service dynamically."
+            "description": "Calls product-service through standard-gateway without auth."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "Discovery Check",
+      "name": "Basic Auth",
       "item": [
         {
-          "name": "1. Query Eureka App Instances",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Accept",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{eurekaBaseUrl}}/eureka/apps/PRODUCT-SERVICE",
-              "host": [
-                "{{eurekaBaseUrl}}"
-              ],
-              "path": [
-                "eureka",
-                "apps",
-                "PRODUCT-SERVICE"
-              ]
-            },
-            "description": "Shows Eureka has the registered product-service instance."
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Express Inventory Flow",
-      "item": [
-        {
-          "name": "1. Register Inventory Service",
+          "name": "1. Create Basic Auth Route",
           "request": {
             "method": "POST",
             "header": [
@@ -172,35 +115,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"serviceId\": \"inventory-service-manual-1\",\n  \"serviceName\": \"inventory-service\",\n  \"address\": \"localhost\",\n  \"port\": 8090,\n  \"tags\": [\"express\", \"manual-registration\"]\n}"
-            },
-            "url": {
-              "raw": "{{gatewayServiceBaseUrl}}/services/register",
-              "host": [
-                "{{gatewayServiceBaseUrl}}"
-              ],
-              "path": [
-                "services",
-                "register"
-              ]
-            },
-            "description": "Registers the Express-based inventory service into Eureka at runtime."
-          },
-          "response": []
-        },
-        {
-          "name": "2. Create Inventory Route",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"inventory-route\",\n  \"path\": \"/api/inventory/**\",\n  \"uri\": \"lb://inventory-service\",\n  \"authType\": \"BASIC\"\n}"
+              "raw": "{\n  \"id\": \"product-route-basic\",\n  \"path\": \"/basic/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"BASIC\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -212,12 +127,12 @@
                 "routes"
               ]
             },
-            "description": "Creates a runtime route for the Express inventory service."
+            "description": "Creates a route protected by Basic Auth."
           },
           "response": []
         },
         {
-          "name": "3. End User - List Inventory",
+          "name": "2. Call Basic Auth Route",
           "request": {
             "method": "GET",
             "auth": {
@@ -237,118 +152,26 @@
             },
             "header": [],
             "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items",
+              "raw": "{{standardGatewayBaseUrl}}/basic/products",
               "host": [
                 "{{standardGatewayBaseUrl}}"
               ],
               "path": [
-                "api",
-                "inventory",
-                "items"
+                "basic",
+                "products"
               ]
             },
-            "description": "Calls the inventory list endpoint through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "4. End User - Inventory By Id",
-          "request": {
-            "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
-            "header": [],
-            "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/i-100",
-              "host": [
-                "{{standardGatewayBaseUrl}}"
-              ],
-              "path": [
-                "api",
-                "inventory",
-                "items",
-                "i-100"
-              ]
-            },
-            "description": "Calls a specific inventory item through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "5. End User - Low Stock",
-          "request": {
-            "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
-            "header": [],
-            "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/low-stock",
-              "host": [
-                "{{standardGatewayBaseUrl}}"
-              ],
-              "path": [
-                "api",
-                "inventory",
-                "items",
-                "low-stock"
-              ]
-            },
-            "description": "Calls the low-stock endpoint through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "6. Direct Inventory Service (Optional)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{inventoryServiceBaseUrl}}/inventory/items",
-              "host": [
-                "{{inventoryServiceBaseUrl}}"
-              ],
-              "path": [
-                "inventory",
-                "items"
-              ]
-            },
-            "description": "Direct check that the Express service itself is running before routing through the gateway."
+            "description": "Calls a Basic Auth protected route through standard-gateway."
           },
           "response": []
         }
       ]
     },
     {
-      "name": "FastAPI Customer Flow",
+      "name": "API Key",
       "item": [
         {
-          "name": "1. Register Customer Service",
+          "name": "1. Create API Key Route",
           "request": {
             "method": "POST",
             "header": [
@@ -359,35 +182,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"serviceId\": \"customer-service-manual-1\",\n  \"serviceName\": \"customer-service\",\n  \"address\": \"localhost\",\n  \"port\": 8091,\n  \"tags\": [\"fastapi\", \"manual-registration\"]\n}"
-            },
-            "url": {
-              "raw": "{{gatewayServiceBaseUrl}}/services/register",
-              "host": [
-                "{{gatewayServiceBaseUrl}}"
-              ],
-              "path": [
-                "services",
-                "register"
-              ]
-            },
-            "description": "Registers the FastAPI customer service into Eureka at runtime."
-          },
-          "response": []
-        },
-        {
-          "name": "2. Create Customer Route",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"id\": \"customer-route\",\n  \"path\": \"/api/customers/**\",\n  \"uri\": \"lb://customer-service\",\n  \"authType\": \"BASIC\"\n}"
+              "raw": "{\n  \"id\": \"product-route-api-key\",\n  \"path\": \"/api-key/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"API_KEY\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -399,129 +194,31 @@
                 "routes"
               ]
             },
-            "description": "Creates a runtime route for the FastAPI customer service."
+            "description": "Creates a route protected by API key validation."
           },
           "response": []
         },
         {
-          "name": "3. End User - List Customers",
+          "name": "2. Call API Key Route",
           "request": {
             "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
-            "header": [],
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "stadoor-demo-key"
+              }
+            ],
             "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/customers",
+              "raw": "{{standardGatewayBaseUrl}}/api-key/products",
               "host": [
                 "{{standardGatewayBaseUrl}}"
               ],
               "path": [
-                "api",
-                "customers"
+                "api-key",
+                "products"
               ]
             },
-            "description": "Calls the customer list endpoint through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "4. End User - Customer By Id",
-          "request": {
-            "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
-            "header": [],
-            "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/customers/c-100",
-              "host": [
-                "{{standardGatewayBaseUrl}}"
-              ],
-              "path": [
-                "api",
-                "customers",
-                "c-100"
-              ]
-            },
-            "description": "Calls a specific customer through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "5. End User - VIP Customers",
-          "request": {
-            "method": "GET",
-            "auth": {
-              "type": "basic",
-              "basic": [
-                {
-                  "key": "username",
-                  "value": "enduser",
-                  "type": "string"
-                },
-                {
-                  "key": "password",
-                  "value": "enduser123",
-                  "type": "string"
-                }
-              ]
-            },
-            "header": [],
-            "url": {
-              "raw": "{{standardGatewayBaseUrl}}/api/customers/vip",
-              "host": [
-                "{{standardGatewayBaseUrl}}"
-              ],
-              "path": [
-                "api",
-                "customers",
-                "vip"
-              ]
-            },
-            "description": "Calls the VIP customer endpoint through the gateway."
-          },
-          "response": []
-        },
-        {
-          "name": "6. Direct Customer Service (Optional)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{customerServiceBaseUrl}}/customers",
-              "host": [
-                "{{customerServiceBaseUrl}}"
-              ],
-              "path": [
-                "customers"
-              ]
-            },
-            "description": "Direct check that the FastAPI service itself is running before routing through the gateway."
+            "description": "Calls an API key protected route through standard-gateway."
           },
           "response": []
         }

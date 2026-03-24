@@ -66,6 +66,7 @@ It shows how developers can manage route definitions at runtime while end users 
 2. A route can be created dynamically instead of being hardcoded in `application.yml`.
 3. End users access only `standard-gateway`, not the backend service directly.
 4. `standard-gateway` can enforce Basic Auth by delegating validation to `consumer-service`.
+5. `standard-gateway` can also enforce API key validation through `consumer-service`.
 
 ## Run the Project
 
@@ -134,6 +135,27 @@ curl -X POST http://localhost:8080/internal/routes \
 
 ```bash
 curl -i -u enduser:enduser123 http://localhost:8080/api/products
+```
+
+## API Key Example
+
+Create a dynamic gateway route with API key protection:
+
+```bash
+curl -X POST http://localhost:8080/internal/routes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "product-route-api-key",
+    "path": "/api-key/products/**",
+    "uri": "lb://product-service",
+    "authType": "API_KEY"
+  }'
+```
+
+Then call it with the demo API key:
+
+```bash
+curl -H "X-API-Key: stadoor-demo-key" http://localhost:8080/api-key/products
 ```
 
 ## Express Example
@@ -240,6 +262,6 @@ Ready-to-import Postman collection:
 - `gateway-service` stores external service registrations in Postgres
 - `gateway-service` sends scheduled Eureka heartbeats for stored external services
 - `consumer-service` is an internal validation service used by `standard-gateway`
-- the demo currently implements Basic Auth first, with API key and JWT left for later
+- the demo currently implements `BASIC` and `API_KEY`, with `JWT` left for later
 - `standard-gateway` resolves `lb://product-service` through Eureka
 - the route is created dynamically at runtime, not in `application.yml`

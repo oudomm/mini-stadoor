@@ -53,6 +53,28 @@ class ConsumerAuthValidationTests {
             .expectStatus().isUnauthorized();
     }
 
+    @Test
+    void validatesCorrectApiKey() {
+        webTestClient.post()
+            .uri("/internal/auth/api-key/validate")
+            .header("X-API-Key", "stadoor-demo-key")
+            .exchange()
+            .expectStatus().isOk()
+            .expectBody()
+            .jsonPath("$.authenticated").isEqualTo(true)
+            .jsonPath("$.authenticationType").isEqualTo("API_KEY")
+            .jsonPath("$.principal").isEqualTo("api-key-client");
+    }
+
+    @Test
+    void rejectsWrongApiKey() {
+        webTestClient.post()
+            .uri("/internal/auth/api-key/validate")
+            .header("X-API-Key", "wrong-key")
+            .exchange()
+            .expectStatus().isUnauthorized();
+    }
+
     private String basicAuth(String username, String password) {
         String token = Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
         return "Basic " + token;

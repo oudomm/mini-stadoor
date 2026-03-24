@@ -30,7 +30,8 @@ public class RouteSecurityWebFilter implements WebFilter {
 
         return routeAuthorizationService.authorize(
                 path,
-                exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION),
+                exchange.getRequest().getHeaders().getFirst("X-API-Key"))
             .then(chain.filter(exchange))
             .onErrorResume(ResponseStatusException.class, exception -> writeError(exchange, exception));
     }

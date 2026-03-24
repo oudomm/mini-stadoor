@@ -38,4 +38,21 @@ public class ConsumerAuthService {
                 "consumer-service is unavailable",
                 exception));
     }
+
+    public Mono<AuthValidationResponse> validateApiKey(String apiKey) {
+        return webClient.post()
+            .uri("/internal/auth/api-key/validate")
+            .header("X-API-Key", apiKey)
+            .retrieve()
+            .onStatus(status -> status.value() == 401, response -> Mono.error(
+                new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid API key")))
+            .onStatus(status -> status.is5xxServerError(), response -> Mono.error(
+                new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "consumer-service is unavailable")))
+            .bodyToMono(AuthValidationResponse.class)
+            .onErrorMap(ResponseStatusException.class, exception -> exception)
+            .onErrorMap(exception -> new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "consumer-service is unavailable",
+                exception));
+    }
 }

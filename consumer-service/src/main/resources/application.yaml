@@ -19,3 +19,6 @@ consumer:
     basic:
       username: enduser
       password: enduser123
+    api-key:
+      header-name: X-API-Key
+      value: stadoor-demo-key

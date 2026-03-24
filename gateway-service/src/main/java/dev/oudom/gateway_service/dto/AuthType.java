@@ -2,5 +2,6 @@ package dev.oudom.gateway_service.dto;
 
 public enum AuthType {
     NONE,
-    BASIC
+    BASIC,
+    API_KEY
 }
