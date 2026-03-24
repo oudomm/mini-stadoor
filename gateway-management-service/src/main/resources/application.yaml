@@ -25,3 +25,5 @@ eureka:
     prefer-ip-address: false
 eureka-api:
   base-url: http://localhost:8761/eureka/v2
+standard-gateway:
+  base-url: http://standard-gateway

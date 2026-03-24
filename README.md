@@ -99,7 +99,7 @@ Recommended startup order:
 ## Main API Endpoints
 
 - `POST http://localhost:8085/services/register`
-- `POST http://localhost:8080/internal/routes`
+- `POST http://localhost:8085/routes`
 - `GET http://localhost:8080/api/products`
 
 ## Demo Flow
@@ -121,7 +121,7 @@ curl -X POST http://localhost:8085/services/register \
 ### 2. Create a dynamic gateway route
 
 ```bash
-curl -X POST http://localhost:8080/internal/routes \
+curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
     "id": "product-route",
@@ -142,7 +142,7 @@ curl -i -u enduser:enduser123 http://localhost:8080/api/products
 Create a dynamic gateway route with API key protection:
 
 ```bash
-curl -X POST http://localhost:8080/internal/routes \
+curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
     "id": "product-route-api-key",
@@ -185,7 +185,7 @@ curl -X POST http://localhost:8085/services/register \
 Create a dynamic route:
 
 ```bash
-curl -X POST http://localhost:8080/internal/routes \
+curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
     "id": "inventory-route",
@@ -232,7 +232,7 @@ curl -X POST http://localhost:8085/services/register \
 Create a dynamic route:
 
 ```bash
-curl -X POST http://localhost:8080/internal/routes \
+curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
     "id": "customer-route",

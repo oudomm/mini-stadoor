@@ -1,6 +1,7 @@
 package dev.oudom.gateway_management_service.controller;
 
 import dev.oudom.gateway_management_service.dto.RouteRequest;
+import dev.oudom.gateway_management_service.service.StandardGatewaySyncService;
 import dev.oudom.gateway_management_service.service.RouteStorageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,14 +22,17 @@ import java.util.Map;
 public class RouteController {
 
     private final RouteStorageService routeStorageService;
+    private final StandardGatewaySyncService standardGatewaySyncService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createRoute(@Valid @RequestBody RouteRequest routeRequest) {
         RouteRequest savedRoute = routeStorageService.save(routeRequest);
+        boolean synced = standardGatewaySyncService.refreshRoutes();
         return Map.of(
             "message", "Route created",
-            "route", savedRoute
+            "route", savedRoute,
+            "gatewayRefreshed", synced
         );
     }
 
