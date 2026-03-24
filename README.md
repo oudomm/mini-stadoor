@@ -2,6 +2,10 @@
 
 This project is a small Spring microservices demo for **developer service registration + dynamic gateway routing**.
 
+It now includes:
+- a Spring `product-service`
+- a non-Spring Express `inventory-service`
+
 It shows how developers can manage route definitions at runtime while end users access backend services through a single API gateway.
 
 ## Services
@@ -24,6 +28,12 @@ It shows how developers can manage route definitions at runtime while end users 
   - Plain backend API used for routing demos
   - Exposes product endpoints
   - Runs as a plain backend service and is registered through the platform API during the demo
+
+- `inventory-service`
+  - Port: `8090`
+  - Express-based backend API for cross-language registration tests
+  - Exposes inventory endpoints
+  - Proves developer services do not have to be Spring Boot
 
 - `eureka-server`
   - Port: `8761`
@@ -103,6 +113,50 @@ curl -X POST http://localhost:8080/internal/routes \
 
 ```bash
 curl -i http://localhost:8080/api/products
+```
+
+## Express Example
+
+Start the non-Spring sample service:
+
+```bash
+cd /Users/oudom/Documents/itp/api-gateway-dynamic-routes-demo/inventory-service
+npm install
+npm start
+```
+
+Register it in Eureka:
+
+```bash
+curl -X POST http://localhost:8085/services/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceId": "inventory-service-manual-1",
+    "serviceName": "inventory-service",
+    "address": "localhost",
+    "port": 8090,
+    "tags": ["express", "manual-registration"]
+  }'
+```
+
+Create a dynamic route:
+
+```bash
+curl -X POST http://localhost:8080/internal/routes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "inventory-route",
+    "path": "/api/inventory/**",
+    "uri": "lb://inventory-service"
+  }'
+```
+
+Then test through the gateway:
+
+```bash
+curl http://localhost:8080/api/inventory/items
+curl http://localhost:8080/api/inventory/items/i-100
+curl http://localhost:8080/api/inventory/items/low-stock
 ```
 
 ## Postman

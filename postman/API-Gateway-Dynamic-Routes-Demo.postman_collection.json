@@ -21,6 +21,10 @@
     {
       "key": "eurekaBaseUrl",
       "value": "http://localhost:8761"
+    },
+    {
+      "key": "inventoryServiceBaseUrl",
+      "value": "http://localhost:8090"
     }
   ],
   "item": [
@@ -129,6 +133,148 @@
               ]
             },
             "description": "Shows Eureka has the registered product-service instance."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Express Inventory Flow",
+      "item": [
+        {
+          "name": "1. Register Inventory Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceId\": \"inventory-service-manual-1\",\n  \"serviceName\": \"inventory-service\",\n  \"address\": \"localhost\",\n  \"port\": 8090,\n  \"tags\": [\"express\", \"manual-registration\"]\n}"
+            },
+            "url": {
+              "raw": "{{routeManagementBaseUrl}}/services/register",
+              "host": [
+                "{{routeManagementBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers the Express-based inventory service into Eureka at runtime."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Inventory Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"inventory-route\",\n  \"path\": \"/api/inventory/**\",\n  \"uri\": \"lb://inventory-service\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/internal/routes",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "internal",
+                "routes"
+              ]
+            },
+            "description": "Creates a runtime route for the Express inventory service."
+          },
+          "response": []
+        },
+        {
+          "name": "3. End User - List Inventory",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/inventory/items",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inventory",
+                "items"
+              ]
+            },
+            "description": "Calls the inventory list endpoint through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "4. End User - Inventory By Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/inventory/items/i-100",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inventory",
+                "items",
+                "i-100"
+              ]
+            },
+            "description": "Calls a specific inventory item through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "5. End User - Low Stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{gatewayBaseUrl}}/api/inventory/items/low-stock",
+              "host": [
+                "{{gatewayBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "inventory",
+                "items",
+                "low-stock"
+              ]
+            },
+            "description": "Calls the low-stock endpoint through the gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Direct Inventory Service (Optional)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{inventoryServiceBaseUrl}}/inventory/items",
+              "host": [
+                "{{inventoryServiceBaseUrl}}"
+              ],
+              "path": [
+                "inventory",
+                "items"
+              ]
+            },
+            "description": "Direct check that the Express service itself is running before routing through the gateway."
           },
           "response": []
         }
