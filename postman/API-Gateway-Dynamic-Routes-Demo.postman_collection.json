@@ -75,7 +75,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"product-route\",\n  \"path\": \"/api/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
+              "raw": "{\n  \"id\": \"product-route\",\n  \"path\": \"/api/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"BASIC\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -92,9 +92,24 @@
           "response": []
         },
         {
-          "name": "3. End User Calls Gateway",
+          "name": "3. End User Calls Standard Gateway",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/products",
@@ -106,7 +121,7 @@
                 "products"
               ]
             },
-            "description": "End users access only the gateway URL. The gateway resolves the registered product service dynamically and forwards the request."
+            "description": "End users call standard-gateway directly. standard-gateway delegates Basic Auth validation to consumer-service, then resolves the registered product service dynamically."
           },
           "response": []
         }
@@ -185,7 +200,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"inventory-route\",\n  \"path\": \"/api/inventory/**\",\n  \"uri\": \"lb://inventory-service\"\n}"
+              "raw": "{\n  \"id\": \"inventory-route\",\n  \"path\": \"/api/inventory/**\",\n  \"uri\": \"lb://inventory-service\",\n  \"authType\": \"BASIC\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -205,6 +220,21 @@
           "name": "3. End User - List Inventory",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/inventory/items",
@@ -225,6 +255,21 @@
           "name": "4. End User - Inventory By Id",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/i-100",
@@ -246,6 +291,21 @@
           "name": "5. End User - Low Stock",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/inventory/items/low-stock",
@@ -327,7 +387,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"id\": \"customer-route\",\n  \"path\": \"/api/customers/**\",\n  \"uri\": \"lb://customer-service\"\n}"
+              "raw": "{\n  \"id\": \"customer-route\",\n  \"path\": \"/api/customers/**\",\n  \"uri\": \"lb://customer-service\",\n  \"authType\": \"BASIC\"\n}"
             },
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/internal/routes",
@@ -347,6 +407,21 @@
           "name": "3. End User - List Customers",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/customers",
@@ -366,6 +441,21 @@
           "name": "4. End User - Customer By Id",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/customers/c-100",
@@ -386,6 +476,21 @@
           "name": "5. End User - VIP Customers",
           "request": {
             "method": "GET",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "enduser",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "enduser123",
+                  "type": "string"
+                }
+              ]
+            },
             "header": [],
             "url": {
               "raw": "{{standardGatewayBaseUrl}}/api/customers/vip",

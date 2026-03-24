@@ -1,6 +1,7 @@
 package dev.oudom.gateway_service.service;
 
 import dev.oudom.gateway_service.dto.RouteRequest;
+import dev.oudom.gateway_service.dto.AuthType;
 import dev.oudom.gateway_service.entity.RouteEntity;
 import dev.oudom.gateway_service.repository.RouteRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,8 @@ public class RouteStorageService {
         routeRepository.save(new RouteEntity(
             routeRequest.id(),
             routeRequest.path(),
-            routeRequest.uri()
+            routeRequest.uri(),
+            routeRequest.authType()
         ));
         return routeRequest;
     }
@@ -32,9 +34,10 @@ public class RouteStorageService {
 
         routeEntity.setPath(routeRequest.path());
         routeEntity.setUri(routeRequest.uri());
+        routeEntity.setAuthType(routeRequest.authType());
         routeRepository.save(routeEntity);
 
-        return new RouteRequest(routeEntity.getId(), routeEntity.getPath(), routeEntity.getUri());
+        return new RouteRequest(routeEntity.getId(), routeEntity.getPath(), routeEntity.getUri(), routeEntity.getAuthType());
     }
 
     public void delete(String id) {
@@ -47,7 +50,11 @@ public class RouteStorageService {
 
     public List<RouteRequest> findAll() {
         return routeRepository.findAll().stream()
-            .map(route -> new RouteRequest(route.getId(), route.getPath(), route.getUri()))
+            .map(route -> new RouteRequest(
+                route.getId(),
+                route.getPath(),
+                route.getUri(),
+                route.getAuthType() == null ? AuthType.NONE : route.getAuthType()))
             .toList();
     }
 }

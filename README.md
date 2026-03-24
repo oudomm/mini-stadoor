@@ -3,6 +3,7 @@
 This project is a small Spring microservices demo for **developer service registration + dynamic gateway routing**.
 
 It now includes:
+- a Spring `consumer-service`
 - a Spring `product-service`
 - a non-Spring Express `inventory-service`
 - a non-Spring FastAPI `customer-service`
@@ -13,10 +14,17 @@ It shows how developers can manage route definitions at runtime while end users 
 
 - `standard-gateway`
   - Port: `8080`
-  - Entry point for end users
+  - Public runtime gateway
   - Loads route definitions from `gateway-service`
+  - Delegates Basic Auth validation to `consumer-service` for protected routes
   - Resolves target services through Eureka
-  - Forwards end-user traffic dynamically
+  - Forwards traffic dynamically to registered backend services
+
+- `consumer-service`
+  - Port: `8081`
+  - Internal security service
+  - Validates Basic Auth credentials for `standard-gateway`
+  - Will later grow to support API key and JWT validation
 
 - `gateway-service`
   - Port: `8085`
@@ -56,7 +64,8 @@ It shows how developers can manage route definitions at runtime while end users 
 
 1. A developer service can be registered at runtime by platform code.
 2. A route can be created dynamically instead of being hardcoded in `application.yml`.
-3. End users access only the gateway URL, not the backend service directly.
+3. End users access only `standard-gateway`, not the backend service directly.
+4. `standard-gateway` can enforce Basic Auth by delegating validation to `consumer-service`.
 
 ## Run the Project
 
@@ -73,6 +82,7 @@ Start these modules:
 - `eureka-server`
 - `gateway-service`
 - `standard-gateway`
+- `consumer-service`
 - `product-service`
 - `inventory-service`
 - `customer-service`
@@ -82,7 +92,8 @@ Recommended startup order:
 1. `eureka-server`
 2. `gateway-service`
 3. `standard-gateway`
-4. `product-service`
+4. `consumer-service`
+5. `product-service`
 
 ## Main API Endpoints
 
@@ -114,14 +125,15 @@ curl -X POST http://localhost:8080/internal/routes \
   -d '{
     "id": "product-route",
     "path": "/api/products/**",
-    "uri": "lb://product-service"
+    "uri": "lb://product-service",
+    "authType": "BASIC"
   }'
 ```
 
 ### 3. Call the gateway as an end user
 
 ```bash
-curl -i http://localhost:8080/api/products
+curl -i -u enduser:enduser123 http://localhost:8080/api/products
 ```
 
 ## Express Example
@@ -156,16 +168,17 @@ curl -X POST http://localhost:8080/internal/routes \
   -d '{
     "id": "inventory-route",
     "path": "/api/inventory/**",
-    "uri": "lb://inventory-service"
+    "uri": "lb://inventory-service",
+    "authType": "BASIC"
   }'
 ```
 
 Then test through the gateway:
 
 ```bash
-curl http://localhost:8080/api/inventory/items
-curl http://localhost:8080/api/inventory/items/i-100
-curl http://localhost:8080/api/inventory/items/low-stock
+curl -u enduser:enduser123 http://localhost:8080/api/inventory/items
+curl -u enduser:enduser123 http://localhost:8080/api/inventory/items/i-100
+curl -u enduser:enduser123 http://localhost:8080/api/inventory/items/low-stock
 ```
 
 ## FastAPI Example
@@ -202,16 +215,17 @@ curl -X POST http://localhost:8080/internal/routes \
   -d '{
     "id": "customer-route",
     "path": "/api/customers/**",
-    "uri": "lb://customer-service"
+    "uri": "lb://customer-service",
+    "authType": "BASIC"
   }'
 ```
 
 Then test through the gateway:
 
 ```bash
-curl http://localhost:8080/api/customers
-curl http://localhost:8080/api/customers/c-100
-curl http://localhost:8080/api/customers/vip
+curl -u enduser:enduser123 http://localhost:8080/api/customers
+curl -u enduser:enduser123 http://localhost:8080/api/customers/c-100
+curl -u enduser:enduser123 http://localhost:8080/api/customers/vip
 ```
 
 ## Postman
@@ -225,5 +239,7 @@ Ready-to-import Postman collection:
 - `gateway-service` registers developer services into Eureka by code
 - `gateway-service` stores external service registrations in Postgres
 - `gateway-service` sends scheduled Eureka heartbeats for stored external services
+- `consumer-service` is an internal validation service used by `standard-gateway`
+- the demo currently implements Basic Auth first, with API key and JWT left for later
 - `standard-gateway` resolves `lb://product-service` through Eureka
 - the route is created dynamically at runtime, not in `application.yml`

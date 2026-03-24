@@ -8,6 +8,10 @@ public record RouteRequest(
     @NotBlank(message = "path must not be blank")
     String path,
     @NotBlank(message = "uri must not be blank")
-    String uri
+    String uri,
+    AuthType authType
 ) {
+    public RouteRequest {
+        authType = authType == null ? AuthType.NONE : authType;
+    }
 }
