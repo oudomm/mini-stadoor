@@ -12,7 +12,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
-import { StadoorLogo } from "@/components/stadoor-logo";
+import { SiteHeader } from "@/components/site-header";
 
 const mentors = [
   {
@@ -138,51 +138,23 @@ const members = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-white">
-      <div className="bg-[radial-gradient(circle_at_top,rgba(0,255,65,0.08),transparent_28%),linear-gradient(180deg,#0a0a0a_0%,#0d100d_18%,#0a0a0a_100%)]">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
+      <div className="bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_28%),linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_88%,var(--background))_18%,var(--background)_100%)]">
         <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-          <header className="flex items-center justify-between border border-white/6 bg-black/30 px-5 py-4 backdrop-blur-sm">
-            <StadoorLogo subtitleClassName="text-white/45" wordmarkClassName="text-xl text-white" />
-
-            <nav className="hidden items-center gap-8 text-[11px] font-medium uppercase tracking-[0.18em] text-white/55 md:flex">
-              <Link href="/" className="transition hover:text-white">
-                Home
-              </Link>
-              <Link href="/about" className="text-white">
-                About us
-              </Link>
-              <Link href="/dashboard" className="transition hover:text-white">
-                Dashboard
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-3">
-              <Button asChild variant="ghost" size="sm" className="text-white/75 hover:bg-white/5 hover:text-white">
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button
-                asChild
-                variant="brand"
-                size="sm"
-                className="border border-[#00ff41]/30 bg-[#00ff41] text-black shadow-[0_0_28px_rgba(0,255,65,0.18)] hover:bg-[#68ff8d]"
-              >
-                <Link href="/dashboard">Open portal</Link>
-              </Button>
-            </div>
-          </header>
+          <SiteHeader active="about" ctaLabel="Open portal" ctaHref="/dashboard" />
 
           <section className="grid gap-8 px-2 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
             <div className="space-y-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
                 academic_project_context
               </p>
-              <h1 className="max-w-4xl text-4xl font-semibold uppercase leading-[0.92] tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-4xl text-4xl font-semibold uppercase leading-[0.92] tracking-[-0.05em] text-[var(--text-strong)] sm:text-5xl lg:text-6xl">
                 About
-                <span className="mt-2 block text-[#00ff41]">Mini Stadoor.</span>
+                <span className="mt-2 block text-[var(--accent)]">Mini Stadoor.</span>
               </h1>
-              <p className="max-w-2xl text-base leading-8 text-white/62 sm:text-lg">
+              <p className="max-w-2xl text-base leading-8 text-[var(--text-muted)] sm:text-lg">
                 Mini Stadoor is the final project of the ITP Program at ISTAD for the subject
-                <span className="text-white"> Spring Microservices</span>. The project is guided by
+                <span className="text-[var(--text-strong)]"> Spring Microservices</span>. The project is guided by
                 2 mentors and built by a team of 9 students as a developer security SaaS prototype.
               </p>
 
@@ -191,7 +163,7 @@ export default function AboutPage() {
                   asChild
                   variant="brand"
                   size="lg"
-                  className="border border-[#00ff41]/30 bg-[#00ff41] px-7 text-black shadow-[0_0_32px_rgba(0,255,65,0.16)] hover:bg-[#7cff98]"
+                  className="border border-[var(--border-strong)] bg-[var(--accent)] px-7 text-[var(--accent-contrast)] shadow-[0_0_32px_var(--glow)] hover:bg-[var(--accent-bright)]"
                 >
                   <Link href="/dashboard">
                     View prototype
@@ -202,7 +174,7 @@ export default function AboutPage() {
                   asChild
                   variant="secondary"
                   size="lg"
-                  className="border-white/10 bg-transparent text-white hover:border-white/20 hover:bg-white/5"
+                  className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5"
                 >
                   <Link href="/">Back to landing</Link>
                 </Button>
@@ -210,7 +182,7 @@ export default function AboutPage() {
             </div>
 
             <div className="border-t border-white/8 pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8fff8b]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-soft)]">
                 project_snapshot
               </p>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -224,7 +196,7 @@ export default function AboutPage() {
         </div>
       </div>
 
-      <section className="border-t border-white/6 bg-[#111111]">
+      <section className="border-t border-white/6 bg-[color:color-mix(in_srgb,var(--background)_92%,black)]">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-20 sm:px-6 lg:grid-cols-3 lg:px-8">
           <AboutCard
             icon={<ShieldCheck className="h-5 w-5" />}
@@ -244,17 +216,17 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-white/6 bg-[#101010]">
+      <section className="border-t border-white/6 bg-[color:color-mix(in_srgb,var(--surface)_90%,var(--background))]">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
               project_team
             </p>
-            <h2 className="mt-4 text-3xl font-semibold uppercase tracking-[-0.04em] text-white sm:text-4xl">
+            <h2 className="mt-4 text-3xl font-semibold uppercase tracking-[-0.04em] text-[var(--text-strong)] sm:text-4xl">
               Mentors and
-              <span className="text-[#00ff41]"> team members.</span>
+              <span className="text-[var(--accent)]"> team members.</span>
             </h2>
-            <p className="mt-5 text-base leading-8 text-white/60">
+            <p className="mt-5 text-base leading-8 text-[var(--text-muted)]">
               Mini Stadoor is built as a team project. This section presents the project structure with
               mentor and member profile cards. You can replace the placeholder names with the real
               team list any time.
@@ -263,12 +235,12 @@ export default function AboutPage() {
 
           <div className="mt-12">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#132113] text-[#8fff8b]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
                 <GraduationCap className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/38">Mentor group</p>
-                <p className="text-xl font-semibold text-white">2 project mentors</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Mentor group</p>
+                <p className="text-xl font-semibold text-[var(--text-strong)]">2 project mentors</p>
               </div>
             </div>
 
@@ -291,12 +263,12 @@ export default function AboutPage() {
 
           <div className="mt-14">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#142114] text-[#8fff8b]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/38">Student team</p>
-                <p className="text-xl font-semibold text-white">9 project members</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Student team</p>
+                <p className="text-xl font-semibold text-[var(--text-strong)]">9 project members</p>
               </div>
             </div>
 
@@ -335,11 +307,11 @@ function AboutStat({
 }) {
   return (
     <div className="border-l border-white/8 pl-4">
-      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#132113] text-[#8fff8b]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
         {icon}
       </div>
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-white/38">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-white">{value}</p>
+      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">{label}</p>
+      <p className="mt-2 text-xl font-semibold text-[var(--text-strong)]">{value}</p>
     </div>
   );
 }
@@ -354,12 +326,12 @@ function AboutCard({
   body: string;
 }) {
   return (
-    <div className="border-t border-white/8 pt-5 text-white">
-      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#142114] text-[#8fff8b]">
+    <div className="border-t border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] pt-5 text-[var(--text-strong)]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
         {icon}
       </div>
-      <h3 className="mt-6 text-lg font-semibold uppercase tracking-tight text-white">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-white/62">{body}</p>
+      <h3 className="mt-6 text-lg font-semibold uppercase tracking-tight text-[var(--text-strong)]">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
     </div>
   );
 }
@@ -389,12 +361,12 @@ function ProfileCard({
 }) {
   const accentClasses =
     accent === "green"
-      ? "bg-[#132113] text-[#8fff8b] border-[#00ff41]/12"
-      : "bg-[#102028] text-[#9ef0ff] border-[#9ef0ff]/12";
+      ? "border-[color:color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[var(--surface-soft)] text-[var(--accent)]"
+      : "border-[color:color-mix(in_srgb,var(--accent)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_72%,var(--background))] text-[color:color-mix(in_srgb,var(--accent)_72%,var(--text-strong))]";
   const bannerClasses =
     accent === "green"
-      ? "from-[#162716] via-[#111111] to-[#0f160f]"
-      : "from-[#11212a] via-[#111111] to-[#0f1618]";
+      ? "from-[color:color-mix(in_srgb,var(--surface-soft)_92%,var(--accent))] via-[var(--surface)] to-[var(--background)]"
+      : "from-[color:color-mix(in_srgb,var(--surface-soft)_88%,var(--accent))] via-[var(--surface)] to-[var(--background)]";
 
   const initials = name
     .split(" ")
@@ -404,19 +376,19 @@ function ProfileCard({
     .toUpperCase();
 
   return (
-    <div className="overflow-hidden border border-white/8 bg-[linear-gradient(180deg,#151515_0%,#111111_100%)] text-white">
+    <div className="overflow-hidden border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_96%,var(--background))_0%,var(--surface-muted)_100%)] text-[var(--text-strong)]">
       <div className={`h-24 bg-gradient-to-br ${bannerClasses}`} />
       <div className="p-6 pt-0">
         <div className="-mt-10 flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <ProfileAvatar image={image} initials={initials} accentClasses={accentClasses} />
             <div>
-              <p className="text-lg font-semibold text-white">{name}</p>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8fff8b]">{title}</p>
-              <p className="mt-2 text-sm text-white/56">{role}</p>
+              <p className="text-lg font-semibold text-[var(--text-strong)]">{name}</p>
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">{title}</p>
+              <p className="mt-2 text-sm text-[var(--text-muted)]">{role}</p>
             </div>
           </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-black/20 text-white/45">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[color:color-mix(in_srgb,var(--surface-soft)_72%,transparent)] text-[var(--text-faint)]">
             <Layers3 className="h-4 w-4" />
           </div>
         </div>
@@ -427,8 +399,8 @@ function ProfileCard({
               key={tag}
               className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
                 accent === "green"
-                  ? "border-[#00ff41]/12 bg-[#111811] text-[#8fff8b]"
-                  : "border-[#9ef0ff]/12 bg-[#10191d] text-[#9ef0ff]"
+                  ? "border-[color:color-mix(in_srgb,var(--accent)_18%,transparent)] bg-[var(--surface-soft)] text-[var(--accent)]"
+                  : "border-[color:color-mix(in_srgb,var(--accent)_14%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_65%,var(--background))] text-[color:color-mix(in_srgb,var(--accent)_72%,var(--text-strong))]"
               }`}
             >
               {tag}
@@ -436,9 +408,9 @@ function ProfileCard({
           ))}
         </div>
 
-        <div className="mt-6 border-t border-white/8 pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">Project focus</p>
-          <p className="mt-3 text-sm leading-7 text-white/62">{focus}</p>
+        <div className="mt-6 border-t border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] pt-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">Project focus</p>
+          <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{focus}</p>
         </div>
 
         <div className="mt-5 flex items-center gap-3">
@@ -462,7 +434,7 @@ function ProfileAvatar({
 }) {
   if (image) {
     return (
-      <div className="h-20 w-20 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_12px_30px_rgba(0,0,0,0.22)]">
+      <div className="h-20 w-20 overflow-hidden rounded-[1.35rem] border border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={image} alt="" className="h-full w-full object-cover" />
       </div>
@@ -470,7 +442,7 @@ function ProfileAvatar({
   }
 
   return (
-    <div className={`flex h-20 w-20 items-center justify-center rounded-[1.35rem] border text-xl font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.22)] ${accentClasses}`}>
+    <div className={`flex h-20 w-20 items-center justify-center rounded-[1.35rem] border text-xl font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.16)] ${accentClasses}`}>
       {initials}
     </div>
   );
@@ -486,7 +458,7 @@ function SocialPill({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-2 rounded-full border border-white/8 bg-black/20 px-3 py-2 text-xs font-medium text-white/70 transition hover:border-white/14 hover:bg-white/4 hover:text-white"
+      className="inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_64%,transparent)] px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:border-[color:color-mix(in_srgb,var(--border-soft)_100%,transparent)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]"
     >
       <Globe2 className="h-4 w-4" />
       {label}

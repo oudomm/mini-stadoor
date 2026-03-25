@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StadoorLogo } from "@/components/stadoor-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { DeveloperPortal } from "../components/developer-portal";
 
 type DashboardPageProps = {
@@ -83,33 +84,33 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const meta = tabMeta[activeTab];
 
   return (
-    <main className="min-h-screen bg-[#0b0b0b] text-white">
+    <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
       <div className="grid min-h-screen xl:grid-cols-[284px_minmax(0,1fr)]">
-        <aside className="border-r border-white/6 bg-[#101010] px-5 py-6">
+        <aside className="border-r border-white/6 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_92%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_84%,var(--background))_100%)] px-5 py-6 xl:sticky xl:top-0 xl:h-screen">
           <StadoorLogo
             iconClassName="h-12 w-12"
-            wordmarkClassName="text-3xl uppercase tracking-[-0.05em] text-[#00ff41]"
+            wordmarkClassName="text-3xl uppercase tracking-[-0.05em] text-[var(--text-strong)]"
             subtitleClassName="hidden"
           />
 
           <div className="mt-10 border-t border-white/8 pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
                   signal_alpha
                 </p>
-                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-white/34">developer_workspace</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[var(--text-faint)]">developer_workspace</p>
               </div>
-              <div className="rounded-full border border-[#00ff41]/20 bg-[#0f170f] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9aff9d]">
+              <div className="rounded-full border border-[var(--border-strong)] bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">
                 live
               </div>
             </div>
-            <p className="mt-5 max-w-[17rem] text-sm leading-7 text-white/54">
+            <p className="mt-5 max-w-[17rem] text-sm leading-7 text-[var(--text-muted)]">
               Control center for gateway workspaces, service onboarding, and route security across the Mini Stadoor prototype.
             </p>
           </div>
 
-          <div className="mt-8 space-y-2">
+          <div className="animate-panel mt-8 space-y-2 rounded-[1.2rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_78%,transparent)] p-2" style={{ animationDelay: "80ms" }}>
             <SidebarItem
               icon={<Grid2x2 className="h-4 w-4" />}
               label="Overview"
@@ -130,8 +131,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             />
           </div>
 
-          <div className="mt-10 border-t border-white/8 pt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/38">Current surface</p>
+          <div className="animate-panel mt-10 rounded-[1.2rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_72%,transparent)] p-4" style={{ animationDelay: "140ms" }}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">Current surface</p>
             <div className="mt-4 space-y-3">
               <MiniSignal label="Application registration" />
               <MiniSignal label="Gateway grouping" />
@@ -143,66 +144,66 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
           <Button
             variant="brand"
-            className="mt-10 h-12 w-full rounded-[0.95rem] border border-[#00ff41]/30 bg-[#00ff41] text-black hover:bg-[#7cff98]"
+            className="mt-10 h-12 w-full rounded-[0.95rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
             asChild
           >
             <Link href="/dashboard?tab=gateway">Open gateway</Link>
           </Button>
 
           <div className="mt-8 border-t border-white/8 pt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/35">Status panel</p>
-            <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white">Live</p>
-            <p className="mt-1 text-sm text-white/50">workspace control plane available</p>
-            <div className="mt-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8fff8b]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Status panel</p>
+            <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Live</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">workspace control plane available</p>
+            <div className="mt-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">
               <Activity className="h-3.5 w-3.5" />
               systems_operational
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-between text-[12px] uppercase tracking-[0.18em] text-white/34">
+          <div className="mt-8 flex items-center justify-between text-[12px] uppercase tracking-[0.18em] text-[var(--text-faint)]">
             <p>Docs</p>
             <p>Support</p>
           </div>
         </aside>
 
         <section className="min-w-0">
-          <header className="border-b border-white/6 bg-[#0d0d0d] px-6 py-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.24em]">
-                <span className="text-[#8fff8b]">{meta.eyebrow}</span>
-                <span className="text-white/22">/</span>
-                <span className="text-white/35">{meta.label}</span>
-              </div>
-
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-                <div className="relative min-w-[280px]">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-                  <Input
-                    className="border-white/8 bg-[#171717] pl-11 text-white placeholder:text-white/28 focus-visible:border-[#00ff41]/35 focus-visible:ring-[#00ff41]/10"
-                    placeholder="query_stadoor..."
-                  />
+          <header className="border-b border-white/6 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--surface))_0%,color-mix(in_srgb,var(--surface)_74%,var(--background))_100%)] px-6 py-6">
+            <div className="animate-panel rounded-[1.35rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_76%,transparent)] p-5">
+              <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.24em]">
+                    <span className="text-[var(--accent-soft)]">{meta.eyebrow}</span>
+                    <span className="text-[var(--text-faint)]">/</span>
+                    <span className="text-[var(--text-faint)]">{meta.label}</span>
+                  </div>
+                  <h1 className="mt-5 text-4xl font-semibold uppercase tracking-[-0.05em] text-[var(--text-strong)] lg:text-5xl">
+                    {meta.title}
+                  </h1>
+                  <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-muted)]">
+                    {meta.description}
+                  </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <TopIcon icon={<Bell className="h-4 w-4" />} />
-                  <TopIcon icon={<LifeBuoy className="h-4 w-4" />} />
-                  <Button asChild variant="secondary" className="border-white/10 bg-transparent text-white hover:border-white/20 hover:bg-white/5">
-                    <Link href="/">Landing</Link>
-                  </Button>
-                  <Button asChild variant="brand" className="border border-[#00ff41]/30 bg-[#00ff41] text-black hover:bg-[#7cff98]">
-                    <Link href={meta.ctaHref}>{meta.ctaLabel}</Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
 
-            <div className="mt-6 border-t border-white/8 pt-5">
-              <div>
-                <h1 className="text-4xl font-semibold uppercase tracking-[-0.05em] text-white lg:text-5xl">
-                  {meta.title}
-                </h1>
-                <p className="mt-4 max-w-3xl text-base leading-8 text-white/54">
-                  {meta.description}
-                </p>
+                <div className="flex flex-col gap-3 xl:min-w-[420px] xl:max-w-[440px]">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
+                    <Input
+                      className="border-white/8 bg-[var(--field)] pl-11 text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
+                      placeholder="query_stadoor..."
+                    />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <ThemeToggle />
+                    <TopIcon icon={<Bell className="h-4 w-4" />} />
+                    <TopIcon icon={<LifeBuoy className="h-4 w-4" />} />
+                    <Button asChild variant="secondary" className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5">
+                      <Link href="/">Landing</Link>
+                    </Button>
+                    <Button asChild variant="brand" className="border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]">
+                      <Link href={meta.ctaHref}>{meta.ctaLabel}</Link>
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </header>
@@ -228,8 +229,8 @@ function SidebarItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-4 rounded-[0.95rem] px-4 py-3 text-sm font-medium ${
-        active ? "bg-[#00ff41] text-black" : "text-white/68 hover:bg-white/5 hover:text-white"
+      className={`flex items-center gap-4 rounded-[0.95rem] px-4 py-3 text-sm font-medium transition ${
+        active ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_24px_var(--glow)]" : "text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]"
       }`}
     >
       <span>{icon}</span>
@@ -240,7 +241,7 @@ function SidebarItem({
 
 function TopIcon({ icon }: { icon: ReactNode }) {
   return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] border border-white/8 bg-[#151515] text-white/65">
+    <div className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-[var(--text-muted)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:text-[var(--text-strong)]">
       {icon}
     </div>
   );
@@ -249,8 +250,8 @@ function TopIcon({ icon }: { icon: ReactNode }) {
 function MiniSignal({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 border-l border-white/8 pl-3">
-      <span className="h-2.5 w-2.5 rounded-full bg-[#00ff41]" />
-      <span className="text-sm text-white/68">{label}</span>
+      <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
+      <span className="text-sm text-[var(--text-muted)]">{label}</span>
     </div>
   );
 }

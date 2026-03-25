@@ -1,0 +1,221 @@
+"use client";
+
+export type DashboardTab = "overview" | "gateway" | "iam";
+export type SupportedAuthType = "NONE" | "BASIC" | "API_KEY" | "JWT";
+export type FutureAuthType = "OAUTH2";
+export type GatewayWorkspaceTab = "gateway" | "service" | "route";
+
+export type GatewayForm = {
+  gatewayId: string;
+  gatewayName: string;
+  description: string;
+};
+
+export type ServiceForm = {
+  gatewayId: string;
+  serviceId: string;
+  serviceName: string;
+  address: string;
+  port: string;
+  tags: string;
+};
+
+export type RouteForm = {
+  gatewayId: string;
+  serviceId: string;
+  id: string;
+  path: string;
+  uri: string;
+  authType: SupportedAuthType;
+};
+
+export type RouteSummary = {
+  gatewayId: string;
+  serviceId: string;
+  id: string;
+  path: string;
+  uri: string;
+  authType?: SupportedAuthType;
+};
+
+export type ServiceSummary = {
+  gatewayId: string;
+  serviceId: string;
+  serviceName: string;
+  address: string;
+  port: number;
+  tags: string[];
+  routes: RouteSummary[];
+};
+
+export type GatewaySummary = {
+  gatewayId: string;
+  gatewayName: string;
+  description: string;
+  services: ServiceSummary[];
+};
+
+export type StatusState = {
+  tone: "loading" | "success" | "error";
+  message: string;
+  payload?: unknown;
+} | null;
+
+export type DeveloperPortalProps = {
+  activeTab: DashboardTab;
+};
+
+export type RecentActivityItem = {
+  title: string;
+  meta: string;
+  tone: "loading" | "success" | "error";
+};
+
+export const initialGatewayForm: GatewayForm = {
+  gatewayId: "ecommerce-gateway",
+  gatewayName: "E-Commerce Gateway",
+  description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
+};
+
+export const initialServiceForm: ServiceForm = {
+  gatewayId: "ecommerce-gateway",
+  serviceId: "product-service-manual-1",
+  serviceName: "product-service",
+  address: "localhost",
+  port: "8082",
+  tags: "manual-registration,ecommerce,spring",
+};
+
+export const initialRouteForm: RouteForm = {
+  gatewayId: "ecommerce-gateway",
+  serviceId: "product-service-manual-1",
+  id: "product-route-open",
+  path: "/open/products/**",
+  uri: "lb://product-service",
+  authType: "NONE",
+};
+
+export const gatewayPresets = [
+  {
+    label: "E-Commerce",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      gatewayName: "E-Commerce Gateway",
+      description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
+    },
+  },
+  {
+    label: "Partner APIs",
+    values: {
+      gatewayId: "partner-gateway",
+      gatewayName: "Partner Gateway",
+      description: "Expose supplier and partner endpoints with isolated routing and security rules.",
+    },
+  },
+] as const;
+
+export const servicePresets = [
+  {
+    label: "Product API",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "product-service-manual-1",
+      serviceName: "product-service",
+      address: "localhost",
+      port: "8082",
+      tags: "manual-registration,ecommerce,spring",
+    },
+  },
+  {
+    label: "Inventory API",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "inventory-service-manual-1",
+      serviceName: "inventory-service",
+      address: "localhost",
+      port: "8090",
+      tags: "manual-registration,ecommerce,express",
+    },
+  },
+  {
+    label: "Customer API",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "customer-service-manual-1",
+      serviceName: "customer-service",
+      address: "localhost",
+      port: "8091",
+      tags: "manual-registration,ecommerce,fastapi",
+    },
+  },
+] as const;
+
+export const routePresets = [
+  {
+    label: "Open catalog",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "product-service-manual-1",
+      id: "product-route-open",
+      path: "/open/products/**",
+      uri: "lb://product-service",
+      authType: "NONE" as const,
+    },
+  },
+  {
+    label: "Basic catalog",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "product-service-manual-1",
+      id: "product-route-basic",
+      path: "/basic/products/**",
+      uri: "lb://product-service",
+      authType: "BASIC" as const,
+    },
+  },
+  {
+    label: "API key inventory",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "inventory-service-manual-1",
+      id: "inventory-route-api-key",
+      path: "/partner/inventory/**",
+      uri: "lb://inventory-service",
+      authType: "API_KEY" as const,
+    },
+  },
+  {
+    label: "JWT catalog",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "product-service-manual-1",
+      id: "product-route-jwt",
+      path: "/jwt/products/**",
+      uri: "lb://product-service",
+      authType: "JWT" as const,
+    },
+  },
+] as const;
+
+export const supportedSecurityModes: Array<{
+  label: SupportedAuthType;
+  status: "live";
+  detail: string;
+}> = [
+  { label: "NONE", status: "live", detail: "Open route with no gateway authentication." },
+  { label: "BASIC", status: "live", detail: "Username and password validation through consumer-service." },
+  { label: "API_KEY", status: "live", detail: "Shared key validation using the current gateway enforcement flow." },
+  { label: "JWT", status: "live", detail: "Bearer access token validation through consumer-service login and token endpoints." },
+];
+
+export const futureSecurityModes: Array<{
+  label: FutureAuthType;
+  status: "planned";
+  detail: string;
+}> = [
+  { label: "OAUTH2", status: "planned", detail: "Future identity-driven security mode for broader IAM integration." },
+];
+
+export function pretty(value: unknown) {
+  return JSON.stringify(value, null, 2);
+}
