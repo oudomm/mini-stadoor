@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 public record ServiceRegistrationRequest(
+    @NotBlank(message = "gatewayId must not be blank")
+    String gatewayId,
     @NotBlank(message = "serviceId must not be blank")
     String serviceId,
     @NotBlank(message = "serviceName must not be blank")

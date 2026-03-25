@@ -20,6 +20,12 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RouteEntity {
 
+    @Column(nullable = false)
+    private String gatewayId;
+
+    @Column(nullable = false)
+    private String serviceId;
+
     @Id
     @Column(nullable = false, updatable = false)
     private String id;

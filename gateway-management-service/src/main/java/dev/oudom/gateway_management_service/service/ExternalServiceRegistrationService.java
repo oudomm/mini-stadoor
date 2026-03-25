@@ -3,6 +3,7 @@ package dev.oudom.gateway_management_service.service;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.ExternalServiceEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
+import dev.oudom.gateway_management_service.repository.GatewayRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -22,23 +24,48 @@ public class ExternalServiceRegistrationService {
 
     private final RestClient restClient;
     private final ExternalServiceRepository externalServiceRepository;
+    private final GatewayRepository gatewayRepository;
 
     public ExternalServiceRegistrationService(
         RestClient.Builder restClientBuilder,
         ExternalServiceRepository externalServiceRepository,
+        GatewayRepository gatewayRepository,
         @Value("${eureka-api.base-url}") String eurekaApiBaseUrl
     ) {
         this.restClient = restClientBuilder
             .baseUrl(eurekaApiBaseUrl)
             .build();
         this.externalServiceRepository = externalServiceRepository;
+        this.gatewayRepository = gatewayRepository;
     }
 
     public ServiceRegistrationRequest register(ServiceRegistrationRequest request) {
+        ensureGatewayExists(request.gatewayId());
         registerWithEureka(request);
         externalServiceRepository.save(toEntity(request));
 
         return request;
+    }
+
+    public List<ServiceRegistrationRequest> findAll() {
+        return externalServiceRepository.findAll().stream()
+            .map(this::toRequest)
+            .toList();
+    }
+
+    public List<ServiceRegistrationRequest> findAllByGatewayId(String gatewayId) {
+        return externalServiceRepository.findAllByGatewayId(gatewayId).stream()
+            .map(this::toRequest)
+            .toList();
+    }
+
+    private void ensureGatewayExists(String gatewayId) {
+        if (!gatewayRepository.existsById(gatewayId)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND,
+                "Gateway not found: " + gatewayId
+            );
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -110,6 +137,7 @@ public class ExternalServiceRegistrationService {
 
     private ExternalServiceEntity toEntity(ServiceRegistrationRequest request) {
         return new ExternalServiceEntity(
+            request.gatewayId(),
             request.serviceId(),
             request.serviceName(),
             request.address(),
@@ -120,6 +148,7 @@ public class ExternalServiceRegistrationService {
 
     private ServiceRegistrationRequest toRequest(ExternalServiceEntity entity) {
         return new ServiceRegistrationRequest(
+            entity.getGatewayId(),
             entity.getServiceId(),
             entity.getServiceName(),
             entity.getAddress(),

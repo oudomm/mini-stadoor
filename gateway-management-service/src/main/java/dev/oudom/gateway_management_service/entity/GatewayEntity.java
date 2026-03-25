@@ -10,29 +10,20 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "external_services")
+@Table(name = "gateways")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExternalServiceEntity {
-
-    @Column(nullable = false)
-    private String gatewayId;
+public class GatewayEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
-    private String serviceId;
+    private String gatewayId;
 
     @Column(nullable = false)
-    private String serviceName;
+    private String gatewayName;
 
     @Column(nullable = false)
-    private String address;
-
-    @Column(nullable = false)
-    private Integer port;
-
-    @Column(nullable = false)
-    private String tags;
+    private String description;
 }
