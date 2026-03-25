@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { SiteFooter } from "@/components/site-footer";
 import { StadoorLogo } from "@/components/stadoor-logo";
 
@@ -210,19 +209,17 @@ export default function AboutPage() {
               </div>
             </div>
 
-            <Card className="border border-white/8 bg-[linear-gradient(180deg,#121212_0%,#0f0f0f_100%)] text-white shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
-              <CardContent className="p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8fff8b]">
-                  project_snapshot
-                </p>
-                <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <AboutStat icon={<GraduationCap className="h-4 w-4" />} label="Program" value="ITP at ISTAD" />
-                  <AboutStat icon={<BookOpen className="h-4 w-4" />} label="Subject" value="Spring Microservices" />
-                  <AboutStat icon={<Users className="h-4 w-4" />} label="Team" value="9 students" />
-                  <AboutStat icon={<ShieldCheck className="h-4 w-4" />} label="Mentors" value="2 mentors" />
-                </div>
-              </CardContent>
-            </Card>
+            <div className="border-t border-white/8 pt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#8fff8b]">
+                project_snapshot
+              </p>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <AboutStat icon={<GraduationCap className="h-4 w-4" />} label="Program" value="ITP at ISTAD" />
+                <AboutStat icon={<BookOpen className="h-4 w-4" />} label="Subject" value="Spring Microservices" />
+                <AboutStat icon={<Users className="h-4 w-4" />} label="Team" value="9 students" />
+                <AboutStat icon={<ShieldCheck className="h-4 w-4" />} label="Mentors" value="2 mentors" />
+              </div>
+            </div>
           </section>
         </div>
       </div>
@@ -337,7 +334,7 @@ function AboutStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-white/8 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#132113] text-[#8fff8b]">
         {icon}
       </div>
@@ -357,15 +354,13 @@ function AboutCard({
   body: string;
 }) {
   return (
-    <Card className="border border-white/8 bg-[#171717] text-white shadow-none">
-      <CardContent className="p-6">
-        <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#142114] text-[#8fff8b]">
-          {icon}
-        </div>
-        <h3 className="mt-6 text-lg font-semibold uppercase tracking-tight text-white">{title}</h3>
-        <p className="mt-3 text-sm leading-7 text-white/62">{body}</p>
-      </CardContent>
-    </Card>
+    <div className="border-t border-white/8 pt-5 text-white">
+      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[#142114] text-[#8fff8b]">
+        {icon}
+      </div>
+      <h3 className="mt-6 text-lg font-semibold uppercase tracking-tight text-white">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-white/62">{body}</p>
+    </div>
   );
 }
 
@@ -409,9 +404,9 @@ function ProfileCard({
     .toUpperCase();
 
   return (
-    <Card className="overflow-hidden border border-white/8 bg-[linear-gradient(180deg,#151515_0%,#111111_100%)] text-white shadow-none">
+    <div className="overflow-hidden border border-white/8 bg-[linear-gradient(180deg,#151515_0%,#111111_100%)] text-white">
       <div className={`h-24 bg-gradient-to-br ${bannerClasses}`} />
-      <CardContent className="p-6 pt-0">
+      <div className="p-6 pt-0">
         <div className="-mt-10 flex items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <ProfileAvatar image={image} initials={initials} accentClasses={accentClasses} />
@@ -441,7 +436,7 @@ function ProfileCard({
           ))}
         </div>
 
-        <div className="mt-6 rounded-[1rem] border border-white/8 bg-black/20 p-4">
+        <div className="mt-6 border-t border-white/8 pt-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/35">Project focus</p>
           <p className="mt-3 text-sm leading-7 text-white/62">{focus}</p>
         </div>
@@ -451,8 +446,8 @@ function ProfileCard({
           <SocialPill href={socials.linkedin} label="LinkedIn" />
           <SocialPill href={socials.portfolio} label="Portfolio" />
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 

@@ -1,11 +1,8 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
   KeyRound,
-  LockKeyhole,
   ShieldCheck,
-  Sparkles,
   Waypoints,
 } from "lucide-react";
 
@@ -36,22 +33,27 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-10">
+            <div className="space-y-8">
               <div>
-                <h1 className="max-w-lg text-5xl font-semibold leading-[0.95] tracking-[-0.05em] text-white">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
+                  developer_access
+                </p>
+                <h1 className="mt-4 max-w-lg text-5xl font-semibold leading-[0.92] tracking-[-0.05em] text-white">
                   Access the
                   <span className="block text-[#00ff41]">Mini Stadoor control plane.</span>
                 </h1>
-                <p className="mt-6 max-w-lg text-lg leading-8 text-white/62">
+                <p className="mt-5 max-w-lg text-lg leading-8 text-white/62">
                   Sign in to manage developer services, dynamic routes, and route-level security from
                   one operational workspace.
                 </p>
               </div>
 
-              <div className="grid max-w-xl gap-4 sm:grid-cols-3">
-                <SignalStat icon={<Waypoints className="h-4 w-4" />} label="Dynamic Routes" value="Live" />
-                <SignalStat icon={<ShieldCheck className="h-4 w-4" />} label="Security Modes" value="3" />
-                <SignalStat icon={<KeyRound className="h-4 w-4" />} label="IAM" value="Planned" />
+              <div className="max-w-xl border-t border-white/8 pt-5">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <SignalStat icon={<Waypoints className="h-4 w-4" />} label="Dynamic Routes" value="Live" />
+                  <SignalStat icon={<ShieldCheck className="h-4 w-4" />} label="Security Modes" value="3" />
+                  <SignalStat icon={<KeyRound className="h-4 w-4" />} label="IAM" value="Planned" />
+                </div>
               </div>
             </div>
           </div>
@@ -62,7 +64,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:34px_34px] opacity-[0.08]" />
 
           <div className="relative w-full max-w-xl">
-            <div className="rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(20,20,20,0.92)_0%,rgba(14,14,14,0.98)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-8">
+            <div className="rounded-[1.6rem] border border-white/8 bg-[linear-gradient(180deg,rgba(20,20,20,0.88)_0%,rgba(14,14,14,0.98)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-8">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
@@ -81,7 +83,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
                 <GhostAuthButton label="Continue with GitHub" />
                 <GhostAuthButton label="Continue with Google" />
               </div>
@@ -119,7 +121,7 @@ export default function LoginPage() {
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-sm text-white/48">
+                <div className="flex items-center justify-between border-t border-white/8 pt-4 text-sm text-white/48">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" defaultChecked className="accent-[#00ff41]" />
                     Keep this workspace active
@@ -161,7 +163,7 @@ function GhostAuthButton({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex h-14 items-center justify-center rounded-[1rem] border border-white/8 bg-[#2a2f36] text-sm font-medium text-white transition hover:border-white/14 hover:bg-[#323842]"
+      className="flex h-14 items-center justify-center rounded-[0.95rem] border border-white/8 bg-[#1c1f25] text-sm font-medium text-white transition hover:border-white/14 hover:bg-[#242932]"
     >
       {label}
     </button>
@@ -196,7 +198,7 @@ function SignalStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-white/8 bg-black/22 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#132113] text-[#8fff8b]">
         {icon}
       </div>

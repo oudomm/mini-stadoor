@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  ArrowRight,
   BadgeCheck,
   KeyRound,
   ShieldCheck,
@@ -26,7 +25,7 @@ export default function RegisterPage() {
               subtitleClassName="text-white/38"
             />
 
-            <div className="max-w-xl rounded-[1.6rem] border border-white/8 bg-black/20 p-6">
+            <div className="max-w-xl">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
                 onboarding_surface
               </p>
@@ -39,7 +38,7 @@ export default function RegisterPage() {
                 the full Mini Stadoor access model.
               </p>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
+              <div className="mt-8 grid gap-4 border-t border-white/8 pt-5 sm:grid-cols-3">
                 <RegisterStat icon={<BadgeCheck className="h-4 w-4" />} label="Portal" value="Ready" />
                 <RegisterStat icon={<ShieldCheck className="h-4 w-4" />} label="Security" value="Live" />
                 <RegisterStat icon={<KeyRound className="h-4 w-4" />} label="IAM" value="Next" />
@@ -68,7 +67,7 @@ export default function RegisterPage() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:34px_34px] opacity-[0.08]" />
 
           <div className="relative w-full max-w-2xl">
-            <div className="rounded-[2rem] border border-white/8 bg-[linear-gradient(180deg,rgba(20,20,20,0.92)_0%,rgba(14,14,14,0.98)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-8">
+            <div className="rounded-[1.6rem] border border-white/8 bg-[linear-gradient(180deg,rgba(20,20,20,0.88)_0%,rgba(14,14,14,0.98)_100%)] p-7 shadow-[0_30px_80px_rgba(0,0,0,0.45)] sm:p-8">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
@@ -87,7 +86,7 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+              <div className="mt-7 grid gap-3 sm:grid-cols-2">
                 <GhostAuthButton label="Continue with GitHub" />
                 <GhostAuthButton label="Continue with Google" />
               </div>
@@ -195,7 +194,7 @@ function GhostAuthButton({ label }: { label: string }) {
   return (
     <button
       type="button"
-      className="flex h-14 items-center justify-center rounded-[1rem] border border-white/8 bg-[#2a2f36] text-sm font-medium text-white transition hover:border-white/14 hover:bg-[#323842]"
+      className="flex h-14 items-center justify-center rounded-[0.95rem] border border-white/8 bg-[#1c1f25] text-sm font-medium text-white transition hover:border-white/14 hover:bg-[#242932]"
     >
       {label}
     </button>
@@ -212,7 +211,7 @@ function RegisterStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-white/8 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#132113] text-[#8fff8b]">
         {icon}
       </div>

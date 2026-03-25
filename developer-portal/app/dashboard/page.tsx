@@ -92,7 +92,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             subtitleClassName="hidden"
           />
 
-          <div className="mt-10 rounded-[1.25rem] border border-white/8 bg-[linear-gradient(180deg,#171717_0%,#111111_100%)] p-4">
+          <div className="mt-10 border-t border-white/8 pt-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
@@ -104,7 +104,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                 live
               </div>
             </div>
-            <p className="mt-5 text-sm leading-7 text-white/54">
+            <p className="mt-5 max-w-[17rem] text-sm leading-7 text-white/54">
               Control center for gateway workspaces, service onboarding, and route security across the Mini Stadoor prototype.
             </p>
           </div>
@@ -130,7 +130,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             />
           </div>
 
-          <div className="mt-10 rounded-[1.2rem] border border-white/8 bg-[#171717] p-4">
+          <div className="mt-10 border-t border-white/8 pt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/38">Current surface</p>
             <div className="mt-4 space-y-3">
               <MiniSignal label="Application registration" />
@@ -149,7 +149,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             <Link href="/dashboard?tab=gateway">Open gateway</Link>
           </Button>
 
-          <div className="mt-8 rounded-[1.2rem] border border-white/8 bg-[#141414] p-4">
+          <div className="mt-8 border-t border-white/8 pt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/35">Status panel</p>
             <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-white">Live</p>
             <p className="mt-1 text-sm text-white/50">workspace control plane available</p>
@@ -195,7 +195,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 border-t border-white/8 pt-5">
               <div>
                 <h1 className="text-4xl font-semibold uppercase tracking-[-0.05em] text-white lg:text-5xl">
                   {meta.title}
@@ -240,7 +240,7 @@ function SidebarItem({
 
 function TopIcon({ icon }: { icon: ReactNode }) {
   return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] border border-white/8 bg-[#171717] text-white/65">
+    <div className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] border border-white/8 bg-[#151515] text-white/65">
       {icon}
     </div>
   );
@@ -248,7 +248,7 @@ function TopIcon({ icon }: { icon: ReactNode }) {
 
 function MiniSignal({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[0.9rem] border border-white/6 bg-black/20 px-3 py-3">
+    <div className="flex items-center gap-3 border-l border-white/8 pl-3">
       <span className="h-2.5 w-2.5 rounded-full bg-[#00ff41]" />
       <span className="text-sm text-white/68">{label}</span>
     </div>

@@ -458,8 +458,8 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
       {activeTab === "overview" ? (
         <>
           <section className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
-            <Card className="border-white/6 bg-[#131313] text-white shadow-none">
-              <CardContent className="p-6">
+            <Card className="border-white/6 bg-transparent text-white shadow-none">
+              <CardContent className="border-t border-white/8 p-0 pt-6">
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#8fff8b]">
@@ -474,7 +474,7 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
                     </p>
                   </div>
 
-                  <div className="rounded-[1rem] border border-[#00ff41]/20 bg-[#101610] px-5 py-4 text-right">
+                  <div className="border-l border-[#00ff41]/20 pl-5 text-right">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/42">
                       live_status
                     </p>
@@ -484,14 +484,14 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
               </CardContent>
             </Card>
 
-            <Card className="border-white/6 bg-[#161616] text-white shadow-none">
-              <CardHeader className="pb-3">
+            <Card className="border-white/6 bg-transparent text-white shadow-none">
+              <CardHeader className="border-t border-white/8 px-0 pb-3 pt-6">
                 <CardTitle className="text-xl font-semibold text-white">Quick actions</CardTitle>
                 <CardDescription className="text-white/42">
                   Start from the main workflow.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 px-0">
                 <ActionLink title="Create gateway" body="Start a new workspace group for related services." href="/dashboard?tab=gateway" />
                 <ActionLink title="Register application" body="Add a service into one of your gateway workspaces." href="/dashboard?tab=gateway" />
                 <ActionLink title="Publish route" body="Expose a public path and attach a security type." href="/dashboard?tab=gateway" />
@@ -508,14 +508,14 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-            <Card className="border-white/6 bg-[#151515] text-white shadow-none">
-              <CardHeader>
+            <Card className="border-white/6 bg-transparent text-white shadow-none">
+              <CardHeader className="border-t border-white/8 px-0 pt-6">
                 <CardTitle className="text-2xl font-semibold text-white">Live modules</CardTitle>
                 <CardDescription className="text-white/42">
                   Main surfaces available in the current workspace.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 px-0">
                 <ModuleRow icon={<Network className="h-4 w-4" />} title="Gateway workspaces" meta="Group services and routes by project boundary." />
                 <ModuleRow icon={<Server className="h-4 w-4" />} title="Application registry" meta="Register backend services into a selected gateway." />
                 <ModuleRow icon={<Route className="h-4 w-4" />} title="Dynamic routes" meta="Publish runtime routes through the control plane." />
@@ -523,14 +523,14 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
               </CardContent>
             </Card>
 
-            <Card className="border-white/6 bg-[#151515] text-white shadow-none">
-              <CardHeader>
+            <Card className="border-white/6 bg-transparent text-white shadow-none">
+              <CardHeader className="border-t border-white/8 px-0 pt-6">
                 <CardTitle className="text-2xl font-semibold text-white">Recent activity</CardTitle>
                 <CardDescription className="text-white/42">
                   Latest workspace events across gateway creation, onboarding, and route publishing.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-3 px-0">
                 {recentActivity.map((item, index) => (
                   <ActivityRow key={`${item.title}-${index}`} title={item.title} meta={item.meta} tone={item.tone} />
                 ))}
@@ -542,8 +542,8 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
 
       {activeTab === "gateway" ? (
         <section className="space-y-6">
-          <Card className="border-white/6 bg-[#131313] text-white shadow-none">
-            <CardContent className="p-6">
+          <Card className="border-white/6 bg-transparent text-white shadow-none">
+            <CardContent className="border-t border-white/8 p-0 pt-6">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#8fff8b]">
@@ -992,8 +992,8 @@ function MetricCard({
   const accentText =
     accent === "green" ? "text-[#8fff8b]" : accent === "cyan" ? "text-[#9ef0ff]" : "text-white";
   return (
-    <Card className="border-white/6 bg-[#151515] text-white shadow-none">
-      <CardContent className="p-5">
+    <Card className="border-white/6 bg-transparent text-white shadow-none">
+      <CardContent className="border-l border-white/8 p-0 pl-4">
         <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/34">{label}</p>
         <p className={`mt-4 text-5xl font-semibold tracking-[-0.05em] ${accentText}`}>{value}</p>
       </CardContent>
@@ -1048,7 +1048,7 @@ function ModuleRow({
   meta: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-[0.95rem] border border-white/6 bg-black/20 px-4 py-4">
+    <div className="flex items-center gap-4 border-l border-white/8 pl-4">
       <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#1c2c1f] text-[#8fff8b]">
         {icon}
       </div>
@@ -1092,7 +1092,7 @@ function MiniWorkspaceStat({
   value: string;
 }) {
   return (
-    <div className="rounded-[1rem] border border-white/8 bg-[#171717] px-4 py-4">
+    <div className="border-l border-white/8 pl-4">
       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/32">{label}</p>
       <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
     </div>
@@ -1112,8 +1112,8 @@ function StepHint({
 }) {
   return (
     <div
-      className={`rounded-[1rem] border px-4 py-4 ${
-        active ? "border-[#00ff41]/24 bg-[#101610]" : "border-white/6 bg-black/20"
+      className={`border-l px-4 py-1 ${
+        active ? "border-[#00ff41]/24 bg-transparent" : "border-white/8 bg-transparent"
       }`}
     >
       <div className="flex items-start gap-4">
@@ -1141,7 +1141,7 @@ function ActionLink({
   return (
     <a
       href={href}
-      className="flex items-center justify-between gap-4 rounded-[0.95rem] border border-white/6 bg-black/20 px-4 py-4 transition hover:border-white/12 hover:bg-white/5"
+      className="flex items-center justify-between gap-4 border-l border-white/8 pl-4 transition hover:border-white/20"
     >
       <div>
         <p className="text-sm font-semibold text-white">{title}</p>
@@ -1204,7 +1204,7 @@ function PreviewStat({
   mono?: boolean;
 }) {
   return (
-    <div className="rounded-[0.85rem] border border-white/6 bg-black/20 p-3">
+    <div className="border-l border-white/8 pl-3">
       <p className="text-[11px] uppercase tracking-[0.18em] text-white/34">{label}</p>
       <p className={`mt-2 text-sm font-semibold text-white ${mono ? "font-mono" : ""}`}>{value}</p>
     </div>
@@ -1244,7 +1244,7 @@ function RouteRow({ route }: { route: RouteSummary }) {
     authType === "BASIC" ? "text-[#ffd27a]" : authType === "API_KEY" ? "text-[#9ef0ff]" : authType === "JWT" ? "text-[#8fff8b]" : "text-white/55";
 
   return (
-    <div className="rounded-[1rem] border border-white/6 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{route.id}</p>
@@ -1255,14 +1255,14 @@ function RouteRow({ route }: { route: RouteSummary }) {
       <p className="mt-2 text-xs uppercase tracking-[0.18em] text-white/34">
         {route.gatewayId} / {route.serviceId}
       </p>
-      <code className="mt-3 block rounded-lg bg-[#121212] px-3 py-2 text-xs text-[#8fff8b]">{route.uri}</code>
+      <code className="mt-3 block bg-[#121212] px-3 py-2 text-xs text-[#8fff8b]">{route.uri}</code>
     </div>
   );
 }
 
 function GatewayRow({ gateway }: { gateway: GatewaySummary }) {
   return (
-    <div className="rounded-[1rem] border border-white/6 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{gateway.gatewayName}</p>
@@ -1279,7 +1279,7 @@ function GatewayRow({ gateway }: { gateway: GatewaySummary }) {
 
 function GatewayTree({ gateway }: { gateway: GatewaySummary }) {
   return (
-    <div className="rounded-[1.1rem] border border-white/6 bg-black/20 p-4">
+    <div className="border-t border-white/8 pt-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{gateway.gatewayName}</p>
@@ -1296,7 +1296,7 @@ function GatewayTree({ gateway }: { gateway: GatewaySummary }) {
           <EmptyState message="No services in this gateway yet." />
         ) : (
           gateway.services.map((service) => (
-            <div key={service.serviceId} className="rounded-[1rem] border border-white/6 bg-[#111111] p-4">
+            <div key={service.serviceId} className="border-l border-white/8 pl-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-semibold text-white">{service.serviceName}</p>
@@ -1338,7 +1338,7 @@ function ActivityRow({
     tone === "success" ? "bg-[#00ff41]" : tone === "error" ? "bg-[#ff7a59]" : "bg-[#ffd166]";
 
   return (
-    <div className="rounded-[1rem] border border-white/6 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-white">{title}</p>
@@ -1352,7 +1352,7 @@ function ActivityRow({
 
 function QuickLink({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1rem] border border-white/6 bg-black/20 p-4">
+    <div className="border-l border-white/8 pl-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-medium text-white">{label}</p>
@@ -1377,7 +1377,7 @@ function StatusCard({ status }: { status: StatusState }) {
         : "border-white/8 bg-[#1a1a1a]";
 
   return (
-    <div className={`rounded-[1rem] border p-4 ${toneClass}`}>
+    <div className={`border-l p-4 ${toneClass}`}>
       <div className="flex items-center gap-3">
         <Activity className="h-4 w-4 text-white/55" />
         <p className="font-semibold text-white">{status.message}</p>
@@ -1393,7 +1393,7 @@ function StatusCard({ status }: { status: StatusState }) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="rounded-[1rem] border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center text-sm text-white/42">
+    <div className="border border-dashed border-white/10 bg-black/10 px-4 py-6 text-center text-sm text-white/42">
       {message}
     </div>
   );
