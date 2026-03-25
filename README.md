@@ -1,4 +1,6 @@
-# API Gateway Dynamic Routes Demo
+# Mini Stadoor
+
+Mini Stadoor is a small demo for proving dynamic API gateway registration and route protection.
 
 This project is a small Spring microservices demo for **developer service registration + dynamic gateway routing**.
 
@@ -17,7 +19,7 @@ It shows how developers can manage route definitions at runtime while end users 
   - Port: `8080`
   - Public runtime gateway
   - Loads route definitions from `gateway-management-service`
-  - Delegates Basic Auth validation to `consumer-service` for protected routes
+  - Delegates Basic Auth, API key, and JWT validation to `consumer-service` for protected routes
   - Resolves target services through Eureka
   - Forwards traffic dynamically to registered backend services
 
@@ -25,7 +27,8 @@ It shows how developers can manage route definitions at runtime while end users 
   - Port: `8081`
   - Internal security service
   - Validates Basic Auth credentials for `standard-gateway`
-  - Will later grow to support API key and JWT validation
+  - Validates API keys for `standard-gateway`
+  - Issues and validates JWT access tokens for `standard-gateway`
 
 - `gateway-management-service`
   - Port: `8085`
@@ -74,6 +77,7 @@ It shows how developers can manage route definitions at runtime while end users 
 3. End users access only `standard-gateway`, not the backend service directly.
 4. `standard-gateway` can enforce Basic Auth by delegating validation to `consumer-service`.
 5. `standard-gateway` can also enforce API key validation through `consumer-service`.
+6. `standard-gateway` can enforce JWT validation through `consumer-service`.
 
 ## Run the Project
 
@@ -107,12 +111,17 @@ Recommended startup order:
 
 ## Main API Endpoints
 
+- `POST http://localhost:8085/gateways`
 - `POST http://localhost:8085/services/register`
 - `POST http://localhost:8085/routes`
+- `POST http://localhost:8081/api/login`
+- `POST http://localhost:8081/api/token/validate`
 - `GET http://localhost:8080/api/products`
 - `GET http://localhost:3000`
 
 ## Developer Portal
+
+The UI is branded as **Mini Stadoor** to reflect that this repository is a focused demo, not the full platform.
 
 Start the Next.js website:
 
@@ -130,6 +139,7 @@ http://localhost:3000
 
 From the website, developers can:
 
+- create gateway workspaces
 - register backend services
 - create dynamic routes
 - choose route auth type
@@ -137,12 +147,25 @@ From the website, developers can:
 
 ## Demo Flow
 
-### 1. Register a developer service in Eureka
+### 1. Create a gateway workspace
+
+```bash
+curl -X POST http://localhost:8085/gateways \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gatewayId": "ecommerce-gateway",
+    "gatewayName": "E-Commerce Gateway",
+    "description": "Gateway workspace for catalog, checkout, and customer APIs."
+  }'
+```
+
+### 2. Register a developer service in Eureka
 
 ```bash
 curl -X POST http://localhost:8085/services/register \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
     "serviceId": "product-service-manual-1",
     "serviceName": "product-service",
     "address": "localhost",
@@ -151,23 +174,25 @@ curl -X POST http://localhost:8085/services/register \
   }'
 ```
 
-### 2. Create a dynamic gateway route
+### 3. Create a dynamic gateway route
 
 ```bash
 curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "product-route",
-    "path": "/api/products/**",
+    "gatewayId": "ecommerce-gateway",
+    "serviceId": "product-service-manual-1",
+    "id": "product-route-basic",
+    "path": "/basic/products/**",
     "uri": "lb://product-service",
     "authType": "BASIC"
   }'
 ```
 
-### 3. Call the gateway as an end user
+### 4. Call the gateway as an end user
 
 ```bash
-curl -i -u enduser:enduser123 http://localhost:8080/api/products
+curl -i -u enduser:enduser123 http://localhost:8080/basic/products
 ```
 
 ## API Key Example
@@ -178,6 +203,8 @@ Create a dynamic gateway route with API key protection:
 curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
+    "serviceId": "product-service-manual-1",
     "id": "product-route-api-key",
     "path": "/api-key/products/**",
     "uri": "lb://product-service",
@@ -189,6 +216,47 @@ Then call it with the demo API key:
 
 ```bash
 curl -H "X-API-Key: stadoor-demo-key" http://localhost:8080/api-key/products
+```
+
+## JWT Example
+
+Create a dynamic gateway route with JWT protection:
+
+```bash
+curl -X POST http://localhost:8085/routes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gatewayId": "ecommerce-gateway",
+    "serviceId": "product-service-manual-1",
+    "id": "product-route-jwt",
+    "path": "/jwt/products/**",
+    "uri": "lb://product-service",
+    "authType": "JWT"
+  }'
+```
+
+Login to issue access and refresh tokens:
+
+```bash
+curl -X POST http://localhost:8081/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "enduser",
+    "password": "enduser123"
+  }'
+```
+
+Validate the access token directly against `consumer-service`:
+
+```bash
+curl -X POST http://localhost:8081/api/token/validate \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Then call the JWT-protected gateway route:
+
+```bash
+curl -H "Authorization: Bearer <access-token>" http://localhost:8080/jwt/products
 ```
 
 ## Express Example
@@ -207,6 +275,7 @@ Register it in Eureka:
 curl -X POST http://localhost:8085/services/register \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
     "serviceId": "inventory-service-manual-1",
     "serviceName": "inventory-service",
     "address": "localhost",
@@ -221,6 +290,8 @@ Create a dynamic route:
 curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
+    "serviceId": "inventory-service-manual-1",
     "id": "inventory-route",
     "path": "/api/inventory/**",
     "uri": "lb://inventory-service",
@@ -254,6 +325,7 @@ Register it in Eureka:
 curl -X POST http://localhost:8085/services/register \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
     "serviceId": "customer-service-manual-1",
     "serviceName": "customer-service",
     "address": "localhost",
@@ -268,6 +340,8 @@ Create a dynamic route:
 curl -X POST http://localhost:8085/routes \
   -H "Content-Type: application/json" \
   -d '{
+    "gatewayId": "ecommerce-gateway",
+    "serviceId": "customer-service-manual-1",
     "id": "customer-route",
     "path": "/api/customers/**",
     "uri": "lb://customer-service",
@@ -295,6 +369,6 @@ Ready-to-import Postman collection:
 - `gateway-management-service` stores external service registrations in Postgres
 - `gateway-management-service` sends scheduled Eureka heartbeats for stored external services
 - `consumer-service` is an internal validation service used by `standard-gateway`
-- the demo currently implements `BASIC` and `API_KEY`, with `JWT` left for later
+- the demo currently implements `NONE`, `BASIC`, `API_KEY`, and `JWT`
 - `standard-gateway` resolves `lb://product-service` through Eureka
 - the route is created dynamically at runtime, not in `application.yml`

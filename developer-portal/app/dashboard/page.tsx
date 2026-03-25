@@ -49,7 +49,7 @@ const tabMeta: Record<
     eyebrow: "stadoor_control_plane",
     title: "Developer Security SaaS",
     description:
-      "Operate Stadoor as a product control plane: register developer applications, group them by gateway workspace, and expose the wider security platform roadmap in one place.",
+      "Operate Mini Stadoor as a product control plane: register developer applications, group them by gateway workspace, and expose the wider security platform roadmap in one place.",
     ctaLabel: "Open gateway",
     ctaHref: "/dashboard?tab=gateway",
   },
@@ -67,7 +67,7 @@ const tabMeta: Record<
     eyebrow: "identity_access_management",
     title: "Identity Platform",
     description:
-      "Reserve product space for login, access control, token issuance, and OAuth2 with OIDC so Stadoor feels like a real developer security suite.",
+      "Reserve product space for login, access control, token issuance, and OAuth2 with OIDC so Mini Stadoor feels like a real developer security suite.",
     ctaLabel: "Roadmap view",
     ctaHref: "/dashboard?tab=iam",
   },
@@ -105,7 +105,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
               </div>
             </div>
             <p className="mt-5 text-sm leading-7 text-white/54">
-              Control center for gateway workspaces, service onboarding, and route security across the Stadoor prototype.
+              Control center for gateway workspaces, service onboarding, and route security across the Mini Stadoor prototype.
             </p>
           </div>
 

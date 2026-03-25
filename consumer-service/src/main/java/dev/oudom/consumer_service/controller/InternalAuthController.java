@@ -3,6 +3,7 @@ package dev.oudom.consumer_service.controller;
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
 import dev.oudom.consumer_service.service.ApiKeyValidationService;
 import dev.oudom.consumer_service.service.BasicAuthValidationService;
+import dev.oudom.consumer_service.service.JwtAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +20,7 @@ public class InternalAuthController {
 
     private final BasicAuthValidationService basicAuthValidationService;
     private final ApiKeyValidationService apiKeyValidationService;
+    private final JwtAuthService jwtAuthService;
 
     @Value("${consumer.security.api-key.header-name}")
     private String apiKeyHeaderName;
@@ -36,5 +38,12 @@ public class InternalAuthController {
     ) {
         String apiKey = headers.getFirst(apiKeyHeaderName);
         return apiKeyValidationService.validate(apiKey);
+    }
+
+    @PostMapping("/jwt/validate")
+    public Mono<AuthValidationResponse> validateJwt(
+        @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
+    ) {
+        return jwtAuthService.validateAccessToken(authorizationHeader);
     }
 }

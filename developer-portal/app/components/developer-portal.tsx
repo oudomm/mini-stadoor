@@ -23,8 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 type DashboardTab = "overview" | "gateway" | "iam";
-type SupportedAuthType = "NONE" | "BASIC" | "API_KEY";
-type FutureAuthType = "JWT" | "OAUTH2";
+type SupportedAuthType = "NONE" | "BASIC" | "API_KEY" | "JWT";
+type FutureAuthType = "OAUTH2";
 type GatewayWorkspaceTab = "gateway" | "service" | "route";
 
 type GatewayForm = {
@@ -200,6 +200,17 @@ const routePresets = [
       authType: "API_KEY" as const,
     },
   },
+  {
+    label: "JWT catalog",
+    values: {
+      gatewayId: "ecommerce-gateway",
+      serviceId: "product-service-manual-1",
+      id: "product-route-jwt",
+      path: "/jwt/products/**",
+      uri: "lb://product-service",
+      authType: "JWT" as const,
+    },
+  },
 ] as const;
 
 const supportedSecurityModes: Array<{
@@ -210,6 +221,7 @@ const supportedSecurityModes: Array<{
   { label: "NONE", status: "live", detail: "Open route with no gateway authentication." },
   { label: "BASIC", status: "live", detail: "Username and password validation through consumer-service." },
   { label: "API_KEY", status: "live", detail: "Shared key validation using the current gateway enforcement flow." },
+  { label: "JWT", status: "live", detail: "Bearer access token validation through consumer-service login and token endpoints." },
 ];
 
 const futureSecurityModes: Array<{
@@ -217,7 +229,6 @@ const futureSecurityModes: Array<{
   status: "planned";
   detail: string;
 }> = [
-  { label: "JWT", status: "planned", detail: "Route type reserved for access token and refresh token flow." },
   { label: "OAUTH2", status: "planned", detail: "Future identity-driven security mode for broader IAM integration." },
 ];
 
@@ -949,6 +960,7 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
                   <QuickLink label="Open route" value="GET http://localhost:8080/open/products" />
                   <QuickLink label="Basic route" value="GET http://localhost:8080/basic/products with Basic Auth" />
                   <QuickLink label="API key route" value="GET http://localhost:8080/partner/inventory with X-API-Key" />
+                  <QuickLink label="JWT route" value="POST http://localhost:8081/api/login then GET http://localhost:8080/jwt/products with Bearer token" />
                 </CardContent>
               </Card>
             </div>
@@ -960,7 +972,7 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
         <PlaceholderSection
           icon={<Fingerprint className="h-5 w-5" />}
           title="IAM module is planned"
-          body="Stadoor’s IAM module should cover identity lifecycle, login, access and refresh tokens, OAuth2 with OIDC, and role-aware access management for registered applications."
+          body="Mini Stadoor’s IAM module should cover identity lifecycle, login, access and refresh tokens, OAuth2 with OIDC, and role-aware access management for registered applications."
         />
       ) : null}
 
@@ -1229,7 +1241,7 @@ function SecurityRow({
 function RouteRow({ route }: { route: RouteSummary }) {
   const authType = route.authType ?? "NONE";
   const authTone =
-    authType === "BASIC" ? "text-[#ffd27a]" : authType === "API_KEY" ? "text-[#9ef0ff]" : "text-white/55";
+    authType === "BASIC" ? "text-[#ffd27a]" : authType === "API_KEY" ? "text-[#9ef0ff]" : authType === "JWT" ? "text-[#8fff8b]" : "text-white/55";
 
   return (
     <div className="rounded-[1rem] border border-white/6 bg-black/20 p-4">

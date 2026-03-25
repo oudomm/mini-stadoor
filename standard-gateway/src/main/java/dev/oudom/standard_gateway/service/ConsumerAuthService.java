@@ -55,4 +55,21 @@ public class ConsumerAuthService {
                 "consumer-service is unavailable",
                 exception));
     }
+
+    public Mono<AuthValidationResponse> validateJwt(String authorizationHeader) {
+        return webClient.post()
+            .uri("/internal/auth/jwt/validate")
+            .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+            .retrieve()
+            .onStatus(status -> status.value() == 401, response -> Mono.error(
+                new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT access token")))
+            .onStatus(status -> status.is5xxServerError(), response -> Mono.error(
+                new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "consumer-service is unavailable")))
+            .bodyToMono(AuthValidationResponse.class)
+            .onErrorMap(ResponseStatusException.class, exception -> exception)
+            .onErrorMap(exception -> new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "consumer-service is unavailable",
+                exception));
+    }
 }

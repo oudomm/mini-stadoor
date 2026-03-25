@@ -36,7 +36,7 @@ export default function RegisterPage() {
               </h2>
               <p className="mt-5 text-base leading-8 text-white/60">
                 Start with a clean account shell today, then connect it later to IAM, OAuth2, and
-                the full Stadoor access model.
+                the full Mini Stadoor access model.
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-3">
@@ -79,7 +79,7 @@ export default function RegisterPage() {
                   </h1>
                   <p className="mt-3 max-w-xl text-base leading-7 text-white/56">
                     This is a polished prototype flow for now. It will later connect to real IAM while
-                    keeping the same Stadoor onboarding experience.
+                    keeping the same Mini Stadoor onboarding experience.
                   </p>
                 </div>
                 <div className="hidden rounded-full border border-[#00ff41]/18 bg-[#101810] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#9aff9d] sm:block">

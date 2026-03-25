@@ -22,3 +22,8 @@ consumer:
     api-key:
       header-name: X-API-Key
       value: stadoor-demo-key
+    jwt:
+      issuer: consumer-service
+      secret: stadoor-jwt-demo-secret-key-that-is-at-least-32-bytes
+      access-token-expiration-seconds: 900
+      refresh-token-expiration-seconds: 604800

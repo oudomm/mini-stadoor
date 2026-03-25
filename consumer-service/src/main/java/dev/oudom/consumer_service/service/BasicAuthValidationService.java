@@ -26,6 +26,19 @@ public class BasicAuthValidationService {
     }
 
     public Mono<AuthValidationResponse> validate(String authorizationHeader) {
+        return authenticateHeader(authorizationHeader)
+            .map(principal -> new AuthValidationResponse(true, "BASIC", principal));
+    }
+
+    public Mono<String> authenticate(String providedUsername, String providedPassword) {
+        if (!username.equals(providedUsername) || !password.equals(providedPassword)) {
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Basic authentication credentials"));
+        }
+
+        return Mono.just(providedUsername);
+    }
+
+    private Mono<String> authenticateHeader(String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing Authorization header"));
         }
@@ -50,10 +63,6 @@ public class BasicAuthValidationService {
         String providedUsername = decodedCredentials.substring(0, separatorIndex);
         String providedPassword = decodedCredentials.substring(separatorIndex + 1);
 
-        if (!username.equals(providedUsername) || !password.equals(providedPassword)) {
-            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Basic authentication credentials"));
-        }
-
-        return Mono.just(new AuthValidationResponse(true, "BASIC", providedUsername));
+        return authenticate(providedUsername, providedPassword);
     }
 }

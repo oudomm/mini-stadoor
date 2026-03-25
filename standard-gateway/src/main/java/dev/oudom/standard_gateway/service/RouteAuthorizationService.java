@@ -2,7 +2,6 @@ package dev.oudom.standard_gateway.service;
 
 import dev.oudom.standard_gateway.dto.AuthType;
 import dev.oudom.standard_gateway.dto.RouteRequest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
@@ -53,6 +52,16 @@ public class RouteAuthorizationService {
             }
 
             return consumerAuthService.validateApiKey(apiKey).then();
+        }
+
+        if (matchingRoute.get().authType() == AuthType.JWT) {
+            if (authorizationHeader == null || authorizationHeader.isBlank()) {
+                return Mono.error(new ResponseStatusException(
+                    HttpStatus.UNAUTHORIZED,
+                    "Bearer token is required"));
+            }
+
+            return consumerAuthService.validateJwt(authorizationHeader).then();
         }
 
         return Mono.error(new ResponseStatusException(

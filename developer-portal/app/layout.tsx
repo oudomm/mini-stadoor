@@ -14,8 +14,8 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stadoor Developer Portal",
-  description: "Developer website for registering services and creating dynamic routes in the Stadoor demo.",
+  title: "Mini Stadoor Developer Portal",
+  description: "Developer website for registering services and creating dynamic routes in the Mini Stadoor demo.",
 };
 
 export default function RootLayout({

@@ -64,7 +64,7 @@ export default function Home() {
 
               <div className="space-y-4">
                 <h1 className="max-w-4xl text-4xl font-semibold uppercase leading-[0.9] tracking-[-0.05em] text-white sm:text-5xl lg:text-[4.5rem]">
-                  Developer security
+                  Mini Stadoor
                   <span className="mt-2 block text-[#00ff41]">with simpler control.</span>
                 </h1>
                 <p className="max-w-lg text-base leading-7 text-white/62">
@@ -186,7 +186,7 @@ export default function Home() {
                 size="lg"
                 className="border border-[#00ff41]/30 bg-[#00ff41] text-black hover:bg-[#7cff98]"
               >
-                <Link href="/dashboard">Start with Stadoor</Link>
+                <Link href="/dashboard">Start with Mini Stadoor</Link>
               </Button>
               <Button
                 asChild
@@ -223,7 +223,7 @@ export default function Home() {
               size="lg"
               className="border border-[#00ff41]/30 bg-[#00ff41] px-8 text-black shadow-[0_0_40px_rgba(0,255,65,0.15)] hover:bg-[#7cff98]"
             >
-              <Link href="/dashboard">Deploy to Stadoor</Link>
+              <Link href="/dashboard">Deploy to Mini Stadoor</Link>
             </Button>
           </div>
         </div>

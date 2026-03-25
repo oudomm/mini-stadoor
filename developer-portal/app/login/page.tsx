@@ -40,7 +40,7 @@ export default function LoginPage() {
               <div>
                 <h1 className="max-w-lg text-5xl font-semibold leading-[0.95] tracking-[-0.05em] text-white">
                   Access the
-                  <span className="block text-[#00ff41]">Stadoor control plane.</span>
+                  <span className="block text-[#00ff41]">Mini Stadoor control plane.</span>
                 </h1>
                 <p className="mt-6 max-w-lg text-lg leading-8 text-white/62">
                   Sign in to manage developer services, dynamic routes, and route-level security from
@@ -72,7 +72,7 @@ export default function LoginPage() {
                     Log in
                   </h2>
                   <p className="mt-3 text-base leading-7 text-white/56">
-                    Mocked for now, designed like the real Stadoor sign-in that will later sit on top
+                    Mocked for now, designed like the real Mini Stadoor sign-in that will later sit on top
                     of IAM and Front BFF.
                   </p>
                 </div>
@@ -102,7 +102,7 @@ export default function LoginPage() {
                   <Input
                     id="email"
                     type="email"
-                    defaultValue="developer@stadoor.dev"
+                    defaultValue="developer@mini-stadoor.dev"
                     className="border-white/8 bg-[#2b2f36] text-white placeholder:text-white/22 focus-visible:border-[#00ff41]/35 focus-visible:ring-[#00ff41]/10"
                   />
                 </div>
@@ -140,7 +140,7 @@ export default function LoginPage() {
 
               <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-white/46">
-                  New to Stadoor?{" "}
+                  New to Mini Stadoor?{" "}
                   <Link href="/register" className="font-semibold text-[#8fff8b]">
                     Create account
                   </Link>

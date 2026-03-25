@@ -32,7 +32,7 @@ export function SiteFooter() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/38">Organized by</p>
             <div className="mt-4 flex h-[116px] items-center justify-center px-2">
               <Image
-                src="/images/istad-logo.png"
+                src="/images/istad-logo-text.png"
                 alt="ISTAD logo"
                 width={132}
                 height={126}
@@ -43,7 +43,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-white/6 pt-6 text-[11px] uppercase tracking-[0.18em] text-white/32 md:flex-row md:items-center md:justify-between">
-          <p>© 2026 stadoor_systems_intl. all_signals_reserved.</p>
+          <p>© 2026 mini_stadoor_demo. all_signals_reserved.</p>
           <div className="flex flex-wrap gap-5">
             <span>Privacy Policy</span>
             <span>Terms of Access</span>

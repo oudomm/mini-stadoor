@@ -17,6 +17,10 @@
     {
       "key": "eurekaBaseUrl",
       "value": "http://localhost:8761"
+    },
+    {
+      "key": "jwtAccessToken",
+      "value": ""
     }
   ],
   "item": [
@@ -243,6 +247,119 @@
               ]
             },
             "description": "Calls an API key protected route through standard-gateway."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "JWT",
+      "item": [
+        {
+          "name": "1. Create JWT Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-jwt\",\n  \"path\": \"/jwt/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"JWT\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "routes"
+              ]
+            },
+            "description": "Creates a route protected by JWT bearer token validation."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Login To Issue Access And Refresh Tokens",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"enduser\",\n  \"password\": \"enduser123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8081/api/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "login"
+              ]
+            },
+            "description": "Issues signed access and refresh tokens from consumer-service."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Validate Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "http://localhost:8081/api/token/validate",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8081",
+              "path": [
+                "api",
+                "token",
+                "validate"
+              ]
+            },
+            "description": "Validates an issued JWT access token."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Call JWT Route",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/jwt/products",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "jwt",
+                "products"
+              ]
+            },
+            "description": "Calls a JWT protected route through standard-gateway."
           },
           "response": []
         }

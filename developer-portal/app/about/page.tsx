@@ -179,10 +179,10 @@ export default function AboutPage() {
               </p>
               <h1 className="max-w-4xl text-4xl font-semibold uppercase leading-[0.92] tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl">
                 About
-                <span className="mt-2 block text-[#00ff41]">Stadoor.</span>
+                <span className="mt-2 block text-[#00ff41]">Mini Stadoor.</span>
               </h1>
               <p className="max-w-2xl text-base leading-8 text-white/62 sm:text-lg">
-                Stadoor is the final project of the ITP Program at ISTAD for the subject
+                Mini Stadoor is the final project of the ITP Program at ISTAD for the subject
                 <span className="text-white"> Spring Microservices</span>. The project is guided by
                 2 mentors and built by a team of 9 students as a developer security SaaS prototype.
               </p>
@@ -231,18 +231,18 @@ export default function AboutPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-20 sm:px-6 lg:grid-cols-3 lg:px-8">
           <AboutCard
             icon={<ShieldCheck className="h-5 w-5" />}
-            title="What Stadoor is"
+            title="What Mini Stadoor is"
             body="A developer security SaaS prototype where developers can register an API or frontend, publish dynamic routes, and apply security policies through one platform."
           />
           <AboutCard
             icon={<Waypoints className="h-5 w-5" />}
             title="What this prototype proves"
-            body="Dynamic service registration, dynamic routing, Basic Authentication, and API Key enforcement working together through the Stadoor control plane."
+            body="Dynamic service registration, dynamic routing, Basic Authentication, API Key enforcement, and JWT working together through the Mini Stadoor control plane."
           />
           <AboutCard
             icon={<BookOpen className="h-5 w-5" />}
             title="What comes next"
-            body="The wider Stadoor vision includes IAM, JWT, OAuth2 with OIDC, BFF as a Service, compliance features, traffic management, and more platform modules."
+            body="The wider Mini Stadoor vision includes IAM, OAuth2 with OIDC, BFF as a Service, compliance features, traffic management, and more platform modules."
           />
         </div>
       </section>
@@ -258,7 +258,7 @@ export default function AboutPage() {
               <span className="text-[#00ff41]"> team members.</span>
             </h2>
             <p className="mt-5 text-base leading-8 text-white/60">
-              Stadoor is built as a team project. This section presents the project structure with
+              Mini Stadoor is built as a team project. This section presents the project structure with
               mentor and member profile cards. You can replace the placeholder names with the real
               team list any time.
             </p>
