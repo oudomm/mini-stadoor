@@ -29,20 +29,14 @@ export default function Home() {
             <StadoorLogo subtitleClassName="text-white/45" wordmarkClassName="text-xl text-white" />
 
             <nav className="hidden items-center gap-8 text-[11px] font-medium uppercase tracking-[0.18em] text-white/55 md:flex">
+              <Link href="/" className="transition hover:text-white">
+                Home
+              </Link>
               <Link href="/about" className="transition hover:text-white">
                 About us
               </Link>
-              <Link href="#platform" className="transition hover:text-white">
-                Platform
-              </Link>
-              <Link href="#gateway" className="transition hover:text-white">
-                Gateway
-              </Link>
-              <Link href="#security" className="transition hover:text-white">
-                Security
-              </Link>
-              <Link href="#access" className="transition hover:text-white">
-                Access
+              <Link href="/dashboard" className="transition hover:text-white">
+                Dashboard
               </Link>
             </nav>
 
