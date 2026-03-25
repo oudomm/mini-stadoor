@@ -3,6 +3,7 @@
 This project is a small Spring microservices demo for **developer service registration + dynamic gateway routing**.
 
 It now includes:
+- a Next.js `developer-portal`
 - a Spring `consumer-service`
 - a Spring `product-service`
 - a non-Spring Express `inventory-service`
@@ -31,6 +32,12 @@ It shows how developers can manage route definitions at runtime while end users 
   - Platform API for developer onboarding
   - Registers developer services into Eureka by API
   - Stores dynamic routes in Postgres
+
+- `developer-portal`
+  - Port: `3000`
+  - Developer-facing Next.js website
+  - Proxies browser actions to `gateway-management-service`
+  - Lets developers register services and create routes from a UI
 
 - `product-service`
   - Port: `8082`
@@ -82,6 +89,7 @@ Start these modules:
 
 - `eureka-server`
 - `gateway-management-service`
+- `developer-portal`
 - `standard-gateway`
 - `consumer-service`
 - `product-service`
@@ -92,15 +100,40 @@ Recommended startup order:
 
 1. `eureka-server`
 2. `gateway-management-service`
-3. `standard-gateway`
-4. `consumer-service`
-5. `product-service`
+3. `developer-portal`
+4. `standard-gateway`
+5. `consumer-service`
+6. `product-service`
 
 ## Main API Endpoints
 
 - `POST http://localhost:8085/services/register`
 - `POST http://localhost:8085/routes`
 - `GET http://localhost:8080/api/products`
+- `GET http://localhost:3000`
+
+## Developer Portal
+
+Start the Next.js website:
+
+```bash
+cd /Users/oudom/Documents/itp/api-gateway-dynamic-routes-demo/developer-portal
+npm install
+npm run dev
+```
+
+Then open:
+
+```text
+http://localhost:3000
+```
+
+From the website, developers can:
+
+- register backend services
+- create dynamic routes
+- choose route auth type
+- view current routes loaded from `gateway-management-service`
 
 ## Demo Flow
 
