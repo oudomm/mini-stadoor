@@ -7,7 +7,7 @@ spring:
     password: demo_pass
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     open-in-view: false
 server:
   port: 8085

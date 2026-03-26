@@ -6,4 +6,7 @@ public record TokenValidationRequest(
     @NotBlank(message = "token must not be blank")
     String token
 ) {
+    public TokenValidationRequest {
+        token = token == null ? null : token.trim();
+    }
 }
