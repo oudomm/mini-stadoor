@@ -9,5 +9,11 @@ public interface ExternalServiceRepository extends JpaRepository<ExternalService
 
     List<ExternalServiceEntity> findAllByGatewayId(String gatewayId);
 
+    List<ExternalServiceEntity> findAllByGatewayIdAndOwnerUserUuidOrderByServiceNameAsc(String gatewayId, String ownerUserUuid);
+
+    List<ExternalServiceEntity> findAllByOwnerUserUuidOrderByServiceNameAsc(String ownerUserUuid);
+
     boolean existsByGatewayIdAndServiceId(String gatewayId, String serviceId);
+
+    boolean existsByGatewayIdAndServiceIdAndOwnerUserUuid(String gatewayId, String serviceId, String ownerUserUuid);
 }

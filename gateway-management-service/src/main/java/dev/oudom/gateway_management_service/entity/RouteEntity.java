@@ -40,4 +40,12 @@ public class RouteEntity {
     @Column(nullable = false)
     private AuthType authType;
 
+    @Column
+    private String ownerUserUuid;
+
+    @Column
+    private String ownerUsername;
+
+    @Column
+    private String ownerEmail;
 }

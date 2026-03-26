@@ -7,6 +7,7 @@ import dev.oudom.gateway_management_service.dto.ServiceCatalogResponse;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.GatewayEntity;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
+import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,34 +24,37 @@ public class GatewayCatalogService {
     private final ExternalServiceRegistrationService externalServiceRegistrationService;
     private final RouteStorageService routeStorageService;
 
-    public GatewayRequest save(GatewayRequest request) {
+    public GatewayRequest save(GatewayRequest request, DeveloperIdentity owner) {
         gatewayRepository.save(new GatewayEntity(
             request.gatewayId(),
             request.gatewayName(),
-            request.description()
+            request.description(),
+            owner.userUuid(),
+            owner.username(),
+            owner.email()
         ));
         return request;
     }
 
-    public List<GatewayCatalogResponse> findAll() {
-        return gatewayRepository.findAll().stream()
+    public List<GatewayCatalogResponse> findAll(DeveloperIdentity owner) {
+        return gatewayRepository.findAllByOwnerUserUuidOrderByGatewayNameAsc(owner.userUuid()).stream()
             .map(gateway -> new GatewayCatalogResponse(
                 gateway.getGatewayId(),
                 gateway.getGatewayName(),
                 gateway.getDescription(),
-                findServicesForGateway(gateway.getGatewayId())
+                findServicesForGateway(gateway.getGatewayId(), owner)
             ))
             .toList();
     }
 
-    public void ensureGatewayExists(String gatewayId) {
-        if (!gatewayRepository.existsById(gatewayId)) {
+    public void ensureGatewayExists(String gatewayId, DeveloperIdentity owner) {
+        if (!gatewayRepository.existsByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())) {
             throw new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId);
         }
     }
 
-    private List<ServiceCatalogResponse> findServicesForGateway(String gatewayId) {
-        return externalServiceRegistrationService.findAllByGatewayId(gatewayId).stream()
+    private List<ServiceCatalogResponse> findServicesForGateway(String gatewayId, DeveloperIdentity owner) {
+        return externalServiceRegistrationService.findAllByGatewayId(gatewayId, owner).stream()
             .map(service -> new ServiceCatalogResponse(
                 service.gatewayId(),
                 service.serviceId(),
@@ -58,12 +62,12 @@ public class GatewayCatalogService {
                 service.address(),
                 service.port(),
                 service.normalizedTags(),
-                findRoutesForService(gatewayId, service.serviceId())
+                findRoutesForService(gatewayId, service.serviceId(), owner)
             ))
             .toList();
     }
 
-    private List<RouteRequest> findRoutesForService(String gatewayId, String serviceId) {
-        return routeStorageService.findAllByGatewayIdAndServiceId(gatewayId, serviceId);
+    private List<RouteRequest> findRoutesForService(String gatewayId, String serviceId, DeveloperIdentity owner) {
+        return routeStorageService.findAllByGatewayIdAndServiceId(gatewayId, serviceId, owner);
     }
 }

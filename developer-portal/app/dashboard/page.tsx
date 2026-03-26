@@ -16,6 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { requirePortalSession } from "@/lib/platform-auth";
 import { StadoorLogo } from "@/components/stadoor-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DeveloperPortal } from "../components/developer-portal";
@@ -79,6 +80,7 @@ function normalizeTab(tab?: string): DashboardTab {
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
+  const session = await requirePortalSession();
   const params = searchParams ? await searchParams : undefined;
   const activeTab = normalizeTab(params?.tab);
   const meta = tabMeta[activeTab];
@@ -193,9 +195,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
                     />
                   </div>
                   <div className="flex flex-wrap items-center gap-3">
+                    <div className="rounded-[0.9rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-4 py-2 text-sm text-[var(--text-muted)]">
+                      Signed in as <span className="font-semibold text-[var(--text-strong)]">{session.displayName ?? session.username}</span>
+                    </div>
                     <ThemeToggle />
                     <TopIcon icon={<Bell className="h-4 w-4" />} />
                     <TopIcon icon={<LifeBuoy className="h-4 w-4" />} />
+                    <Button asChild variant="secondary" className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5">
+                      <Link href="/api/auth/logout">Log out</Link>
+                    </Button>
                     <Button asChild variant="secondary" className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5">
                       <Link href="/">Landing</Link>
                     </Button>

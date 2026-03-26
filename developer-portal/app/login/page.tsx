@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   KeyRound,
@@ -11,8 +12,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { StadoorLogo } from "@/components/stadoor-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { getPortalSession } from "@/lib/platform-auth";
 
-export default function LoginPage() {
+type LoginPageProps = {
+  searchParams?: Promise<{
+    error?: string;
+  }>;
+};
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const session = await getPortalSession();
+  if (session) {
+    redirect("/dashboard");
+  }
+
+  const params = searchParams ? await searchParams : undefined;
+  const hasError = Boolean(params?.error);
+
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
       <div className="grid min-h-screen lg:grid-cols-[0.98fr_1.02fr]">
@@ -74,81 +90,57 @@ export default function LoginPage() {
                   <h2 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[var(--text-strong)]">
                     Log in
                   </h2>
-                  <p className="mt-3 text-base leading-7 text-[var(--text-muted)]">
-                    Mocked for now, designed like the real Mini Stadoor sign-in that will later sit on top
-                    of IAM and Front BFF.
+                <p className="mt-3 text-base leading-7 text-[var(--text-muted)]">
+                    Sign in with the copied iam-server so dashboard access is tied to real platform identity.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden rounded-full border border-[var(--border-strong)] bg-[var(--surface-muted)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)] sm:block">
-                    demo mode
+                    iam login
                   </div>
                   <ThemeToggle />
                 </div>
               </div>
 
-              <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                <GhostAuthButton label="Continue with GitHub" />
-                <GhostAuthButton label="Continue with Google" />
-              </div>
-
-              <div className="my-7 flex items-center gap-4">
-                <div className="h-px flex-1 bg-white/8" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">
-                  or continue with email
-                </p>
-                <div className="h-px flex-1 bg-white/8" />
-              </div>
-
-              <form action="/dashboard" className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Work email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue="developer@mini-stadoor.dev"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
+              {hasError ? (
+                <div className="mt-7 rounded-[1rem] border border-red-500/25 bg-red-500/8 px-4 py-3 text-sm text-red-300">
+                  The IAM login flow did not complete. Try again.
                 </div>
+              ) : null}
 
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    defaultValue="password"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between border-t border-white/8 pt-4 text-sm text-[var(--text-muted)]">
-                  <label className="flex items-center gap-2">
-                    <input type="checkbox" defaultChecked className="accent-[var(--accent)]" />
-                    Keep this workspace active
-                  </label>
-                  <span>Forgot password</span>
+              <div className="mt-7 space-y-5">
+                <div className="rounded-[1rem] border border-white/8 bg-[var(--surface-muted)] p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">Demo identity</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">Username</Label>
+                      <Input value="oudom" readOnly className="border-white/8 bg-[var(--field)] text-[var(--text-strong)]" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">Password</Label>
+                      <Input value="qwer" readOnly className="border-white/8 bg-[var(--field)] text-[var(--text-strong)]" />
+                    </div>
+                  </div>
                 </div>
 
                 <Button
-                  type="submit"
+                  asChild
                   variant="brand"
                   size="lg"
                   className="h-14 w-full rounded-[1rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_32px_var(--glow)] hover:bg-[var(--accent-bright)]"
                 >
-                  Enter dashboard
-                  <ArrowRight className="h-4 w-4" />
+                  <Link href="/api/auth/login">
+                    Continue with IAM
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </Button>
-              </form>
+              </div>
 
               <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-[var(--text-muted)]">
-                  New to Mini Stadoor?{" "}
+                  Need platform access lifecycle?{" "}
                   <Link href="/register" className="font-semibold text-[var(--accent-soft)]">
-                    Create account
+                    Review IAM onboarding
                   </Link>
                 </p>
                 <Link href="/" className="text-sm text-[var(--text-muted)] transition hover:text-[var(--text-strong)]">
@@ -160,17 +152,6 @@ export default function LoginPage() {
         </section>
       </div>
     </main>
-  );
-}
-
-function GhostAuthButton({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex h-14 items-center justify-center rounded-[0.95rem] border border-white/8 bg-[var(--surface-muted)] text-sm font-medium text-[var(--text-strong)] transition hover:border-white/14 hover:bg-[var(--surface-soft)]"
-    >
-      {label}
-    </button>
   );
 }
 

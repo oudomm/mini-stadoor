@@ -16,5 +16,23 @@ services:
       timeout: 5s
       retries: 5
 
+  iam-postgres:
+    image: postgres:17.5-bullseye
+    container_name: mini-stadoor-iam-postgres
+    environment:
+      POSTGRES_DB: iam_demo
+      POSTGRES_USER: iam_user
+      POSTGRES_PASSWORD: iam_pass
+    ports:
+      - "5434:5432"
+    volumes:
+      - iam_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iam_user -d iam_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
+  iam_postgres_data:

@@ -1,6 +1,7 @@
 package dev.oudom.gateway_management_service.controller;
 
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
+import dev.oudom.gateway_management_service.security.DeveloperIdentityResolver;
 import dev.oudom.gateway_management_service.service.ExternalServiceRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,15 @@ import java.util.Map;
 public class ServiceRegistrationController {
 
     private final ExternalServiceRegistrationService externalServiceRegistrationService;
+    private final DeveloperIdentityResolver developerIdentityResolver;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> register(@Valid @RequestBody ServiceRegistrationRequest request) {
-        ServiceRegistrationRequest registeredService = externalServiceRegistrationService.register(request);
+        ServiceRegistrationRequest registeredService = externalServiceRegistrationService.register(
+            request,
+            developerIdentityResolver.currentDeveloper()
+        );
         return Map.of(
             "message", "Service registered in Eureka",
             "service", registeredService
@@ -34,6 +39,6 @@ public class ServiceRegistrationController {
 
     @GetMapping
     public Map<String, List<ServiceRegistrationRequest>> list() {
-        return Map.of("services", externalServiceRegistrationService.findAll());
+        return Map.of("services", externalServiceRegistrationService.findAll(developerIdentityResolver.currentDeveloper()));
     }
 }

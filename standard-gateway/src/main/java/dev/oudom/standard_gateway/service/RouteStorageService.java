@@ -55,7 +55,7 @@ public class RouteStorageService {
 
     public Flux<RouteRequest> findAll() {
         return webClient.get()
-            .uri("/routes")
+            .uri("/internal/routes")
             .retrieve()
             .bodyToMono(RoutesResponse.class)
             .flatMapMany(response -> response == null || response.routes() == null

@@ -18,3 +18,5 @@ route-management:
   base-url: http://gateway-management-service
 consumer-service:
   base-url: http://consumer-service
+iam-server:
+  issuer-uri: http://localhost:9090

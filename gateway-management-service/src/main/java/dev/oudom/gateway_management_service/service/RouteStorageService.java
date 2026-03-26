@@ -6,6 +6,7 @@ import dev.oudom.gateway_management_service.entity.RouteEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
 import dev.oudom.gateway_management_service.repository.RouteRepository;
+import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,26 +23,30 @@ public class RouteStorageService {
     private final GatewayRepository gatewayRepository;
     private final ExternalServiceRepository externalServiceRepository;
 
-    public RouteRequest save(RouteRequest routeRequest) {
-        ensureGatewayExists(routeRequest.gatewayId());
-        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId());
+    public RouteRequest save(RouteRequest routeRequest, DeveloperIdentity owner) {
+        ensureGatewayExists(routeRequest.gatewayId(), owner);
+        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
         routeRepository.save(new RouteEntity(
             routeRequest.gatewayId(),
             routeRequest.serviceId(),
             routeRequest.id(),
             routeRequest.path(),
             routeRequest.uri(),
-            routeRequest.authType()
+            routeRequest.authType(),
+            owner.userUuid(),
+            owner.username(),
+            owner.email()
         ));
         return routeRequest;
     }
 
-    public RouteRequest update(String id, RouteRequest routeRequest) {
+    public RouteRequest update(String id, RouteRequest routeRequest, DeveloperIdentity owner) {
         RouteEntity routeEntity = routeRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Route not found: " + id));
 
-        ensureGatewayExists(routeRequest.gatewayId());
-        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId());
+        ensureRouteOwnership(routeEntity, id, owner);
+        ensureGatewayExists(routeRequest.gatewayId(), owner);
+        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
         routeEntity.setGatewayId(routeRequest.gatewayId());
         routeEntity.setServiceId(routeRequest.serviceId());
         routeEntity.setPath(routeRequest.path());
@@ -59,16 +64,15 @@ public class RouteStorageService {
         );
     }
 
-    public void delete(String id) {
-        if (!routeRepository.existsById(id)) {
-            throw new ResponseStatusException(NOT_FOUND, "Route not found: " + id);
-        }
-
+    public void delete(String id, DeveloperIdentity owner) {
+        RouteEntity routeEntity = routeRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Route not found: " + id));
+        ensureRouteOwnership(routeEntity, id, owner);
         routeRepository.deleteById(id);
     }
 
-    public List<RouteRequest> findAll() {
-        return routeRepository.findAll().stream()
+    public List<RouteRequest> findAll(DeveloperIdentity owner) {
+        return routeRepository.findAllByOwnerUserUuidOrderByIdAsc(owner.userUuid()).stream()
             .map(route -> new RouteRequest(
                 route.getGatewayId(),
                 route.getServiceId(),
@@ -79,8 +83,12 @@ public class RouteStorageService {
             .toList();
     }
 
-    public List<RouteRequest> findAllByGatewayIdAndServiceId(String gatewayId, String serviceId) {
-        return routeRepository.findAllByGatewayIdAndServiceId(gatewayId, serviceId).stream()
+    public List<RouteRequest> findAllByGatewayIdAndServiceId(String gatewayId, String serviceId, DeveloperIdentity owner) {
+        return routeRepository.findAllByGatewayIdAndServiceIdAndOwnerUserUuidOrderByIdAsc(
+            gatewayId,
+            serviceId,
+            owner.userUuid()
+        ).stream()
             .map(route -> new RouteRequest(
                 route.getGatewayId(),
                 route.getServiceId(),
@@ -92,15 +100,38 @@ public class RouteStorageService {
             .toList();
     }
 
-    private void ensureServiceExists(String gatewayId, String serviceId) {
-        if (!externalServiceRepository.existsByGatewayIdAndServiceId(gatewayId, serviceId)) {
+    public List<RouteRequest> findAllForGatewaySync() {
+        return routeRepository.findAll().stream()
+            .map(route -> new RouteRequest(
+                route.getGatewayId(),
+                route.getServiceId(),
+                route.getId(),
+                route.getPath(),
+                route.getUri(),
+                route.getAuthType() == null ? AuthType.NONE : route.getAuthType()
+            ))
+            .toList();
+    }
+
+    private void ensureServiceExists(String gatewayId, String serviceId, DeveloperIdentity owner) {
+        if (!externalServiceRepository.existsByGatewayIdAndServiceIdAndOwnerUserUuid(
+            gatewayId,
+            serviceId,
+            owner.userUuid()
+        )) {
             throw new ResponseStatusException(NOT_FOUND, "Service not found in gateway: " + serviceId);
         }
     }
 
-    private void ensureGatewayExists(String gatewayId) {
-        if (!gatewayRepository.existsById(gatewayId)) {
+    private void ensureGatewayExists(String gatewayId, DeveloperIdentity owner) {
+        if (!gatewayRepository.existsByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())) {
             throw new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId);
+        }
+    }
+
+    private void ensureRouteOwnership(RouteEntity routeEntity, String routeId, DeveloperIdentity owner) {
+        if (routeEntity.getOwnerUserUuid() == null || !routeEntity.getOwnerUserUuid().equals(owner.userUuid())) {
+            throw new ResponseStatusException(NOT_FOUND, "Route not found: " + routeId);
         }
     }
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { getPortalSession } from "@/lib/platform-auth";
 import { StadoorLogo } from "@/components/stadoor-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,8 @@ type SiteHeaderProps = {
   ctaHref: string;
 };
 
-export function SiteHeader({ active, ctaLabel, ctaHref }: SiteHeaderProps) {
+export async function SiteHeader({ active, ctaLabel, ctaHref }: SiteHeaderProps) {
+  const session = await getPortalSession();
   const navItems = [
     { key: "home" as const, label: "Home", href: "/" },
     { key: "about" as const, label: "About", href: "/about" },
@@ -38,7 +40,7 @@ export function SiteHeader({ active, ctaLabel, ctaHref }: SiteHeaderProps) {
       <div className="flex items-center gap-3">
         <ThemeToggle />
         <Button asChild variant="ghost" size="sm" className="text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]">
-          <Link href="/login">Log in</Link>
+          <Link href={session ? "/api/auth/logout" : "/login"}>{session ? "Log out" : "Log in"}</Link>
         </Button>
         <Button
           asChild

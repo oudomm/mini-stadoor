@@ -35,4 +35,13 @@ public class ExternalServiceEntity {
 
     @Column(nullable = false)
     private String tags;
+
+    @Column
+    private String ownerUserUuid;
+
+    @Column
+    private String ownerUsername;
+
+    @Column
+    private String ownerEmail;
 }

@@ -26,4 +26,13 @@ public class GatewayEntity {
 
     @Column(nullable = false)
     private String description;
+
+    @Column
+    private String ownerUserUuid;
+
+    @Column
+    private String ownerUsername;
+
+    @Column
+    private String ownerEmail;
 }

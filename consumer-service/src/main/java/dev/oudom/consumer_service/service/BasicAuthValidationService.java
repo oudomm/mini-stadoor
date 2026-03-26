@@ -1,7 +1,6 @@
 package dev.oudom.consumer_service.service;
 
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -14,15 +13,10 @@ import java.util.Base64;
 @Service
 public class BasicAuthValidationService {
 
-    private final String username;
-    private final String password;
+    private final ConsumerUserStore consumerUserStore;
 
-    public BasicAuthValidationService(
-        @Value("${consumer.security.basic.username}") String username,
-        @Value("${consumer.security.basic.password}") String password
-    ) {
-        this.username = username;
-        this.password = password;
+    public BasicAuthValidationService(ConsumerUserStore consumerUserStore) {
+        this.consumerUserStore = consumerUserStore;
     }
 
     public Mono<AuthValidationResponse> validate(String authorizationHeader) {
@@ -31,11 +25,7 @@ public class BasicAuthValidationService {
     }
 
     public Mono<String> authenticate(String providedUsername, String providedPassword) {
-        if (!username.equals(providedUsername) || !password.equals(providedPassword)) {
-            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Basic authentication credentials"));
-        }
-
-        return Mono.just(providedUsername);
+        return consumerUserStore.authenticate(providedUsername, providedPassword);
     }
 
     private Mono<String> authenticateHeader(String authorizationHeader) {

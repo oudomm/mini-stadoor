@@ -19,7 +19,59 @@
       "value": "http://localhost:8761"
     },
     {
+      "key": "consumerServiceBaseUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "iamServerBaseUrl",
+      "value": "http://localhost:9090"
+    },
+    {
+      "key": "platformOAuthClientId",
+      "value": "mini-stadoor-postman"
+    },
+    {
+      "key": "platformOAuthClientSecret",
+      "value": "mini-stadoor-postman-secret"
+    },
+    {
+      "key": "platformRedirectUri",
+      "value": "https://oauth.pstmn.io/v1/browser-callback"
+    },
+    {
+      "key": "platformAuthorizationCode",
+      "value": ""
+    },
+    {
+      "key": "platformAccessToken",
+      "value": ""
+    },
+    {
+      "key": "registeredUsername",
+      "value": "alice-demo"
+    },
+    {
+      "key": "registeredPassword",
+      "value": "alice12345"
+    },
+    {
+      "key": "registeredApiKey",
+      "value": ""
+    },
+    {
       "key": "jwtAccessToken",
+      "value": ""
+    },
+    {
+      "key": "oauth2ClientId",
+      "value": "itp-standard"
+    },
+    {
+      "key": "oauth2ClientSecret",
+      "value": "qwerqwer"
+    },
+    {
+      "key": "oauth2AccessToken",
       "value": ""
     }
   ],
@@ -32,6 +84,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -50,7 +106,7 @@
                 "gateways"
               ]
             },
-            "description": "Creates the top-level gateway workspace."
+            "description": "Creates the top-level gateway workspace for the authenticated developer. Requires a platform IAM bearer token."
           },
           "response": []
         },
@@ -59,6 +115,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -78,7 +138,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the e-commerce gateway workspace."
+            "description": "Registers product-service into the authenticated developer's gateway workspace."
           },
           "response": []
         },
@@ -87,6 +147,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -105,7 +169,7 @@
                 "routes"
               ]
             },
-            "description": "Creates an open route inside the e-commerce gateway."
+            "description": "Creates an open route inside the authenticated developer's e-commerce gateway."
           },
           "response": []
         },
@@ -131,6 +195,278 @@
       ]
     },
     {
+      "name": "Consumer User",
+      "item": [
+        {
+          "name": "1. Register Consumer User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('registeredUsername', body.username);",
+                  "pm.collectionVariables.set('registeredApiKey', body.apiKey);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{consumerServiceBaseUrl}}/api/users/register",
+              "host": [
+                "{{consumerServiceBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "register"
+              ]
+            },
+            "description": "Registers a consumer-service user. The returned API key is stored in the collection variable registeredApiKey."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "IAM Server",
+      "item": [
+        {
+          "name": "1. OIDC Discovery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/.well-known/openid-configuration",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                ".well-known",
+                "openid-configuration"
+              ]
+            },
+            "description": "Checks that the copied iam-server is running as an OpenID Connect authorization server."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Public Welcome",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/public/welcome",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "public",
+                "welcome"
+              ]
+            },
+            "description": "Calls a public iam-server endpoint without authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Login Page",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/login",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Opens the form login page for iam-server. Demo credentials from the copied service are oudom / qwer."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Protected Users Endpoint",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/api/v1/users",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "users"
+              ]
+            },
+            "description": "Protected endpoint in iam-server. In Postman this will redirect to login unless you authenticate with the session flow manually."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Platform IAM",
+      "item": [
+        {
+          "name": "1. Open Portal Authorize URL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/oauth2/authorize?response_type=code&client_id={{platformOAuthClientId}}&redirect_uri={{platformRedirectUri}}&scope=openid%20profile%20email&state=postman-state&nonce=postman-nonce",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "oauth2",
+                "authorize"
+              ],
+              "query": [
+                {
+                  "key": "response_type",
+                  "value": "code"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{platformOAuthClientId}}"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{platformRedirectUri}}"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid profile email"
+                },
+                {
+                  "key": "state",
+                  "value": "postman-state"
+                },
+                {
+                  "key": "nonce",
+                  "value": "postman-nonce"
+                }
+              ]
+            },
+            "description": "Open this request in a browser, sign in with iam-server, then copy the code query parameter from the redirect URL into the collection variable platformAuthorizationCode."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Exchange Portal Authorization Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('platformAccessToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{platformOAuthClientId}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{platformOAuthClientSecret}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "authorization_code",
+                  "type": "text"
+                },
+                {
+                  "key": "code",
+                  "value": "{{platformAuthorizationCode}}",
+                  "type": "text"
+                },
+                {
+                  "key": "redirect_uri",
+                  "value": "{{platformRedirectUri}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/oauth2/token",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "oauth2",
+                "token"
+              ]
+            },
+            "description": "Exchanges the copied authorization code for a developer access token and stores it in platformAccessToken."
+          },
+          "response": []
+        },
+        {
+          "name": "3. List My Gateways",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            },
+            "description": "Lists only the gateways owned by the authenticated developer."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
       "name": "Basic Auth",
       "item": [
         {
@@ -138,6 +474,10 @@
           "request": {
             "method": "POST",
             "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
               {
                 "key": "Content-Type",
                 "value": "application/json"
@@ -156,7 +496,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by Basic Auth."
+            "description": "Creates a route protected by Basic Auth for the authenticated developer's gateway."
           },
           "response": []
         },
@@ -169,12 +509,12 @@
               "basic": [
                 {
                   "key": "username",
-                  "value": "enduser",
+                  "value": "{{registeredUsername}}",
                   "type": "string"
                 },
                 {
                   "key": "password",
-                  "value": "enduser123",
+                  "value": "{{registeredPassword}}",
                   "type": "string"
                 }
               ]
@@ -205,6 +545,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -222,7 +566,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by API key validation."
+            "description": "Creates a route protected by API key validation for the authenticated developer's gateway."
           },
           "response": []
         },
@@ -233,7 +577,7 @@
             "header": [
               {
                 "key": "X-API-Key",
-                "value": "stadoor-demo-key"
+                "value": "{{registeredApiKey}}"
               }
             ],
             "url": {
@@ -261,6 +605,10 @@
             "method": "POST",
             "header": [
               {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
                 "key": "Content-Type",
                 "value": "application/json"
               }
@@ -278,12 +626,24 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by JWT bearer token validation."
+            "description": "Creates a route protected by JWT bearer token validation for the authenticated developer's gateway."
           },
           "response": []
         },
         {
           "name": "2. Login To Issue Access And Refresh Tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('jwtAccessToken', body.accessToken);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -294,15 +654,13 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"enduser\",\n  \"password\": \"enduser123\"\n}"
+              "raw": "{\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
             },
             "url": {
-              "raw": "http://localhost:8081/api/login",
-              "protocol": "http",
+              "raw": "{{consumerServiceBaseUrl}}/api/login",
               "host": [
-                "localhost"
+                "{{consumerServiceBaseUrl}}"
               ],
-              "port": "8081",
               "path": [
                 "api",
                 "login"
@@ -323,12 +681,10 @@
               }
             ],
             "url": {
-              "raw": "http://localhost:8081/api/token/validate",
-              "protocol": "http",
+              "raw": "{{consumerServiceBaseUrl}}/api/token/validate",
               "host": [
-                "localhost"
+                "{{consumerServiceBaseUrl}}"
               ],
-              "port": "8081",
               "path": [
                 "api",
                 "token",
@@ -360,6 +716,132 @@
               ]
             },
             "description": "Calls a JWT protected route through standard-gateway."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "OAuth2",
+      "item": [
+        {
+          "name": "1. Create OAuth2 Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-oauth2\",\n  \"path\": \"/oauth2/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"OAUTH2\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "routes"
+              ]
+            },
+            "description": "Creates a route protected by OAuth2 bearer token validation through iam-server for the authenticated developer's gateway."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Request OAuth2 Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('oauth2AccessToken', body.access_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "basic",
+              "basic": [
+                {
+                  "key": "username",
+                  "value": "{{oauth2ClientId}}",
+                  "type": "string"
+                },
+                {
+                  "key": "password",
+                  "value": "{{oauth2ClientSecret}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "grant_type",
+                  "value": "client_credentials",
+                  "type": "text"
+                },
+                {
+                  "key": "scope",
+                  "value": "openid profile email",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{iamServerBaseUrl}}/oauth2/token",
+              "host": [
+                "{{iamServerBaseUrl}}"
+              ],
+              "path": [
+                "oauth2",
+                "token"
+              ]
+            },
+            "description": "Requests an access token from iam-server using the seeded OAuth2 client itp-standard / qwerqwer."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Call OAuth2 Route",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{oauth2AccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{standardGatewayBaseUrl}}/oauth2/products",
+              "host": [
+                "{{standardGatewayBaseUrl}}"
+              ],
+              "path": [
+                "oauth2",
+                "products"
+              ]
+            },
+            "description": "Calls an OAuth2 protected route through standard-gateway using an access token issued by iam-server."
           },
           "response": []
         }

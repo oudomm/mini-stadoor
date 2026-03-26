@@ -2,6 +2,7 @@ package dev.oudom.gateway_management_service.controller;
 
 import dev.oudom.gateway_management_service.dto.GatewayCatalogResponse;
 import dev.oudom.gateway_management_service.dto.GatewayRequest;
+import dev.oudom.gateway_management_service.security.DeveloperIdentityResolver;
 import dev.oudom.gateway_management_service.service.GatewayCatalogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,11 +23,12 @@ import java.util.Map;
 public class GatewayController {
 
     private final GatewayCatalogService gatewayCatalogService;
+    private final DeveloperIdentityResolver developerIdentityResolver;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createGateway(@Valid @RequestBody GatewayRequest request) {
-        GatewayRequest savedGateway = gatewayCatalogService.save(request);
+        GatewayRequest savedGateway = gatewayCatalogService.save(request, developerIdentityResolver.currentDeveloper());
         return Map.of(
             "message", "Gateway created",
             "gateway", savedGateway
@@ -35,6 +37,6 @@ public class GatewayController {
 
     @GetMapping
     public Map<String, List<GatewayCatalogResponse>> listGateways() {
-        return Map.of("gateways", gatewayCatalogService.findAll());
+        return Map.of("gateways", gatewayCatalogService.findAll(developerIdentityResolver.currentDeveloper()));
     }
 }

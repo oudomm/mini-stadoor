@@ -65,7 +65,7 @@ class ConsumerAuthValidationTests {
             .expectBody()
             .jsonPath("$.authenticated").isEqualTo(true)
             .jsonPath("$.authenticationType").isEqualTo("API_KEY")
-            .jsonPath("$.principal").isEqualTo("api-key-client");
+            .jsonPath("$.principal").isEqualTo("enduser");
     }
 
     @Test

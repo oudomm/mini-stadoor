@@ -7,8 +7,14 @@ spring:
     password: demo_pass
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     open-in-view: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090
+          jwk-set-uri: http://localhost:9090/oauth2/jwks
 server:
   port: 8085
 management:

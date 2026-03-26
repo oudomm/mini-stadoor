@@ -1,16 +1,12 @@
 import Link from "next/link";
 import {
+  ArrowRight,
   BadgeCheck,
-  KeyRound,
   ShieldCheck,
-  Sparkles,
-  TerminalSquare,
   UserRound,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { StadoorLogo } from "@/components/stadoor-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -35,14 +31,14 @@ export default function RegisterPage() {
                 <span className="block text-[var(--accent)]">workspace identity.</span>
               </h2>
               <p className="mt-5 text-base leading-8 text-[var(--text-muted)]">
-                Start with a clean account shell today, then connect it later to IAM, OAuth2, and
-                the full Mini Stadoor access model.
+                Platform identity is now expected to come from iam-server, so this screen works as
+                an onboarding guide instead of a fake local signup form.
               </p>
 
               <div className="mt-8 grid gap-4 border-t border-white/8 pt-5 sm:grid-cols-3">
                 <RegisterStat icon={<BadgeCheck className="h-4 w-4" />} label="Portal" value="Ready" />
                 <RegisterStat icon={<ShieldCheck className="h-4 w-4" />} label="Security" value="Live" />
-                <RegisterStat icon={<KeyRound className="h-4 w-4" />} label="IAM" value="Next" />
+                <RegisterStat icon={<UserRound className="h-4 w-4" />} label="IAM" value="Live" />
               </div>
             </div>
 
@@ -75,104 +71,49 @@ export default function RegisterPage() {
                     developer_onboarding
                   </p>
                   <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[var(--text-strong)]">
-                    Create account
+                    IAM onboarding
                   </h1>
                   <p className="mt-3 max-w-xl text-base leading-7 text-[var(--text-muted)]">
-                    This is a polished prototype flow for now. It will later connect to real IAM while
-                    keeping the same Mini Stadoor onboarding experience.
+                    Use the copied iam-server for platform login today. Full self-service signup can be
+                    added later inside that IAM surface without changing the portal entry point.
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="hidden rounded-full border border-[var(--border-strong)] bg-[var(--surface-muted)] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)] sm:block">
-                    preview signup
+                    iam onboarding
                   </div>
                   <ThemeToggle />
                 </div>
               </div>
 
-              <div className="mt-7 grid gap-3 sm:grid-cols-2">
-                <GhostAuthButton label="Continue with GitHub" />
-                <GhostAuthButton label="Continue with Google" />
-              </div>
-
-              <div className="my-7 flex items-center gap-4">
-                <div className="h-px flex-1 bg-white/8" />
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">
-                  or create with email
-                </p>
-                <div className="h-px flex-1 bg-white/8" />
-              </div>
-
-              <form action="/dashboard" className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="full-name" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Full name
-                  </Label>
-                  <Input
-                    id="full-name"
-                    defaultValue="John Doe"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="username" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Username
-                  </Label>
-                  <Input
-                    id="username"
-                    defaultValue="@handle"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="email" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Work email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue="dev@company.com"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
-                  <p className="text-sm text-[var(--accent-soft)]">Verified developer domains will fit future IAM onboarding best.</p>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="password" className="text-[11px] uppercase tracking-[0.2em] text-[var(--text-faint)]">
-                    Secure password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    defaultValue="password"
-                    className="border-white/8 bg-[var(--field)] text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                  />
-                  <div className="grid grid-cols-4 gap-2">
-                    <span className="h-1.5 rounded-full bg-[var(--accent)]" />
-                    <span className="h-1.5 rounded-full bg-[var(--accent)]" />
-                    <span className="h-1.5 rounded-full bg-white/12" />
-                    <span className="h-1.5 rounded-full bg-white/12" />
-                  </div>
-                  <div className="flex items-center justify-between text-sm text-[var(--text-faint)]">
-                    <span>Strength: Strong</span>
-                    <span>Entropy: 78 bits</span>
+              <div className="mt-7 space-y-5">
+                <div className="rounded-[1rem] border border-white/8 bg-[var(--surface-muted)] p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">
+                    Demo platform account
+                  </p>
+                  <div className="mt-4 space-y-3 text-sm text-[var(--text-muted)]">
+                    <p>
+                      Use the seeded IAM user to access the portal now:
+                      <span className="ml-2 font-semibold text-[var(--text-strong)]">oudom / qwer</span>
+                    </p>
+                    <p>
+                      Future self-service signup should live inside `iam-server`, not as a separate local portal form.
+                    </p>
                   </div>
                 </div>
 
-                <div className="md:col-span-2">
-                  <Button
-                    type="submit"
-                    variant="brand"
-                    size="lg"
-                    className="h-14 w-full rounded-[1rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_32px_var(--glow)] hover:bg-[var(--accent-bright)]"
-                  >
-                    Initialize account
-                    <Sparkles className="h-4 w-4" />
-                  </Button>
-                </div>
-              </form>
+                <Button
+                  asChild
+                  variant="brand"
+                  size="lg"
+                  className="h-14 w-full rounded-[1rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_32px_var(--glow)] hover:bg-[var(--accent-bright)]"
+                >
+                  <Link href="/api/auth/login">
+                    Continue with IAM
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
 
               <div className="mt-8 flex flex-col gap-4 border-t border-white/8 pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-[var(--text-muted)]">
@@ -191,17 +132,6 @@ export default function RegisterPage() {
         </section>
       </div>
     </main>
-  );
-}
-
-function GhostAuthButton({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex h-14 items-center justify-center rounded-[0.95rem] border border-white/8 bg-[var(--surface-muted)] text-sm font-medium text-[var(--text-strong)] transition hover:border-white/14 hover:bg-[var(--surface-soft)]"
-    >
-      {label}
-    </button>
   );
 }
 

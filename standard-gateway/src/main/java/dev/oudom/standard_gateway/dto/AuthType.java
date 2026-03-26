@@ -4,5 +4,6 @@ public enum AuthType {
     NONE,
     BASIC,
     API_KEY,
-    JWT
+    JWT,
+    OAUTH2
 }
