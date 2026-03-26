@@ -18,6 +18,13 @@
   --field: #ffffff;
   --code: #eef3ed;
   --glow: rgba(13, 72, 4, 0.12);
+  --mascot-core: #c9ddc4;
+  --mascot-core-bright: #eef7eb;
+  --mascot-flame: #1e7f1b;
+  --mascot-flame-bright: #56e340;
+  --mascot-eye: #f7fff3;
+  --mascot-pupil: #0d4804;
+  --mascot-glow: rgba(86, 227, 64, 0.3);
 }
 
 html[data-theme="dark"] {
@@ -38,6 +45,13 @@ html[data-theme="dark"] {
   --field: #2b2121;
   --code: #161111;
   --glow: rgba(86, 227, 64, 0.12);
+  --mascot-core: #233324;
+  --mascot-core-bright: #315636;
+  --mascot-flame: #43cd34;
+  --mascot-flame-bright: #92ff7f;
+  --mascot-eye: #f6ffe9;
+  --mascot-pupil: #0f3b0c;
+  --mascot-glow: rgba(86, 227, 64, 0.35);
 }
 
 @theme inline {
@@ -94,6 +108,38 @@ a {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
+.guide-section {
+  isolation: isolate;
+}
+
+.guide-section::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 0;
+  background:
+    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 42%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, transparent), transparent 45%);
+}
+
+.guide-section[data-guide-active="true"]::after {
+  opacity: 1;
+}
+
+html[data-theme="dark"] .guide-section::after {
+  background:
+    radial-gradient(circle at 50% 12%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 44%),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent 48%);
+}
+
+.guide-section > * {
+  position: relative;
+  z-index: 1;
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -128,6 +174,16 @@ a {
   }
 }
 
+@keyframes mascot-bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
 @media (max-height: 840px) {
   .site-header {
     padding-top: 0.6rem;
@@ -146,5 +202,22 @@ a {
 
   .signal-field {
     min-height: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-drift,
+  .animate-rise,
+  .animate-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .mascot-motion {
+    animation: none !important;
+  }
+
+  .guide-section::after {
+    transition: none !important;
   }
 }

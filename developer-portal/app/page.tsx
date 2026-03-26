@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Fingerprint, Network, Route, ShieldCheck, Sparkles } from "lucide-react";
 
+import { LandingMascot } from "@/components/landing-mascot";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,17 @@ const platformRoadmap = [
 export default function Home() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
-      <section className="relative min-h-screen overflow-hidden border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[radial-gradient(circle_at_18%_18%,color-mix(in_srgb,var(--accent)_16%,transparent),transparent_24%),radial-gradient(circle_at_82%_22%,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_20%),linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_86%,var(--background))_56%,var(--background)_100%)]">
+      <LandingMascot />
+
+      <section
+        data-guide-section="hero"
+        data-guide-title="Start with one gateway"
+        data-guide-detail="Group services under one workspace before you publish any route."
+        data-mascot-x="14vw"
+        data-mascot-y="74vh"
+        data-mascot-align="left"
+        className="guide-section relative min-h-screen overflow-hidden border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[radial-gradient(circle_at_18%_18%,color-mix(in_srgb,var(--accent)_16%,transparent),transparent_24%),radial-gradient(circle_at_82%_22%,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_20%),linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_86%,var(--background))_56%,var(--background)_100%)]"
+      >
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:84px_84px] opacity-20" />
 
         <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-5 sm:px-6 lg:px-8">
@@ -98,7 +109,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_86%,var(--background))]">
+      <section
+        data-guide-section="workflow"
+        data-guide-title="Follow the sequence"
+        data-guide-detail="Create gateway, then register service, then publish the route."
+        data-mascot-x="77vw"
+        data-mascot-y="32vh"
+        data-mascot-align="right"
+        className="guide-section relative border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_86%,var(--background))]"
+      >
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
             <div>
@@ -121,7 +140,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--background)]">
+      <section
+        data-guide-section="surface"
+        data-guide-title="Protect by route"
+        data-guide-detail="Each route can choose NONE, BASIC, API_KEY, JWT, or OAUTH2."
+        data-mascot-x="16vw"
+        data-mascot-y="64vh"
+        data-mascot-align="left"
+        className="guide-section relative border-b border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--background)]"
+      >
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="grid gap-14 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
@@ -149,7 +176,15 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-[color:color-mix(in_srgb,var(--background)_92%,var(--surface))]">
+      <section
+        data-guide-section="cta"
+        data-guide-title="Open the workspace"
+        data-guide-detail="Use the dashboard to run the full demo flow after the landing page."
+        data-mascot-x="80vw"
+        data-mascot-y="68vh"
+        data-mascot-align="right"
+        className="guide-section relative bg-[color:color-mix(in_srgb,var(--background)_92%,var(--surface))]"
+      >
         <div className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
           <div className="border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--accent)_12%,transparent),transparent_30%),linear-gradient(180deg,color-mix(in_srgb,var(--surface)_88%,var(--background))_0%,var(--background)_100%)] px-6 py-10 text-center sm:px-10">
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
