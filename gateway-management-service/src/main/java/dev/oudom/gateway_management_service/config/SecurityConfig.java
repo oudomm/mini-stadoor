@@ -10,11 +10,21 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
+    private final ApiSecurityErrorHandlers apiSecurityErrorHandlers;
+
+    public SecurityConfig(ApiSecurityErrorHandlers apiSecurityErrorHandlers) {
+        this.apiSecurityErrorHandlers = apiSecurityErrorHandlers;
+    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(apiSecurityErrorHandlers)
+                .accessDeniedHandler(apiSecurityErrorHandlers)
+            )
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/actuator/health", "/actuator/info", "/internal/routes").permitAll()
                 .anyRequest().authenticated()

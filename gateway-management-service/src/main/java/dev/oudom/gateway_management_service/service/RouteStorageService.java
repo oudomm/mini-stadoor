@@ -2,6 +2,8 @@ package dev.oudom.gateway_management_service.service;
 
 import dev.oudom.gateway_management_service.dto.RouteRequest;
 import dev.oudom.gateway_management_service.dto.AuthType;
+import dev.oudom.gateway_management_service.entity.ExternalServiceEntity;
+import dev.oudom.gateway_management_service.entity.GatewayEntity;
 import dev.oudom.gateway_management_service.entity.RouteEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
@@ -13,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -24,20 +27,29 @@ public class RouteStorageService {
     private final ExternalServiceRepository externalServiceRepository;
 
     public RouteRequest save(RouteRequest routeRequest, DeveloperIdentity owner) {
-        ensureGatewayExists(routeRequest.gatewayId(), owner);
-        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        GatewayEntity gateway = resolveGateway(routeRequest.gatewayId(), owner);
+        ExternalServiceEntity service = resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        validateRouteAuthType(routeRequest, service, gateway);
+        AuthType effectiveAuthType = resolveEffectiveAuthType(routeRequest.authType(), service.getAuthType(), gateway.getAuthType());
         routeRepository.save(new RouteEntity(
             routeRequest.gatewayId(),
             routeRequest.serviceId(),
             routeRequest.id(),
             routeRequest.path(),
             routeRequest.uri(),
-            routeRequest.authType(),
+            effectiveAuthType,
             owner.userUuid(),
             owner.username(),
             owner.email()
         ));
-        return routeRequest;
+        return new RouteRequest(
+            routeRequest.gatewayId(),
+            routeRequest.serviceId(),
+            routeRequest.id(),
+            routeRequest.path(),
+            routeRequest.uri(),
+            effectiveAuthType
+        );
     }
 
     public RouteRequest update(String id, RouteRequest routeRequest, DeveloperIdentity owner) {
@@ -45,13 +57,15 @@ public class RouteStorageService {
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Route not found: " + id));
 
         ensureRouteOwnership(routeEntity, id, owner);
-        ensureGatewayExists(routeRequest.gatewayId(), owner);
-        ensureServiceExists(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        GatewayEntity gateway = resolveGateway(routeRequest.gatewayId(), owner);
+        ExternalServiceEntity service = resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        validateRouteAuthType(routeRequest, service, gateway);
+        AuthType effectiveAuthType = resolveEffectiveAuthType(routeRequest.authType(), service.getAuthType(), gateway.getAuthType());
         routeEntity.setGatewayId(routeRequest.gatewayId());
         routeEntity.setServiceId(routeRequest.serviceId());
         routeEntity.setPath(routeRequest.path());
         routeEntity.setUri(routeRequest.uri());
-        routeEntity.setAuthType(routeRequest.authType());
+        routeEntity.setAuthType(effectiveAuthType);
         routeRepository.save(routeEntity);
 
         return new RouteRequest(
@@ -60,7 +74,7 @@ public class RouteStorageService {
             routeEntity.getId(),
             routeEntity.getPath(),
             routeEntity.getUri(),
-            routeEntity.getAuthType()
+            effectiveAuthType
         );
     }
 
@@ -79,7 +93,8 @@ public class RouteStorageService {
                 route.getId(),
                 route.getPath(),
                 route.getUri(),
-                route.getAuthType() == null ? AuthType.NONE : route.getAuthType()))
+                route.getAuthType() == null ? AuthType.NONE : route.getAuthType()
+            ))
             .toList();
     }
 
@@ -113,19 +128,61 @@ public class RouteStorageService {
             .toList();
     }
 
-    private void ensureServiceExists(String gatewayId, String serviceId, DeveloperIdentity owner) {
-        if (!externalServiceRepository.existsByGatewayIdAndServiceIdAndOwnerUserUuid(
-            gatewayId,
-            serviceId,
-            owner.userUuid()
-        )) {
-            throw new ResponseStatusException(NOT_FOUND, "Service not found in gateway: " + serviceId);
-        }
+    private GatewayEntity resolveGateway(String gatewayId, DeveloperIdentity owner) {
+        return gatewayRepository.findByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId));
     }
 
-    private void ensureGatewayExists(String gatewayId, DeveloperIdentity owner) {
-        if (!gatewayRepository.existsByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())) {
-            throw new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId);
+    private ExternalServiceEntity resolveService(String gatewayId, String serviceId, DeveloperIdentity owner) {
+        return externalServiceRepository.findByGatewayIdAndServiceIdAndOwnerUserUuid(gatewayId, serviceId, owner.userUuid())
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Service not found in gateway: " + serviceId));
+    }
+
+    private AuthType resolveEffectiveAuthType(
+        AuthType routeAuthType,
+        AuthType serviceAuthType,
+        AuthType gatewayDefaultAuthType
+    ) {
+        if (serviceAuthType != null) {
+            return serviceAuthType;
+        }
+        if (routeAuthType != null) {
+            return routeAuthType;
+        }
+        return gatewayDefaultAuthType == null ? AuthType.NONE : gatewayDefaultAuthType;
+    }
+
+    private void validateRouteAuthType(
+        RouteRequest routeRequest,
+        ExternalServiceEntity service,
+        GatewayEntity gateway
+    ) {
+        AuthType gatewayAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
+        AuthType serviceAuthType = service.getAuthType();
+        AuthType requestedRouteAuthType = routeRequest.authType();
+
+        if (serviceAuthType != null && serviceAuthType != gatewayAuthType) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Service " + service.getServiceId() + " has authType " + serviceAuthType
+                    + " which does not match gateway security " + gatewayAuthType
+            );
+        }
+
+        if (serviceAuthType != null && requestedRouteAuthType != null && requestedRouteAuthType != serviceAuthType) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Route authType " + requestedRouteAuthType + " is not allowed because service "
+                    + service.getServiceId() + " enforces " + serviceAuthType
+            );
+        }
+
+        if (requestedRouteAuthType != null && requestedRouteAuthType != gatewayAuthType) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Route authType " + requestedRouteAuthType + " is not allowed in gateway " + gateway.getGatewayId()
+                    + ". Gateway security is " + gatewayAuthType
+            );
         }
     }
 

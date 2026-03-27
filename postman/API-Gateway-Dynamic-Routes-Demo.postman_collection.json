@@ -95,7 +95,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"gatewayName\": \"E-Commerce Gateway\",\n  \"description\": \"Gateway workspace for catalog, checkout, and customer APIs.\"\n}"
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"gatewayName\": \"E-Commerce Gateway\",\n  \"description\": \"Gateway workspace for catalog, checkout, and customer APIs.\",\n  \"authType\": \"NONE\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
@@ -106,7 +106,7 @@
                 "gateways"
               ]
             },
-            "description": "Creates the top-level gateway workspace for the authenticated developer. Requires a platform IAM bearer token."
+            "description": "Creates the top-level gateway workspace for the authenticated developer with a gateway default auth policy. This sample uses NONE so later requests can demonstrate route-level overrides."
           },
           "response": []
         },
@@ -126,7 +126,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"]\n}"
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"],\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -138,7 +138,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the authenticated developer's gateway workspace."
+            "description": "Registers product-service into the authenticated developer's gateway workspace. This sample leaves authType null so each route can choose its own auth policy. Set authType to BASIC, API_KEY, JWT, or NONE if you want every route in this service to inherit one policy."
           },
           "response": []
         },
@@ -158,7 +158,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-open\",\n  \"path\": \"/open/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"NONE\"\n}"
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-open\",\n  \"path\": \"/open/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -169,7 +169,7 @@
                 "routes"
               ]
             },
-            "description": "Creates an open route inside the authenticated developer's e-commerce gateway."
+            "description": "Creates an open route inside the authenticated developer's e-commerce gateway. Because the service authType is null and this route authType is null, the route inherits the gateway default NONE policy."
           },
           "response": []
         },
@@ -188,7 +188,7 @@
                 "products"
               ]
             },
-            "description": "Calls product-service through standard-gateway without auth."
+            "description": "Calls product-service through standard-gateway without auth because the route resolves to the gateway default NONE policy."
           },
           "response": []
         }
@@ -496,7 +496,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by Basic Auth for the authenticated developer's gateway."
+            "description": "Creates a route protected by Basic Auth. This works because the service was registered with authType null, so this route can override the gateway default with BASIC."
           },
           "response": []
         },
@@ -530,7 +530,7 @@
                 "products"
               ]
             },
-            "description": "Calls a Basic Auth protected route through standard-gateway."
+            "description": "Calls a Basic Auth protected route through standard-gateway using the consumer credentials created earlier."
           },
           "response": []
         }
@@ -566,7 +566,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by API key validation for the authenticated developer's gateway."
+            "description": "Creates a route protected by API key validation. This route sets API_KEY directly because the service authType is still null."
           },
           "response": []
         },
@@ -590,7 +590,7 @@
                 "products"
               ]
             },
-            "description": "Calls an API key protected route through standard-gateway."
+            "description": "Calls an API key protected route through standard-gateway using the API key returned by consumer registration."
           },
           "response": []
         }
@@ -626,7 +626,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by JWT bearer token validation for the authenticated developer's gateway."
+            "description": "Creates a route protected by JWT bearer token validation. This route sets JWT directly because the service authType is still null."
           },
           "response": []
         },
@@ -666,7 +666,7 @@
                 "login"
               ]
             },
-            "description": "Issues signed access and refresh tokens from consumer-service."
+            "description": "Issues signed access and refresh tokens from consumer-service for the registered consumer user."
           },
           "response": []
         },
@@ -715,7 +715,7 @@
                 "products"
               ]
             },
-            "description": "Calls a JWT protected route through standard-gateway."
+            "description": "Calls a JWT protected route through standard-gateway with the bearer token issued by consumer-service."
           },
           "response": []
         }
@@ -751,7 +751,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by OAuth2 bearer token validation through iam-server for the authenticated developer's gateway."
+            "description": "Optional IAM-backed example: creates a route protected by OAuth2 bearer token validation through iam-server. Like the other route-level examples, this works because the service authType is null."
           },
           "response": []
         },

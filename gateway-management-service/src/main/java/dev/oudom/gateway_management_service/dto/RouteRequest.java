@@ -21,7 +21,4 @@ public record RouteRequest(
     String uri,
     AuthType authType
 ) {
-    public RouteRequest {
-        authType = authType == null ? AuthType.NONE : authType;
-    }
 }

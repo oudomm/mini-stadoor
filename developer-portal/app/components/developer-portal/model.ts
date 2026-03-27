@@ -1,14 +1,23 @@
 "use client";
 
-export type DashboardTab = "overview" | "gateway" | "iam";
+export type DashboardTab =
+  | "dashboard"
+  | "gateways"
+  | "services"
+  | "routes"
+  | "security"
+  | "consumers"
+  | "settings";
 export type SupportedAuthType = "NONE" | "BASIC" | "API_KEY" | "JWT";
 export type FutureAuthType = "OAUTH2";
+export type GatewayAuthType = SupportedAuthType | FutureAuthType;
 export type GatewayWorkspaceTab = "gateway" | "service" | "route";
 
 export type GatewayForm = {
   gatewayId: string;
   gatewayName: string;
   description: string;
+  authType: GatewayAuthType;
 };
 
 export type ServiceForm = {
@@ -18,6 +27,7 @@ export type ServiceForm = {
   address: string;
   port: string;
   tags: string;
+  authType: SupportedAuthType | "";
 };
 
 export type RouteForm = {
@@ -26,7 +36,7 @@ export type RouteForm = {
   id: string;
   path: string;
   uri: string;
-  authType: SupportedAuthType;
+  authType: SupportedAuthType | "";
 };
 
 export type RouteSummary = {
@@ -35,7 +45,7 @@ export type RouteSummary = {
   id: string;
   path: string;
   uri: string;
-  authType?: SupportedAuthType;
+  authType?: GatewayAuthType;
 };
 
 export type ServiceSummary = {
@@ -45,6 +55,7 @@ export type ServiceSummary = {
   address: string;
   port: number;
   tags: string[];
+  authType?: GatewayAuthType;
   routes: RouteSummary[];
 };
 
@@ -52,6 +63,7 @@ export type GatewaySummary = {
   gatewayId: string;
   gatewayName: string;
   description: string;
+  authType?: GatewayAuthType;
   services: ServiceSummary[];
 };
 
@@ -63,6 +75,8 @@ export type StatusState = {
 
 export type DeveloperPortalProps = {
   activeTab: DashboardTab;
+  operatorName?: string;
+  operatorEmail?: string;
 };
 
 export type RecentActivityItem = {
@@ -75,6 +89,7 @@ export const initialGatewayForm: GatewayForm = {
   gatewayId: "ecommerce-gateway",
   gatewayName: "E-Commerce Gateway",
   description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
+  authType: "NONE",
 };
 
 export const initialServiceForm: ServiceForm = {
@@ -84,6 +99,7 @@ export const initialServiceForm: ServiceForm = {
   address: "localhost",
   port: "8082",
   tags: "manual-registration,ecommerce,spring",
+  authType: "",
 };
 
 export const initialRouteForm: RouteForm = {
@@ -92,7 +108,7 @@ export const initialRouteForm: RouteForm = {
   id: "product-route-open",
   path: "/open/products/**",
   uri: "lb://product-service",
-  authType: "NONE",
+  authType: "",
 };
 
 export const gatewayPresets = [
@@ -102,6 +118,7 @@ export const gatewayPresets = [
       gatewayId: "ecommerce-gateway",
       gatewayName: "E-Commerce Gateway",
       description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
+      authType: "JWT" as const,
     },
   },
   {
@@ -110,6 +127,7 @@ export const gatewayPresets = [
       gatewayId: "partner-gateway",
       gatewayName: "Partner Gateway",
       description: "Expose supplier and partner endpoints with isolated routing and security rules.",
+      authType: "API_KEY" as const,
     },
   },
 ] as const;
@@ -124,6 +142,7 @@ export const servicePresets = [
       address: "localhost",
       port: "8082",
       tags: "manual-registration,ecommerce,spring",
+      authType: "",
     },
   },
   {
@@ -135,6 +154,7 @@ export const servicePresets = [
       address: "localhost",
       port: "8090",
       tags: "manual-registration,ecommerce,express",
+      authType: "",
     },
   },
   {
@@ -146,6 +166,7 @@ export const servicePresets = [
       address: "localhost",
       port: "8091",
       tags: "manual-registration,ecommerce,fastapi",
+      authType: "",
     },
   },
 ] as const;

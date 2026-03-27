@@ -27,7 +27,8 @@ public record ServiceRegistrationRequest(
     @Min(value = 1, message = "port must be greater than 0")
     @Max(value = 65535, message = "port must be less than or equal to 65535")
     Integer port,
-    List<@NotBlank(message = "tags must not contain blank values") String> tags
+    List<@NotBlank(message = "tags must not contain blank values") String> tags,
+    AuthType authType
 ) {
     public List<String> normalizedTags() {
         return tags == null ? List.of() : List.copyOf(tags);

@@ -2,9 +2,10 @@ spring:
   application:
     name: gateway-management-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/gateway_management_service_db
-    username: demo_user
-    password: demo_pass
+    url: jdbc:h2:mem:gateway-management-service;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -15,21 +16,13 @@ spring:
         jwt:
           issuer-uri: http://localhost:9090
           jwk-set-uri: http://localhost:9090/oauth2/jwks
-server:
-  port: 8085
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+
 eureka:
   client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-    registry-fetch-interval-seconds: 30
-  instance:
-    prefer-ip-address: false
+    enabled: false
+
 eureka-api:
   base-url: http://localhost:8761/eureka/v2
+
 standard-gateway:
   base-url: http://standard-gateway

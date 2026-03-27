@@ -1,25 +1,25 @@
 import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import {
-  Activity,
   Bell,
-  Fingerprint,
   Grid2x2,
-  LifeBuoy,
-  Network,
-  Plus,
+  Moon,
+  Route,
   Search,
+  Server,
+  Settings,
   Shield,
-  ShieldCheck,
+  Users,
   Waypoints,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requirePortalSession } from "@/lib/platform-auth";
-import { StadoorLogo } from "@/components/stadoor-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DeveloperPortal } from "../components/developer-portal";
+import type { DashboardTab } from "../components/developer-portal/model";
 
 type DashboardPageProps = {
   searchParams?: Promise<{
@@ -27,56 +27,89 @@ type DashboardPageProps = {
   }>;
 };
 
-const dashboardTabs = [
-  "overview",
-  "gateway",
-  "iam",
-] as const;
-
-type DashboardTab = (typeof dashboardTabs)[number];
+const sidebarItems: Array<{
+  key: DashboardTab;
+  label: string;
+  icon: LucideIcon;
+}> = [
+  { key: "dashboard", label: "Dashboard", icon: Grid2x2 },
+  { key: "gateways", label: "Gateways", icon: Waypoints },
+  { key: "services", label: "Services", icon: Server },
+  { key: "routes", label: "Routes", icon: Route },
+  { key: "security", label: "Security", icon: Shield },
+  { key: "consumers", label: "Consumers", icon: Users },
+  { key: "settings", label: "Settings", icon: Settings },
+];
 
 const tabMeta: Record<
   DashboardTab,
   {
-    label: string;
-    eyebrow: string;
     title: string;
     description: string;
-    ctaLabel: string;
-    ctaHref: string;
+    ctaLabel?: string;
+    ctaHref?: string;
   }
 > = {
-  overview: {
-    label: "Overview",
-    eyebrow: "stadoor_control_plane",
-    title: "Developer Security SaaS",
-    description:
-      "Operate Mini Stadoor as a product control plane: register developer applications, group them by gateway workspace, and expose the wider security platform roadmap in one place.",
-    ctaLabel: "Open gateway",
-    ctaHref: "/dashboard?tab=gateway",
+  dashboard: {
+    title: "Dashboard",
+    description: "Manage and monitor your API gateway workspaces and protected routes.",
   },
-  gateway: {
-    label: "Gateway",
-    eyebrow: "gateway_registration_routing",
-    title: "Gateway Management",
-    description:
-      "Create gateway workspaces, register services inside them, and publish dynamic routes with route-level security in one flow.",
-    ctaLabel: "Manage gateway",
-    ctaHref: "/dashboard?tab=gateway",
+  gateways: {
+    title: "Gateways",
+    description: "Create and configure gateway workspaces for grouped service ownership.",
+    ctaLabel: "Add Gateway",
+    ctaHref: "/dashboard?tab=gateways",
   },
-  iam: {
-    label: "IAM",
-    eyebrow: "identity_access_management",
-    title: "Identity Platform",
-    description:
-      "Reserve product space for login, access control, token issuance, and OAuth2 with OIDC so Mini Stadoor feels like a real developer security suite.",
-    ctaLabel: "Roadmap view",
-    ctaHref: "/dashboard?tab=iam",
+  services: {
+    title: "Services",
+    description: "Register and manage backend services for your gateways.",
+    ctaLabel: "Add Service",
+    ctaHref: "/dashboard?tab=services",
+  },
+  routes: {
+    title: "Routes",
+    description: "Configure API routes and map public endpoints to backend services.",
+    ctaLabel: "Add Route",
+    ctaHref: "/dashboard?tab=routes",
+  },
+  security: {
+    title: "Security",
+    description: "Track route protection strategy across BASIC, API_KEY, JWT, and planned OAuth2.",
+  },
+  consumers: {
+    title: "Consumers",
+    description: "Manage consumer access for Basic Auth, API Key, and JWT protected routes.",
+  },
+  settings: {
+    title: "Settings",
+    description: "Configure your account, defaults, and portal preferences.",
   },
 };
 
 function normalizeTab(tab?: string): DashboardTab {
-  return dashboardTabs.includes(tab as DashboardTab) ? (tab as DashboardTab) : "overview";
+  if (tab === "overview") {
+    return "dashboard";
+  }
+  if (tab === "gateway") {
+    return "gateways";
+  }
+  if (tab === "iam") {
+    return "security";
+  }
+  return sidebarItems.some((item) => item.key === tab) ? (tab as DashboardTab) : "dashboard";
+}
+
+function initials(name?: string, username?: string) {
+  const source = name || username || "DV";
+  const chunks = source
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (chunks.length === 0) {
+    return "DV";
+  }
+  return chunks.map((chunk) => chunk.charAt(0).toUpperCase()).join("");
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
@@ -84,182 +117,107 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const params = searchParams ? await searchParams : undefined;
   const activeTab = normalizeTab(params?.tab);
   const meta = tabMeta[activeTab];
+  const displayName = session.displayName ?? session.username;
+  const displayEmail = session.email ?? `${session.username}@stadoor.com`;
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
-      <div className="grid min-h-screen xl:grid-cols-[284px_minmax(0,1fr)]">
-        <aside className="border-r border-white/6 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_92%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_84%,var(--background))_100%)] px-5 py-6 xl:sticky xl:top-0 xl:h-screen">
-          <StadoorLogo
-            iconClassName="h-12 w-12"
-            wordmarkClassName="text-3xl uppercase tracking-[-0.05em] text-[var(--text-strong)]"
-            subtitleClassName="hidden"
-          />
-
-          <div className="mt-10 border-t border-white/8 pt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
-                  signal_alpha
-                </p>
-                <p className="mt-2 text-xs uppercase tracking-[0.2em] text-[var(--text-faint)]">developer_workspace</p>
-              </div>
-              <div className="rounded-full border border-[var(--border-strong)] bg-[var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">
-                live
-              </div>
-            </div>
-            <p className="mt-5 max-w-[17rem] text-sm leading-7 text-[var(--text-muted)]">
-              Control center for gateway workspaces, service onboarding, and route security across the Mini Stadoor prototype.
-            </p>
+      <div className="grid min-h-screen xl:grid-cols-[252px_minmax(0,1fr)]">
+        <aside className="flex flex-col border-r border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_82%,var(--background))]">
+          <div className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] px-6 py-7">
+            <p className="text-4xl font-semibold tracking-[-0.055em] text-[var(--text-strong)]">Stadoor</p>
+            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">Developer Portal</p>
           </div>
 
-          <div className="animate-panel mt-8 space-y-2 rounded-[1.2rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_78%,transparent)] p-2" style={{ animationDelay: "80ms" }}>
-            <SidebarItem
-              icon={<Grid2x2 className="h-4 w-4" />}
-              label="Overview"
-              href="/dashboard?tab=overview"
-              active={activeTab === "overview"}
-            />
-            <SidebarItem
-              icon={<Network className="h-4 w-4" />}
-              label="Gateway"
-              href="/dashboard?tab=gateway"
-              active={activeTab === "gateway"}
-            />
-            <SidebarItem
-              icon={<Fingerprint className="h-4 w-4" />}
-              label="IAM"
-              href="/dashboard?tab=iam"
-              active={activeTab === "iam"}
-            />
-          </div>
+          <nav className="space-y-1 px-3 py-4">
+            {sidebarItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = item.key === activeTab;
+              return (
+                <Link
+                  key={item.key}
+                  href={`/dashboard?tab=${item.key}`}
+                  className={`flex items-center gap-3 rounded-[0.82rem] px-3.5 py-3 text-[1.05rem] font-medium transition ${
+                    isActive
+                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                      : "text-[var(--accent-soft)] hover:bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)]"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-          <div className="animate-panel mt-10 rounded-[1.2rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_72%,transparent)] p-4" style={{ animationDelay: "140ms" }}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">Current surface</p>
-            <div className="mt-4 space-y-3">
-              <MiniSignal label="Application registration" />
-              <MiniSignal label="Gateway grouping" />
-              <MiniSignal label="Dynamic gateway routes" />
-              <MiniSignal label="Identity roadmap" />
-              <MiniSignal label="Security controls" />
-            </div>
-          </div>
-
-          <Button
-            variant="brand"
-            className="mt-10 h-12 w-full rounded-[0.95rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
-            asChild
-          >
-            <Link href="/dashboard?tab=gateway">Open gateway</Link>
-          </Button>
-
-          <div className="mt-8 border-t border-white/8 pt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Status panel</p>
-            <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Live</p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">workspace control plane available</p>
-            <div className="mt-5 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">
-              <Activity className="h-3.5 w-3.5" />
-              systems_operational
-            </div>
-          </div>
-
-          <div className="mt-8 flex items-center justify-between text-[12px] uppercase tracking-[0.18em] text-[var(--text-faint)]">
-            <p>Docs</p>
-            <p>Support</p>
+          <div className="mt-auto border-t border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] px-6 py-5 text-sm text-[var(--text-faint)]">
+            <p>Version 1.0.0</p>
+            <p className="mt-1">© 2026 Stadoor</p>
           </div>
         </aside>
 
         <section className="min-w-0">
-          <header className="border-b border-white/6 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--surface))_0%,color-mix(in_srgb,var(--surface)_74%,var(--background))_100%)] px-6 py-6">
-            <div className="animate-panel rounded-[1.35rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_76%,transparent)] p-5">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.24em]">
-                    <span className="text-[var(--accent-soft)]">{meta.eyebrow}</span>
-                    <span className="text-[var(--text-faint)]">/</span>
-                    <span className="text-[var(--text-faint)]">{meta.label}</span>
-                  </div>
-                  <h1 className="mt-5 text-4xl font-semibold uppercase tracking-[-0.05em] text-[var(--text-strong)] lg:text-5xl">
-                    {meta.title}
-                  </h1>
-                  <p className="mt-4 max-w-3xl text-base leading-8 text-[var(--text-muted)]">
-                    {meta.description}
-                  </p>
-                </div>
+          <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_92%,var(--background))]">
+            <div className="flex flex-wrap items-center gap-3 px-5 py-3">
+              <div className="relative min-w-[280px] flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
+                <Input
+                  className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_90%,transparent)] pl-10 text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
+                  placeholder="Search gateways, services, routes..."
+                />
+              </div>
 
-                <div className="flex flex-col gap-3 xl:min-w-[420px] xl:max-w-[440px]">
-                  <div className="relative">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-faint)]" />
-                    <Input
-                      className="border-white/8 bg-[var(--field)] pl-11 text-[var(--text-strong)] placeholder:text-[var(--text-faint)] focus-visible:border-[var(--border-strong)] focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_14%,transparent)]"
-                      placeholder="query_stadoor..."
-                    />
+              <div className="ml-auto flex items-center gap-2">
+                <ThemeToggle />
+                <TopCircle icon={<Moon className="h-4 w-4" />} />
+                <TopCircle icon={<Bell className="h-4 w-4" />} />
+                <div className="ml-1 flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] px-2.5 py-1.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]">
+                    {initials(session.displayName, session.username)}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="rounded-[0.9rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-4 py-2 text-sm text-[var(--text-muted)]">
-                      Signed in as <span className="font-semibold text-[var(--text-strong)]">{session.displayName ?? session.username}</span>
-                    </div>
-                    <ThemeToggle />
-                    <TopIcon icon={<Bell className="h-4 w-4" />} />
-                    <TopIcon icon={<LifeBuoy className="h-4 w-4" />} />
-                    <Button asChild variant="secondary" className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5">
-                      <Link href="/api/auth/logout">Log out</Link>
-                    </Button>
-                    <Button asChild variant="secondary" className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5">
-                      <Link href="/">Landing</Link>
-                    </Button>
-                    <Button asChild variant="brand" className="border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]">
-                      <Link href={meta.ctaHref}>{meta.ctaLabel}</Link>
-                    </Button>
+                  <div className="pr-1 leading-tight">
+                    <p className="text-sm font-semibold text-[var(--text-strong)]">{displayName}</p>
+                    <p className="text-xs text-[var(--text-muted)]">{displayEmail}</p>
                   </div>
                 </div>
               </div>
             </div>
           </header>
 
-          <DeveloperPortal activeTab={activeTab} />
+          <div className="px-5 py-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h1 className="text-[2.35rem] font-semibold tracking-[-0.055em] text-[var(--text-strong)]">{meta.title}</h1>
+                <p className="mt-1 text-xl text-[var(--text-muted)]">{meta.description}</p>
+              </div>
+
+              {meta.ctaLabel && meta.ctaHref ? (
+                <Button
+                  asChild
+                  variant="brand"
+                  className="h-11 rounded-[0.8rem] border border-[var(--border-strong)] bg-[var(--accent)] px-5 text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                >
+                  <Link href={meta.ctaHref}>{meta.ctaLabel}</Link>
+                </Button>
+              ) : null}
+            </div>
+
+            <DeveloperPortal
+              activeTab={activeTab}
+              operatorName={displayName}
+              operatorEmail={displayEmail}
+            />
+          </div>
         </section>
       </div>
     </main>
   );
 }
 
-function SidebarItem({
-  icon,
-  label,
-  href,
-  active,
-}: {
-  icon: ReactNode;
-  label: string;
-  href: string;
-  active?: boolean;
-}) {
+function TopCircle({ icon }: { icon: ReactNode }) {
   return (
-    <Link
-      href={href}
-      className={`flex items-center gap-4 rounded-[0.95rem] px-4 py-3 text-sm font-medium transition ${
-        active ? "bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_24px_var(--glow)]" : "text-[var(--text-muted)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]"
-      }`}
-    >
-      <span>{icon}</span>
-      <span>{label}</span>
-    </Link>
-  );
-}
-
-function TopIcon({ icon }: { icon: ReactNode }) {
-  return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] border border-white/8 bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] text-[var(--text-muted)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:text-[var(--text-strong)]">
+    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_90%,transparent)] text-[var(--accent-soft)]">
       {icon}
-    </div>
-  );
-}
-
-function MiniSignal({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-3 border-l border-white/8 pl-3">
-      <span className="h-2.5 w-2.5 rounded-full bg-[var(--accent)]" />
-      <span className="text-sm text-[var(--text-muted)]">{label}</span>
     </div>
   );
 }

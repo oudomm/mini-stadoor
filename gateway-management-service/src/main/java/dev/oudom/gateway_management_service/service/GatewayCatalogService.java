@@ -29,6 +29,7 @@ public class GatewayCatalogService {
             request.gatewayId(),
             request.gatewayName(),
             request.description(),
+            request.authType(),
             owner.userUuid(),
             owner.username(),
             owner.email()
@@ -42,6 +43,7 @@ public class GatewayCatalogService {
                 gateway.getGatewayId(),
                 gateway.getGatewayName(),
                 gateway.getDescription(),
+                gateway.getAuthType(),
                 findServicesForGateway(gateway.getGatewayId(), owner)
             ))
             .toList();
@@ -62,6 +64,7 @@ public class GatewayCatalogService {
                 service.address(),
                 service.port(),
                 service.normalizedTags(),
+                service.authType(),
                 findRoutesForService(gatewayId, service.serviceId(), owner)
             ))
             .toList();

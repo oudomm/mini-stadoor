@@ -1,9 +1,12 @@
 package dev.oudom.gateway_management_service.service;
 
+import dev.oudom.gateway_management_service.dto.AuthType;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.ExternalServiceEntity;
+import dev.oudom.gateway_management_service.entity.GatewayEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
+import dev.oudom.gateway_management_service.repository.RouteRepository;
 import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,10 +17,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
 @Slf4j
@@ -26,11 +33,13 @@ public class ExternalServiceRegistrationService {
     private final RestClient restClient;
     private final ExternalServiceRepository externalServiceRepository;
     private final GatewayRepository gatewayRepository;
+    private final RouteRepository routeRepository;
 
     public ExternalServiceRegistrationService(
         RestClient.Builder restClientBuilder,
         ExternalServiceRepository externalServiceRepository,
         GatewayRepository gatewayRepository,
+        RouteRepository routeRepository,
         @Value("${eureka-api.base-url}") String eurekaApiBaseUrl
     ) {
         this.restClient = restClientBuilder
@@ -38,12 +47,17 @@ public class ExternalServiceRegistrationService {
             .build();
         this.externalServiceRepository = externalServiceRepository;
         this.gatewayRepository = gatewayRepository;
+        this.routeRepository = routeRepository;
     }
 
     public ServiceRegistrationRequest register(ServiceRegistrationRequest request, DeveloperIdentity owner) {
-        ensureGatewayExists(request.gatewayId(), owner);
+        GatewayEntity gateway = resolveGateway(request.gatewayId(), owner);
+        validateServiceAuthType(request, gateway);
         registerWithEureka(request);
         externalServiceRepository.save(toEntity(request, owner));
+        if (request.authType() != null) {
+            applyServiceSecurityToExistingRoutes(request, owner, request.authType());
+        }
 
         return request;
     }
@@ -63,13 +77,42 @@ public class ExternalServiceRegistrationService {
             .toList();
     }
 
-    private void ensureGatewayExists(String gatewayId, DeveloperIdentity owner) {
-        if (!gatewayRepository.existsByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.NOT_FOUND,
-                "Gateway not found: " + gatewayId
+    private GatewayEntity resolveGateway(String gatewayId, DeveloperIdentity owner) {
+        return gatewayRepository.findByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId));
+    }
+
+    private void validateServiceAuthType(ServiceRegistrationRequest request, GatewayEntity gateway) {
+        if (request.authType() == null) {
+            return;
+        }
+
+        AuthType gatewayAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
+        if (request.authType() != gatewayAuthType) {
+            throw new ResponseStatusException(
+                BAD_REQUEST,
+                "Service authType " + request.authType() + " is not allowed in gateway " + gateway.getGatewayId()
+                    + ". Gateway security is " + gatewayAuthType
             );
         }
+    }
+
+    private void applyServiceSecurityToExistingRoutes(
+        ServiceRegistrationRequest request,
+        DeveloperIdentity owner,
+        AuthType serviceAuthType
+    ) {
+        List<dev.oudom.gateway_management_service.entity.RouteEntity> routes = routeRepository
+            .findAllByGatewayIdAndServiceIdAndOwnerUserUuidOrderByIdAsc(
+                request.gatewayId(),
+                request.serviceId(),
+                owner.userUuid()
+            );
+        if (routes.isEmpty()) {
+            return;
+        }
+        routes.forEach(route -> route.setAuthType(serviceAuthType));
+        routeRepository.saveAll(routes);
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -147,6 +190,7 @@ public class ExternalServiceRegistrationService {
             request.address(),
             request.port(),
             request.tagsAsCsv(),
+            request.authType(),
             owner.userUuid(),
             owner.username(),
             owner.email()
@@ -160,7 +204,8 @@ public class ExternalServiceRegistrationService {
             entity.getServiceName(),
             entity.getAddress(),
             entity.getPort(),
-            ServiceRegistrationRequest.tagsFromCsv(entity.getTags())
+            ServiceRegistrationRequest.tagsFromCsv(entity.getTags()),
+            entity.getAuthType()
         );
     }
 }

@@ -1,12 +1,12 @@
 # Mini Stadoor
 
-Mini Stadoor is a demo for dynamic API gateway registration and route-level security.
+Mini Stadoor is a demo for dynamic API gateway registration with hierarchical security policies.
 
 It proves:
 - developers sign in through `iam-server`
 - developers create `Gateway -> Service -> Route`
 - management data is owner-scoped per developer
-- `standard-gateway` can enforce `NONE`, `BASIC`, `API_KEY`, `JWT`, and `OAUTH2`
+- `standard-gateway` resolves auth from gateway defaults, optional service policies, and route overrides
 
 ## Services
 
@@ -19,7 +19,7 @@ It proves:
 - `customer-service` on `8091`
 - `eureka-server` on `8761`
 - `iam-server` on `9090`
-- `postgres` on `5433` for demo data and consumer users
+- `postgres` on `5433` for `gateway-management-service` and `consumer-service` databases
 - `iam-postgres` on `5434` for IAM data
 
 ## Auth Model
@@ -27,7 +27,12 @@ It proves:
 - Platform users live in `iam-server`
 - Consumer users for `BASIC`, `API_KEY`, and `JWT` live in `consumer-service`
 - `gateway-management-service` requires IAM bearer tokens
-- `standard-gateway` enforces route auth based on the registered route
+- gateway defines a default security type (`NONE`, `BASIC`, `API_KEY`, or `JWT`)
+- service can optionally define its own security type; if set, all routes under that service inherit it
+- if service security is not set, each route can set its own security type
+- if route security is not set, route falls back to the gateway default
+- effective precedence is `service -> route -> gateway default`
+- `standard-gateway` enforces the resolved auth type on each route
 
 ## Run
 
@@ -68,7 +73,14 @@ Recommended order:
 5. `Platform IAM -> Exchange Portal Authorization Code`
 6. `Gateway Setup + Non Auth`
 7. `Consumer User -> Register Consumer User`
-8. `Basic Auth`, `API Key`, `JWT`, or `OAuth2`
+8. `Basic Auth`, `API Key`, or `JWT`
+9. optional: `OAuth2`
+
+Postman demo notes:
+
+- `Create Gateway` sets the gateway default policy
+- `Register Product Service` currently uses `authType: null`, so later route requests can choose their own auth type
+- to lock an entire service to one policy, rerun service registration with `authType` set and then create routes with `authType: null`
 
 Demo IAM credentials:
 
@@ -83,7 +95,9 @@ Postman OAuth client:
 ## Notes
 
 - `gateway-management-service` stores gateways, services, and routes in Postgres
+- `gateway-management-service` uses the `gateway_management_service_db` database
 - `gateway-management-service` ownership is tied to the authenticated IAM developer
 - `consumer-service` stores consumer users in Postgres
+- `consumer-service` uses the `consumer_service_db` database
 - `iam-server` stores identity and OAuth2/OIDC data in `iam-postgres`
 - `standard-gateway` loads routes dynamically at runtime, not from static config

@@ -1,24 +1,25 @@
 services:
   postgres:
     image: postgres:17.5-bullseye
-    container_name: dynamic-routes-postgres
+    container_name: postgres
     environment:
-      POSTGRES_DB: dynamic_routes_demo
+      POSTGRES_DB: gateway_management_service_db
       POSTGRES_USER: demo_user
       POSTGRES_PASSWORD: demo_pass
     ports:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-consumer-service-db.sql:/docker-entrypoint-initdb.d/init-consumer-service-db.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U demo_user -d dynamic_routes_demo"]
+      test: ["CMD-SHELL", "pg_isready -U demo_user -d gateway_management_service_db"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   iam-postgres:
     image: postgres:17.5-bullseye
-    container_name: mini-stadoor-iam-postgres
+    container_name: iam-postgres
     environment:
       POSTGRES_DB: iam_demo
       POSTGRES_USER: iam_user

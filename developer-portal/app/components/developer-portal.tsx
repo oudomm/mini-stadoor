@@ -1,37 +1,75 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Fingerprint } from "lucide-react";
+import type { FormEvent, ReactNode } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import Link from "next/link";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  Plus,
+  Route,
+  Server,
+  Shield,
+  Trash2,
+  UserRound,
+  Waypoints,
+  X,
+} from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   futureSecurityModes,
   initialGatewayForm,
   initialRouteForm,
   initialServiceForm,
-  type RecentActivityItem,
   supportedSecurityModes,
+  type DashboardTab,
   type DeveloperPortalProps,
   type GatewayForm,
   type GatewaySummary,
-  type GatewayWorkspaceTab,
   type RouteForm,
   type ServiceForm,
   type StatusState,
 } from "@/app/components/developer-portal/model";
-import { GatewayWorkspace } from "@/app/components/developer-portal/gateway-workspace";
-import { OverviewPanel } from "@/app/components/developer-portal/overview-panel";
-import { PlaceholderSection } from "@/app/components/developer-portal/ui";
 
-export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
+type WizardStep = 1 | 2;
+
+export function DeveloperPortal({
+  activeTab,
+  operatorName = "Developer",
+  operatorEmail = "dev@stadoor.com",
+}: DeveloperPortalProps) {
   const [gatewayForm, setGatewayForm] = useState<GatewayForm>(initialGatewayForm);
   const [serviceForm, setServiceForm] = useState<ServiceForm>(initialServiceForm);
   const [routeForm, setRouteForm] = useState<RouteForm>(initialRouteForm);
-  const [gatewayWorkspaceTab, setGatewayWorkspaceTab] = useState<GatewayWorkspaceTab>("gateway");
   const [gateways, setGateways] = useState<GatewaySummary[]>([]);
   const [gatewayStatus, setGatewayStatus] = useState<StatusState>(null);
   const [serviceStatus, setServiceStatus] = useState<StatusState>(null);
   const [routeStatus, setRouteStatus] = useState<StatusState>(null);
   const [isPending, startTransition] = useTransition();
+
+  const [gatewayStep, setGatewayStep] = useState<WizardStep>(1);
+
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [serviceBaseUrl, setServiceBaseUrl] = useState("http://localhost:8082");
+
+  const [showRouteForm, setShowRouteForm] = useState(false);
+
+  const [profileName, setProfileName] = useState(operatorName);
+  const [profileEmail, setProfileEmail] = useState(operatorEmail);
+  const [defaultBaseUrl, setDefaultBaseUrl] = useState("https://api.stadoor.com");
+  const [defaultTimeout, setDefaultTimeout] = useState("5000");
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [securityAlerts, setSecurityAlerts] = useState(true);
+
+  useEffect(() => {
+    setProfileName(operatorName);
+    setProfileEmail(operatorEmail);
+  }, [operatorEmail, operatorName]);
 
   useEffect(() => {
     void loadGateways();
@@ -49,11 +87,7 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
     });
   }
 
-  function syncSelections(
-    gatewayList: GatewaySummary[],
-    preferredGatewayId?: string,
-    preferredServiceId?: string,
-  ) {
+  function syncSelections(gatewayList: GatewaySummary[], preferredGatewayId?: string, preferredServiceId?: string) {
     if (gatewayList.length === 0) {
       return;
     }
@@ -88,14 +122,32 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
     }));
   }
 
-  async function createGateway(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function parseServiceBaseUrl(rawUrl: string) {
+    const withProtocol = /^https?:\/\//i.test(rawUrl) ? rawUrl : `http://${rawUrl}`;
+    const parsed = new URL(withProtocol);
+    const port = parsed.port || (parsed.protocol === "https:" ? "443" : "80");
+    return {
+      normalized: withProtocol,
+      address: parsed.hostname,
+      port,
+    };
+  }
+
+  async function submitGateway() {
     setGatewayStatus({ tone: "loading", message: "Creating gateway..." });
+
+    const description =
+      gatewayForm.description.trim() || "Gateway workspace for grouped services and routes.";
 
     const response = await fetch("/api/gateways", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(gatewayForm),
+      body: JSON.stringify({
+        gatewayId: gatewayForm.gatewayId.trim(),
+        gatewayName: gatewayForm.gatewayName.trim(),
+        description,
+        authType: gatewayForm.authType,
+      }),
     });
 
     const data = await response.json().catch(() => ({ message: "Unable to parse response" }));
@@ -106,70 +158,93 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
     });
 
     if (response.ok) {
-      setServiceForm((current) => ({ ...current, gatewayId: gatewayForm.gatewayId }));
-      setRouteForm((current) => ({ ...current, gatewayId: gatewayForm.gatewayId, serviceId: "" }));
-      void loadGateways(gatewayForm.gatewayId);
+      void loadGateways(gatewayForm.gatewayId.trim());
+      setGatewayStep(1);
+      setGatewayForm((current) => ({
+        ...current,
+        gatewayId: "",
+        gatewayName: "",
+        description: "",
+        authType: initialGatewayForm.authType,
+      }));
     }
   }
 
-  async function registerService(event: React.FormEvent<HTMLFormElement>) {
+  async function submitService(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setServiceStatus({ tone: "loading", message: "Registering service..." });
 
+    try {
+      const parsed = parseServiceBaseUrl(serviceBaseUrl);
+      const payload = {
+        gatewayId: serviceForm.gatewayId,
+        serviceId: serviceForm.serviceId,
+        serviceName: serviceForm.serviceName,
+        address: parsed.address,
+        port: Number(parsed.port),
+        tags: serviceForm.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean),
+        authType: serviceForm.authType || null,
+      };
+
+      const response = await fetch("/api/services/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({ message: "Unable to parse response" }));
+      setServiceStatus({
+        tone: response.ok ? "success" : "error",
+        message: response.ok ? "Service registered successfully." : "Failed to register service.",
+        payload: data,
+      });
+
+      if (response.ok) {
+        setRouteForm((current) => ({
+          ...current,
+          gatewayId: serviceForm.gatewayId,
+          serviceId: serviceForm.serviceId,
+          uri: `lb://${serviceForm.serviceName}`,
+          authType: "",
+        }));
+        setShowServiceForm(false);
+        void loadGateways(serviceForm.gatewayId, serviceForm.serviceId);
+      }
+    } catch {
+      setServiceStatus({
+        tone: "error",
+        message: "Invalid base URL. Use format like https://api.internal.com",
+      });
+    }
+  }
+
+  async function submitRoute(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRouteStatus({ tone: "loading", message: "Creating route..." });
+
     const payload = {
-      gatewayId: serviceForm.gatewayId,
-      serviceId: serviceForm.serviceId,
-      serviceName: serviceForm.serviceName,
-      address: serviceForm.address,
-      port: Number(serviceForm.port),
-      tags: serviceForm.tags
-        .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean),
+      ...routeForm,
+      authType: inheritedServiceAuthType ? null : routeForm.authType || null,
     };
 
-    const response = await fetch("/api/services/register", {
+    const response = await fetch("/api/routes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
     const data = await response.json().catch(() => ({ message: "Unable to parse response" }));
-    setServiceStatus({
-      tone: response.ok ? "success" : "error",
-      message: response.ok ? "Service registered successfully." : "Failed to register service.",
-      payload: data,
-    });
-
-    if (response.ok) {
-      setRouteForm((current) => ({
-        ...current,
-        gatewayId: serviceForm.gatewayId,
-        serviceId: serviceForm.serviceId,
-        uri: `lb://${serviceForm.serviceName}`,
-      }));
-      void loadGateways(serviceForm.gatewayId, serviceForm.serviceId);
-    }
-  }
-
-  async function createRoute(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setRouteStatus({ tone: "loading", message: "Creating route..." });
-
-    const response = await fetch("/api/routes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(routeForm),
-    });
-
-    const data = await response.json().catch(() => ({ message: "Unable to parse response" }));
     setRouteStatus({
       tone: response.ok ? "success" : "error",
-      message: response.ok ? "Route created and synced." : "Failed to create route.",
+      message: response.ok ? "Route created and synced with resolved security." : "Failed to create route.",
       payload: data,
     });
 
     if (response.ok) {
+      setShowRouteForm(false);
       void loadGateways(routeForm.gatewayId, routeForm.serviceId);
     }
   }
@@ -183,6 +258,7 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
       gatewayId,
       serviceId: firstService?.serviceId ?? "",
       uri: firstService ? `lb://${firstService.serviceName}` : current.uri,
+      authType: "",
     }));
   }
 
@@ -192,100 +268,1025 @@ export function DeveloperPortal({ activeTab }: DeveloperPortalProps) {
       ...current,
       serviceId,
       uri: service ? `lb://${service.serviceName}` : current.uri,
+      authType: "",
     }));
   }
 
   const allServices = gateways.flatMap((gateway) => gateway.services);
-  const routes = allServices.flatMap((service) => service.routes);
-  const supportedModeCount = supportedSecurityModes.length;
-  const gatewayCount = gateways.length;
-  const serviceCount = allServices.length;
-  const routeCount = routes.length;
+  const allRoutes = allServices.flatMap((service) =>
+    service.routes.map((route) => ({
+      ...route,
+      serviceName: service.serviceName,
+      gatewayName: gateways.find((gateway) => gateway.gatewayId === route.gatewayId)?.gatewayName ?? route.gatewayId,
+    })),
+  );
   const selectedRouteGateway =
     gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId) ?? gateways[0] ?? null;
-  const publicBasePath = routeForm.path.replace("/**", "");
-  const exampleCall =
-    publicBasePath && routeForm.serviceId ? `${publicBasePath} -> ${routeForm.uri || "lb://service-name"}` : publicBasePath || "/";
+  const selectedServiceGateway =
+    gateways.find((gateway) => gateway.gatewayId === serviceForm.gatewayId) ?? gateways[0] ?? null;
+  const selectedRouteService =
+    selectedRouteGateway?.services.find((service) => service.serviceId === routeForm.serviceId) ?? null;
+  const inheritedServiceAuthType = selectedRouteService?.authType ?? null;
+  const routePreviewAuthType =
+    inheritedServiceAuthType ??
+    (routeForm.authType || selectedRouteGateway?.authType || "NONE");
+  const selectedServiceGatewayAuthType = selectedServiceGateway?.authType ?? "NONE";
+  const selectedRouteGatewayAuthType = selectedRouteGateway?.authType ?? "NONE";
+  const allowedServiceSecurityModes = supportedSecurityModes.filter(
+    (mode) => mode.label === selectedServiceGatewayAuthType,
+  );
+  const allowedRouteSecurityModes = supportedSecurityModes.filter(
+    (mode) => mode.label === selectedRouteGatewayAuthType,
+  );
 
-  const recentActivity: RecentActivityItem[] = [
-    gatewayStatus
-      ? {
-          title: gatewayStatus.message,
-          meta: "Gateway workspace",
-          tone: gatewayStatus.tone,
-        }
-      : null,
-    serviceStatus
-      ? {
-          title: serviceStatus.message,
-          meta: "Service onboarding",
-          tone: serviceStatus.tone,
-        }
-      : null,
-    routeStatus
-      ? {
-          title: routeStatus.message,
-          meta: "Route publishing",
-          tone: routeStatus.tone,
-        }
-      : null,
-    {
-      title: `${gatewayCount} gateway workspace${gatewayCount === 1 ? "" : "s"} in control plane`,
-      meta: "Gateway catalog",
-      tone: "success" as const,
-    },
-  ].filter((item): item is RecentActivityItem => item !== null);
+  const protectedRouteCount = allRoutes.filter((route) => (route.authType ?? "NONE") !== "NONE").length;
+  const jwtRouteCount = allRoutes.filter((route) => route.authType === "JWT").length;
+  const basicRouteCount = allRoutes.filter((route) => route.authType === "BASIC").length;
+  const apiKeyRouteCount = allRoutes.filter((route) => route.authType === "API_KEY").length;
+  const oauth2RouteCount = allRoutes.filter((route) => route.authType === "OAUTH2").length;
+  const openRouteCount = allRoutes.filter((route) => !route.authType || route.authType === "NONE").length;
+  const gatewayCount = gateways.length;
+  const serviceCount = allServices.length;
+  const routeCount = allRoutes.length;
+
+  const gatewayRows = useMemo(
+    () =>
+      gateways.map((gateway) => {
+        const serviceTotal = gateway.services.length;
+        const routeTotal = gateway.services.reduce((total, service) => total + service.routes.length, 0);
+        const primaryAuth = gateway.authType ?? "NONE";
+
+        return {
+          gateway,
+          serviceTotal,
+          routeTotal,
+          primaryAuth,
+        };
+      }),
+    [gateways],
+  );
+
+  const gatewayWizardSteps = [
+    { id: 1 as WizardStep, label: "Basic Information" },
+    { id: 2 as WizardStep, label: "Review" },
+  ];
+
+  const canGoNext = gatewayStep === 1
+    ? gatewayForm.gatewayName.trim().length > 1 && gatewayForm.gatewayId.trim().length > 1
+    : true;
+
+  function renderContent(tab: DashboardTab) {
+    if (tab === "dashboard") {
+      return (
+        <section className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              icon={<Waypoints className="h-5 w-5" />}
+              value={gatewayCount}
+              label="Total Gateways"
+              helper={`+${Math.max(gatewayCount, 1)} this month`}
+            />
+            <MetricCard
+              icon={<Server className="h-5 w-5" />}
+              value={serviceCount}
+              label="Registered Services"
+              helper={`+${Math.max(serviceCount, 1)} this month`}
+            />
+            <MetricCard
+              icon={<Route className="h-5 w-5" />}
+              value={routeCount}
+              label="Active Routes"
+              helper={`+${Math.max(routeCount, 1)} this month`}
+            />
+            <MetricCard
+              icon={<Shield className="h-5 w-5" />}
+              value={protectedRouteCount}
+              label="Protected Routes"
+              helper={routeCount > 0 ? `${Math.round((protectedRouteCount / routeCount) * 100)}% coverage` : "0% coverage"}
+            />
+          </div>
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <div>
+                <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Your Gateways</p>
+                <p className="mt-0.5 text-[1rem] text-[var(--text-muted)]">Manage and monitor your API Gateway instances</p>
+              </div>
+              <LinkButton href="/dashboard?tab=gateways" label="View All" />
+            </header>
+
+            <div className="space-y-3 px-4 py-4">
+              {gatewayRows.length === 0 ? (
+                <EmptyRow message="No gateways yet. Go to Gateways and create your first workspace." />
+              ) : (
+                gatewayRows.map((row) => (
+                  <div
+                    key={row.gateway.gatewayId}
+                    className="flex flex-wrap items-center gap-3 rounded-[0.9rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-3"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[0.8rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)] text-[var(--accent-soft)]">
+                      <Waypoints className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-[220px] flex-1">
+                      <p className="text-[1.35rem] font-semibold text-[var(--text-strong)]">{row.gateway.gatewayName}</p>
+                      <p className="text-[1rem] text-[var(--text-muted)]">
+                        {row.serviceTotal} services • {row.routeTotal} endpoints • {row.gateway.gatewayId}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_90%,transparent)] px-3 py-1 text-sm font-semibold text-[var(--accent-soft)]">
+                      Active
+                    </span>
+                    <span className="rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] px-3 py-1 text-sm text-[var(--text-muted)]">
+                      {row.primaryAuth}
+                    </span>
+                    <Button
+                      variant="secondary"
+                      asChild
+                      className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                    >
+                      <Link href="/dashboard?tab=gateways">Manage</Link>
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </section>
+      );
+    }
+
+    if (tab === "gateways") {
+      return (
+        <section className="space-y-4">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+              <p className="text-[2.15rem] font-semibold tracking-[-0.05em] text-[var(--text-strong)]">Create New Gateway</p>
+              <p className="text-[1rem] text-[var(--text-muted)]">Set up a new gateway workspace for your services and routes.</p>
+            </header>
+
+            <div className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+              <div className="grid gap-3 md:grid-cols-4">
+                {gatewayWizardSteps.map((step, index) => {
+                  const isActive = step.id === gatewayStep;
+                  const isDone = step.id < gatewayStep;
+                  return (
+                    <div key={step.id} className="flex items-center gap-2.5">
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
+                          isActive || isDone
+                            ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                            : "bg-[color:color-mix(in_srgb,var(--surface-muted)_96%,transparent)] text-[var(--text-muted)]"
+                        }`}
+                      >
+                        {isDone ? <Check className="h-4 w-4" /> : step.id}
+                      </div>
+                      <p className="text-[1rem] font-medium text-[var(--accent-soft)]">{step.label}</p>
+                      {index < gatewayWizardSteps.length - 1 ? (
+                        <div className="hidden h-px flex-1 bg-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] md:block" />
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="px-5 py-5">
+              {gatewayStep === 1 ? (
+                <div className="space-y-4">
+                  <Field label="Gateway Name">
+                    <Input
+                      value={gatewayForm.gatewayName}
+                      onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayName: event.target.value })}
+                      placeholder="e.g., E-Commerce API Gateway"
+                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
+                  <Field label="Gateway ID">
+                    <Input
+                      value={gatewayForm.gatewayId}
+                      onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayId: event.target.value })}
+                      placeholder="e.g., ecommerce-gateway"
+                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
+                  <Field label="Description (optional)">
+                    <Textarea
+                      value={gatewayForm.description}
+                      onChange={(event) => setGatewayForm({ ...gatewayForm, description: event.target.value })}
+                      placeholder="What this gateway is for (e.g., product, checkout, partner APIs)"
+                      className="min-h-[96px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
+                  <Field label="Gateway Default Security">
+                    <select
+                      className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                      value={gatewayForm.authType}
+                      onChange={(event) =>
+                        setGatewayForm((current) => ({
+                          ...current,
+                          authType: event.target.value as GatewayForm["authType"],
+                        }))
+                      }
+                    >
+                      {supportedSecurityModes.map((mode) => (
+                        <option key={mode.label} value={mode.label}>
+                          {mode.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+              ) : null}
+
+              {gatewayStep === 2 ? (
+                <div className="space-y-4">
+                  <p className="text-[1.2rem] font-semibold text-[var(--accent-soft)]">Review Configuration</p>
+                  <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-4">
+                    <ReviewRow label="Gateway Name" value={gatewayForm.gatewayName || "-"} />
+                    <ReviewRow label="Gateway ID" value={gatewayForm.gatewayId || "-"} />
+                    <ReviewRow label="Default Security" value={gatewayForm.authType || "NONE"} />
+                    <ReviewRow label="Description" value={gatewayForm.description || "No description"} />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <footer className="flex items-center justify-between gap-3 border-t border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                onClick={() => setGatewayStep((current) => (current > 1 ? ((current - 1) as WizardStep) : current))}
+                disabled={gatewayStep === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Back
+              </Button>
+
+              <Button
+                type="button"
+                variant="brand"
+                className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)] disabled:opacity-50"
+                disabled={!canGoNext || isPending}
+                onClick={() => {
+                  if (gatewayStep < 2) {
+                    setGatewayStep((current) => (current + 1) as WizardStep);
+                    return;
+                  }
+                  void submitGateway();
+                }}
+              >
+                {gatewayStep === 2 ? "Create Gateway" : "Next"}
+                {gatewayStep < 2 ? <ChevronRight className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+              </Button>
+            </footer>
+          </section>
+          <StatusPanel status={gatewayStatus} />
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <div>
+                <p className="text-[1.6rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Existing Gateways</p>
+                <p className="text-[1rem] text-[var(--text-muted)]">Gateway workspaces already registered in your control plane.</p>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-10 rounded-[0.72rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                onClick={() => void loadGateways()}
+              >
+                Refresh
+              </Button>
+            </header>
+
+            <div className="overflow-x-auto px-4 py-4">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Gateway</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Services</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Routes</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Default Auth</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gatewayRows.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-5 text-[1rem] text-[var(--text-muted)]" colSpan={5}>
+                        No gateways registered yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    gatewayRows.map((row) => (
+                      <tr key={row.gateway.gatewayId} className="text-[1rem] text-[var(--text-strong)]">
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <p className="font-semibold">{row.gateway.gatewayName}</p>
+                          <p className="text-sm text-[var(--text-muted)]">{row.gateway.gatewayId}</p>
+                        </td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">{row.serviceTotal}</td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">{row.routeTotal}</td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-2.5 py-1 text-sm font-medium text-[var(--accent-soft)]">
+                            {row.primaryAuth}
+                          </span>
+                        </td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              asChild
+                              className="h-8 rounded-[0.6rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent px-3 text-sm text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                            >
+                              <Link href="/dashboard?tab=services">Services</Link>
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              asChild
+                              className="h-8 rounded-[0.6rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent px-3 text-sm text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                            >
+                              <Link href="/dashboard?tab=routes">Routes</Link>
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      );
+    }
+
+    if (tab === "services") {
+      return (
+        <section className="space-y-4">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <div>
+                <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Registered Services</p>
+                <p className="text-[1rem] text-[var(--text-muted)]">{allServices.length} services registered across your gateways</p>
+              </div>
+              <Button
+                type="button"
+                variant="brand"
+                className="h-10 rounded-[0.72rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                onClick={() => setShowServiceForm((current) => !current)}
+              >
+                {showServiceForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {showServiceForm ? "Close" : "Add Service"}
+              </Button>
+            </header>
+
+            {showServiceForm ? (
+              <form className="grid gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4 md:grid-cols-2" onSubmit={submitService}>
+                <Field label="Service Name">
+                  <Input
+                    value={serviceForm.serviceName}
+                    onChange={(event) =>
+                      setServiceForm((current) => ({
+                        ...current,
+                        serviceName: event.target.value,
+                        serviceId: event.target.value.replace(/\s+/g, "-").toLowerCase() + "-manual-1",
+                      }))
+                    }
+                    placeholder="e.g., Payment Service"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                <Field label="Assign to Gateway">
+                  <select
+                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                    value={serviceForm.gatewayId}
+                    onChange={(event) =>
+                      setServiceForm((current) => ({
+                        ...current,
+                        gatewayId: event.target.value,
+                        authType: "",
+                      }))
+                    }
+                  >
+                    {gateways.length === 0 ? <option value="">Create a gateway first</option> : null}
+                    {gateways.map((gateway) => (
+                      <option key={gateway.gatewayId} value={gateway.gatewayId}>
+                        {gateway.gatewayName}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Base URL">
+                  <Input
+                    value={serviceBaseUrl}
+                    onChange={(event) => setServiceBaseUrl(event.target.value)}
+                    placeholder="https://api.internal.com/service"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                <Field label="Tags">
+                  <Input
+                    value={serviceForm.tags}
+                    onChange={(event) => setServiceForm((current) => ({ ...current, tags: event.target.value }))}
+                    placeholder="manual-registration,ecommerce,spring"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                <Field label="Service Security (optional)">
+                  <select
+                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                    value={serviceForm.authType}
+                    onChange={(event) =>
+                      setServiceForm((current) => ({
+                        ...current,
+                        authType: event.target.value as typeof current.authType,
+                      }))
+                    }
+                  >
+                    <option value="">No service-level policy (inherit {selectedServiceGatewayAuthType})</option>
+                    {allowedServiceSecurityModes.map((mode) => (
+                      <option key={mode.label} value={mode.label}>
+                        {mode.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <div className="md:col-span-2 flex items-center gap-3">
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    disabled={gateways.length === 0}
+                    className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)] disabled:opacity-50"
+                  >
+                    Register Service
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                    onClick={() => setShowServiceForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            ) : null}
+
+            <div className="overflow-x-auto px-4 py-4">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Service Name</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Base URL</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Gateway</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Service Auth</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Status</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allServices.length === 0 ? (
+                    <tr>
+                      <td
+                        className="px-3 py-5 text-[1rem] text-[var(--text-muted)]"
+                        colSpan={6}
+                      >
+                        No services registered yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    allServices.map((service) => {
+                      const gateway = gateways.find((item) => item.gatewayId === service.gatewayId);
+                      return (
+                        <tr key={service.serviceId} className="text-[1rem] text-[var(--text-strong)]">
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <p className="font-semibold">{service.serviceName}</p>
+                            <p className="text-sm text-[var(--text-muted)]">{service.serviceId}</p>
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3 font-mono text-sm">
+                            https://{service.address}:{service.port}
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            {gateway?.gatewayName ?? service.gatewayId}
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-2.5 py-1 text-sm font-medium text-[var(--accent-soft)]">
+                              {service.authType ?? "Per Route"}
+                            </span>
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-2.5 py-1 text-sm font-medium text-[var(--accent-soft)]">
+                              Healthy
+                            </span>
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Server className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-[color:color-mix(in_srgb,#e05f49_90%,#bc422f)]">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <StatusPanel status={serviceStatus} />
+        </section>
+      );
+    }
+
+    if (tab === "routes") {
+      return (
+        <section className="space-y-4">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <div>
+                <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Routes</p>
+                <p className="text-[1rem] text-[var(--text-muted)]">Configure API routes and map public endpoints to backend services</p>
+              </div>
+              <Button
+                type="button"
+                variant="brand"
+                className="h-10 rounded-[0.72rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                onClick={() => setShowRouteForm((current) => !current)}
+              >
+                {showRouteForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {showRouteForm ? "Close" : "Add Route"}
+              </Button>
+            </header>
+
+            {showRouteForm ? (
+              <form className="grid gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4 md:grid-cols-2" onSubmit={submitRoute}>
+                <Field label="Gateway">
+                  <select
+                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                    value={routeForm.gatewayId}
+                    onChange={(event) => handleRouteGatewayChange(event.target.value)}
+                  >
+                    {gateways.length === 0 ? <option value="">Create a gateway first</option> : null}
+                    {gateways.map((gateway) => (
+                      <option key={gateway.gatewayId} value={gateway.gatewayId}>
+                        {gateway.gatewayName}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Target Service">
+                  <select
+                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                    value={routeForm.serviceId}
+                    onChange={(event) => handleRouteServiceChange(event.target.value)}
+                  >
+                    {!selectedRouteGateway?.services.length ? <option value="">Register a service first</option> : null}
+                    {selectedRouteGateway?.services.map((service) => (
+                      <option key={service.serviceId} value={service.serviceId}>
+                        {service.serviceName}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Public Path">
+                  <Input
+                    value={routeForm.path}
+                    onChange={(event) => setRouteForm((current) => ({ ...current, path: event.target.value }))}
+                    placeholder="/api/endpoint"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                <Field label="Route ID">
+                  <Input
+                    value={routeForm.id}
+                    onChange={(event) => setRouteForm((current) => ({ ...current, id: event.target.value }))}
+                    placeholder="product-route-jwt"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                <Field label="Target URI">
+                  <Input
+                    value={routeForm.uri}
+                    onChange={(event) => setRouteForm((current) => ({ ...current, uri: event.target.value }))}
+                    placeholder="lb://product-service"
+                    className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                  />
+                </Field>
+                {inheritedServiceAuthType ? (
+                  <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
+                    <p className="text-sm font-medium text-[var(--accent-soft)]">Service Security (inherited)</p>
+                    <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+                      This service enforces <span className="font-semibold text-[var(--text-strong)]">{inheritedServiceAuthType}</span>, so all routes in this service use the same security.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <Field label="Route Security">
+                      <select
+                        className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                        value={routeForm.authType}
+                        onChange={(event) =>
+                          setRouteForm((current) => ({
+                            ...current,
+                            authType: event.target.value as typeof current.authType,
+                          }))
+                        }
+                      >
+                        <option value="">Use gateway default ({selectedRouteGatewayAuthType})</option>
+                        {allowedRouteSecurityModes.map((mode) => (
+                          <option key={mode.label} value={mode.label}>
+                            {mode.label}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
+                      <p className="text-sm font-medium text-[var(--accent-soft)]">Effective Security Preview</p>
+                      <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+                        This route will resolve to <span className="font-semibold text-[var(--text-strong)]">{routePreviewAuthType}</span>.
+                      </p>
+                    </div>
+                  </>
+                )}
+                <div className="md:col-span-2 flex items-center gap-3">
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    disabled={!routeForm.gatewayId || !routeForm.serviceId}
+                    className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)] disabled:opacity-50"
+                  >
+                    Create Route
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                    onClick={() => setShowRouteForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            ) : null}
+
+            <div className="overflow-x-auto px-4 py-4">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Route</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Gateway</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Service</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Auth</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allRoutes.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-5 text-[1rem] text-[var(--text-muted)]" colSpan={5}>
+                        No routes published yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    allRoutes.map((route) => (
+                      <tr key={`${route.id}-${route.serviceId}`} className="text-[1rem] text-[var(--text-strong)]">
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <p className="font-semibold">{route.id}</p>
+                          <p className="font-mono text-sm text-[var(--text-muted)]">{route.path}</p>
+                        </td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">{route.gatewayName}</td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">{route.serviceName}</td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-2.5 py-1 text-sm font-medium text-[var(--accent-soft)]">
+                            {route.authType ?? "NONE"}
+                          </span>
+                        </td>
+                        <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                          <div className="flex items-center gap-2 text-[var(--text-muted)]">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Route className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-[color:color-mix(in_srgb,#e05f49_90%,#bc422f)]">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <StatusPanel status={routeStatus} />
+        </section>
+      );
+    }
+
+    if (tab === "security") {
+      return (
+        <section className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <MetricCard icon={<Shield className="h-5 w-5" />} value={openRouteCount} label="Open (NONE)" helper="no auth policy" />
+            <MetricCard icon={<Shield className="h-5 w-5" />} value={basicRouteCount} label="Basic Auth" helper="username/password" />
+            <MetricCard icon={<Shield className="h-5 w-5" />} value={apiKeyRouteCount} label="API Key" helper="header or query key" />
+            <MetricCard icon={<Shield className="h-5 w-5" />} value={jwtRouteCount} label="JWT" helper="token protected" />
+            <MetricCard icon={<Shield className="h-5 w-5" />} value={oauth2RouteCount} label="OAuth2" helper="IAM bearer token" />
+          </div>
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Route Security Matrix</p>
+            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+              Security resolves in this order: service policy (if set), otherwise route policy, otherwise gateway default.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {supportedSecurityModes.map((mode) => (
+                <div
+                  key={mode.label}
+                  className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-3"
+                >
+                  <p className="text-[1.08rem] font-semibold text-[var(--accent-soft)]">{mode.label}</p>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">{mode.detail}</p>
+                </div>
+              ))}
+              {futureSecurityModes.map((mode) => (
+                <div
+                  key={mode.label}
+                  className="rounded-[0.85rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_76%,transparent)] px-4 py-3"
+                >
+                  <p className="text-[1.08rem] font-semibold text-[var(--text-muted)]">{mode.label}</p>
+                  <p className="mt-1 text-sm text-[var(--text-muted)]">{mode.detail}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </section>
+      );
+    }
+
+    if (tab === "consumers") {
+      return (
+        <section className="space-y-4">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Consumer Access</p>
+            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+              Manage user and credential flows for Basic Auth, API Key, and JWT protected routes.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <ConsumerBlock
+                icon={<UserRound className="h-5 w-5" />}
+                title="Register consumer user"
+                endpoint="POST /api/users/register"
+                detail="Create platform-level consumer identities for protected routes."
+              />
+              <ConsumerBlock
+                icon={<Shield className="h-5 w-5" />}
+                title="Issue JWT"
+                endpoint="POST /api/login"
+                detail="Exchange username/password for access token and refresh token."
+              />
+              <ConsumerBlock
+                icon={<Shield className="h-5 w-5" />}
+                title="Validate token"
+                endpoint="POST /api/token/validate"
+                detail="Validate bearer token before forwarding secured route traffic."
+              />
+              <ConsumerBlock
+                icon={<Server className="h-5 w-5" />}
+                title="API key policy"
+                endpoint="Header: X-API-Key"
+                detail="Apply key-based route protection for partner-facing APIs."
+              />
+            </div>
+          </section>
+        </section>
+      );
+    }
+
+    if (tab === "settings") {
+      return (
+        <section className="space-y-4">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Profile Information</p>
+            <div className="mt-4 grid gap-3">
+              <Field label="Name">
+                <Input
+                  value={profileName}
+                  onChange={(event) => setProfileName(event.target.value)}
+                  className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                />
+              </Field>
+              <Field label="Email">
+                <Input
+                  value={profileEmail}
+                  onChange={(event) => setProfileEmail(event.target.value)}
+                  className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                />
+              </Field>
+              <Button
+                type="button"
+                variant="brand"
+                className="h-10 w-fit rounded-[0.72rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </section>
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">API Configuration</p>
+            <div className="mt-4 grid gap-3">
+              <Field label="Default Base URL">
+                <Input
+                  value={defaultBaseUrl}
+                  onChange={(event) => setDefaultBaseUrl(event.target.value)}
+                  className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                />
+              </Field>
+              <Field label="Default Timeout (ms)">
+                <Input
+                  value={defaultTimeout}
+                  onChange={(event) => setDefaultTimeout(event.target.value)}
+                  className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                />
+              </Field>
+            </div>
+          </section>
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Notifications</p>
+            <div className="mt-4 space-y-3">
+              <ToggleRow
+                label="Email Notifications"
+                detail="Receive alerts about gateway status"
+                checked={emailNotifications}
+                onToggle={() => setEmailNotifications((current) => !current)}
+              />
+              <ToggleRow
+                label="Security Alerts"
+                detail="Get notified about route security events"
+                checked={securityAlerts}
+                onToggle={() => setSecurityAlerts((current) => !current)}
+              />
+            </div>
+          </section>
+        </section>
+      );
+    }
+
+    return null;
+  }
+
+  return renderContent(activeTab);
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <label className="grid gap-1.5 text-sm font-medium text-[var(--accent-soft)]">
+      {label}
+      {children}
+    </label>
+  );
+}
+
+function MetricCard({
+  icon,
+  value,
+  label,
+  helper,
+}: {
+  icon: ReactNode;
+  value: number;
+  label: string;
+  helper: string;
+}) {
+  return (
+    <div className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-[0.8rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)] text-[var(--accent-soft)]">
+        {icon}
+      </div>
+      <p className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[var(--accent-soft)]">{value}</p>
+      <p className="mt-1 text-[1rem] text-[var(--text-muted)]">{label}</p>
+      <p className="mt-1 text-sm text-[color:color-mix(in_srgb,#c9852b_92%,#a7641b)]">{helper}</p>
+    </div>
+  );
+}
+
+function ReviewRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[180px_minmax(0,1fr)] gap-2 border-b border-[color:color-mix(in_srgb,var(--border-soft)_60%,transparent)] py-2 last:border-0">
+      <p className="text-[1rem] text-[var(--text-muted)]">{label}</p>
+      <p className="text-[1rem] font-medium text-[var(--accent-soft)]">{value}</p>
+    </div>
+  );
+}
+
+function StatusPanel({ status }: { status: StatusState }) {
+  if (!status) {
+    return null;
+  }
+
+  const toneClass =
+    status.tone === "success"
+      ? "border-[color:color-mix(in_srgb,var(--accent)_26%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)]"
+      : status.tone === "error"
+        ? "border-[color:color-mix(in_srgb,#e05f49_42%,transparent)] bg-[color:color-mix(in_srgb,#ffcfca_36%,transparent)]"
+        : "border-[color:color-mix(in_srgb,#d8aa45_40%,transparent)] bg-[color:color-mix(in_srgb,#ffe4a8_28%,transparent)]";
 
   return (
-    <div className="space-y-6 px-6 py-6">
-      {activeTab === "overview" ? (
-        <OverviewPanel
-          gatewayCount={gatewayCount}
-          serviceCount={serviceCount}
-          routeCount={routeCount}
-          supportedModeCount={supportedModeCount}
-          recentActivity={recentActivity}
-        />
-      ) : null}
+    <div className={`rounded-[0.8rem] border px-4 py-3 ${toneClass}`}>
+      <div className="flex items-center gap-2">
+        <CircleAlert className="h-4 w-4 text-[var(--text-muted)]" />
+        <p className="text-[1rem] font-medium text-[var(--text-strong)]">{status.message}</p>
+      </div>
+    </div>
+  );
+}
 
-      {activeTab === "gateway" ? (
-        <GatewayWorkspace
-          gatewayWorkspaceTab={gatewayWorkspaceTab}
-          setGatewayWorkspaceTab={setGatewayWorkspaceTab}
-          gatewayCount={gatewayCount}
-          serviceCount={serviceCount}
-          routeCount={routeCount}
-          gatewayForm={gatewayForm}
-          setGatewayForm={setGatewayForm}
-          serviceForm={serviceForm}
-          setServiceForm={setServiceForm}
-          routeForm={routeForm}
-          setRouteForm={setRouteForm}
-          gateways={gateways}
-          gatewayStatus={gatewayStatus}
-          serviceStatus={serviceStatus}
-          routeStatus={routeStatus}
-          isPending={isPending}
-          selectedRouteGateway={selectedRouteGateway}
-          exampleCall={exampleCall}
-          onCreateGateway={createGateway}
-          onRegisterService={registerService}
-          onCreateRoute={createRoute}
-          onRouteGatewayChange={handleRouteGatewayChange}
-          onRouteServiceChange={handleRouteServiceChange}
-          onReloadGateways={() => {
-            void loadGateways(routeForm.gatewayId, routeForm.serviceId);
-          }}
-        />
-      ) : null}
+function ConsumerBlock({
+  icon,
+  title,
+  endpoint,
+  detail,
+}: {
+  icon: ReactNode;
+  title: string;
+  endpoint: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[var(--surface)] px-4 py-4">
+      <div className="flex items-center gap-2 text-[var(--accent-soft)]">{icon}</div>
+      <p className="mt-2 text-[1.08rem] font-semibold text-[var(--text-strong)]">{title}</p>
+      <p className="mt-1 font-mono text-sm text-[var(--accent-soft)]">{endpoint}</p>
+      <p className="mt-1 text-sm text-[var(--text-muted)]">{detail}</p>
+    </div>
+  );
+}
 
-      {activeTab === "iam" ? (
-        <PlaceholderSection
-          icon={<Fingerprint className="h-5 w-5" />}
-          title="IAM module is planned"
-          body="Mini Stadoor’s IAM module should cover identity lifecycle, login, access and refresh tokens, OAuth2 with OIDC, and role-aware access management for registered applications."
-        />
-      ) : null}
+function ToggleRow({
+  label,
+  detail,
+  checked,
+  onToggle,
+}: {
+  label: string;
+  detail: string;
+  checked: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-start justify-between gap-3 rounded-[0.8rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] px-4 py-3 text-left"
+    >
+      <div>
+        <p className="text-[1.05rem] font-medium text-[var(--text-strong)]">{label}</p>
+        <p className="text-sm text-[var(--text-muted)]">{detail}</p>
+      </div>
+      <span
+        className={`rounded-full px-2.5 py-1 text-sm font-medium ${
+          checked
+            ? "bg-[color:color-mix(in_srgb,var(--surface-soft)_90%,transparent)] text-[var(--accent-soft)]"
+            : "bg-[color:color-mix(in_srgb,var(--surface-muted)_92%,transparent)] text-[var(--text-muted)]"
+        }`}
+      >
+        {checked ? "On" : "Off"}
+      </span>
+    </button>
+  );
+}
+
+function LinkButton({ href, label }: { href: string; label: string }) {
+  return (
+    <Button
+      variant="secondary"
+      asChild
+      className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+    >
+      <a href={href}>
+        {label}
+        <ChevronRight className="h-4 w-4" />
+      </a>
+    </Button>
+  );
+}
+
+function EmptyRow({ message }: { message: string }) {
+  return (
+    <div className="rounded-[0.85rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-6 text-[1rem] text-[var(--text-muted)]">
+      {message}
     </div>
   );
 }

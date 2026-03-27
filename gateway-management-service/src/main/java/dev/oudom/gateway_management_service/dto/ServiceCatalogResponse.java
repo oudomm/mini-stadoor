@@ -9,6 +9,7 @@ public record ServiceCatalogResponse(
     String address,
     Integer port,
     List<String> tags,
+    AuthType authType,
     List<RouteRequest> routes
 ) {
 }

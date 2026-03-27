@@ -3,6 +3,7 @@ package dev.oudom.gateway_management_service.controller;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.security.DeveloperIdentityResolver;
 import dev.oudom.gateway_management_service.service.ExternalServiceRegistrationService;
+import dev.oudom.gateway_management_service.service.StandardGatewaySyncService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import java.util.Map;
 public class ServiceRegistrationController {
 
     private final ExternalServiceRegistrationService externalServiceRegistrationService;
+    private final StandardGatewaySyncService standardGatewaySyncService;
     private final DeveloperIdentityResolver developerIdentityResolver;
 
     @PostMapping("/register")
@@ -31,9 +33,11 @@ public class ServiceRegistrationController {
             request,
             developerIdentityResolver.currentDeveloper()
         );
+        boolean synced = standardGatewaySyncService.refreshRoutes();
         return Map.of(
             "message", "Service registered in Eureka",
-            "service", registeredService
+            "service", registeredService,
+            "gatewayRefreshed", synced
         );
     }
 

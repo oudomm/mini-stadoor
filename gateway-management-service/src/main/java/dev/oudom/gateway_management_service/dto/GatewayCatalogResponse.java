@@ -6,6 +6,7 @@ public record GatewayCatalogResponse(
     String gatewayId,
     String gatewayName,
     String description,
+    AuthType authType,
     List<ServiceCatalogResponse> services
 ) {
 }

@@ -9,9 +9,11 @@ public record GatewayRequest(
     String gatewayId,
     @NotBlank(message = "gatewayName must not be blank")
     String gatewayName,
-    String description
+    String description,
+    AuthType authType
 ) {
     public GatewayRequest {
         description = description == null ? "" : description.trim();
+        authType = authType == null ? AuthType.NONE : authType;
     }
 }

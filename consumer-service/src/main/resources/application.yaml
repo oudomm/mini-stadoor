@@ -2,7 +2,7 @@ spring:
   application:
     name: consumer-service
   datasource:
-    url: jdbc:postgresql://localhost:5433/dynamic_routes_demo
+    url: jdbc:postgresql://localhost:5433/consumer_service_db
     username: demo_user
     password: demo_pass
   jpa:

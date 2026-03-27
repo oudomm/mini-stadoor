@@ -12,14 +12,12 @@ import {
   gatewayPresets,
   routePresets,
   servicePresets,
-  supportedSecurityModes,
   type GatewayForm,
   type GatewaySummary,
   type GatewayWorkspaceTab,
   type RouteForm,
   type ServiceForm,
   type StatusState,
-  type SupportedAuthType,
 } from "@/app/components/developer-portal/model";
 import {
   EmptyState,
@@ -87,6 +85,15 @@ export function GatewayWorkspace({
   onRouteServiceChange,
   onReloadGateways,
 }: GatewayWorkspaceProps) {
+  const selectedRouteService =
+    selectedRouteGateway?.services.find((service) => service.serviceId === routeForm.serviceId) ?? null;
+  const inheritedSecurity =
+    selectedRouteService?.authType ??
+    (routeForm.authType ||
+      selectedRouteGateway?.authType ||
+      gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId)?.authType ||
+      "NONE");
+
   return (
     <section className="space-y-6">
       <div className="animate-panel rounded-[1.45rem] border border-white/8 bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_84%,transparent)_0%,color-mix(in_srgb,var(--surface-muted)_74%,transparent)_100%)] p-6">
@@ -283,7 +290,7 @@ export function GatewayWorkspace({
               <CardHeader>
                 <CardTitle className="text-2xl font-semibold text-[var(--text-strong)]">Publish route</CardTitle>
                 <CardDescription className="text-[var(--text-muted)]">
-                  Pick the gateway, choose one of its services, then attach the public path and security type.
+                  Pick the gateway, choose one of its services, then attach the public path. Security is inherited from the gateway.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -295,7 +302,16 @@ export function GatewayWorkspace({
                       variant="secondary"
                       size="sm"
                       className="border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--surface-muted)] text-[var(--text-strong)] hover:bg-[var(--surface-soft)]"
-                      onClick={() => setRouteForm({ ...preset.values })}
+                      onClick={() =>
+                        setRouteForm({
+                          gatewayId: preset.values.gatewayId,
+                          serviceId: preset.values.serviceId,
+                          id: preset.values.id,
+                          path: preset.values.path,
+                          uri: preset.values.uri,
+                          authType: preset.values.authType,
+                        })
+                      }
                     >
                       {preset.label}
                     </Button>
@@ -304,7 +320,7 @@ export function GatewayWorkspace({
 
                 <div className="grid gap-3 rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--surface-muted)] p-4 md:grid-cols-3">
                   <PreviewStat label="Gateway" value={routeForm.gatewayId || "select_gateway"} />
-                  <PreviewStat label="Security policy" value={routeForm.authType} />
+                  <PreviewStat label="Security policy" value={inheritedSecurity} />
                   <PreviewStat label="Example request" value={exampleCall} mono />
                 </div>
 
@@ -361,29 +377,9 @@ export function GatewayWorkspace({
                       placeholder="lb://product-service"
                     />
                   </FormField>
-                  <FormField label="Auth Type">
-                    <select
-                      className="flex h-12 w-full rounded-2xl border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--field)] px-4 py-3 text-sm text-[var(--text-strong)] outline-none transition focus-visible:border-[var(--border-strong)] focus-visible:ring-4 focus-visible:ring-[color:color-mix(in_srgb,var(--accent)_10%,transparent)]"
-                      value={routeForm.authType}
-                      onChange={(event) =>
-                        setRouteForm({
-                          ...routeForm,
-                          authType: event.target.value as SupportedAuthType,
-                        })
-                      }
-                    >
-                      {supportedSecurityModes.map((mode) => (
-                        <option key={mode.label} value={mode.label}>
-                          {mode.label}
-                        </option>
-                      ))}
-                    </select>
-                  </FormField>
                   <div className="rounded-[1rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_72%,transparent)] px-4 py-4 text-sm leading-7 text-[var(--text-muted)]">
-                    Route security belongs to the gateway workspace. This prototype currently publishes live routes with
-                    <span className="text-[var(--text-strong)]"> NONE</span>, <span className="text-[var(--text-strong)]"> BASIC</span>, and
-                    <span className="text-[var(--text-strong)]"> API_KEY</span>, while <span className="text-[var(--text-strong)]">JWT</span> and
-                    <span className="text-[var(--text-strong)]">OAuth2/OIDC</span> stay visible as the next step.
+                    This route will inherit <span className="text-[var(--text-strong)]">{inheritedSecurity}</span> from the selected gateway.
+                    If you need a different security type, create another gateway workspace with that policy.
                   </div>
                   <Button
                     type="submit"
@@ -409,10 +405,10 @@ export function GatewayWorkspace({
           <CardContent className="space-y-5">
             <StepHint index="01" title="Create gateway" body="Use a gateway as the top-level project group for related services and routes." active={gatewayWorkspaceTab === "gateway"} />
             <StepHint index="02" title="Register service" body="Add a service into the selected gateway so it becomes available for dynamic route publishing." active={gatewayWorkspaceTab === "service"} />
-            <StepHint index="03" title="Create route" body="Attach a public path and security mode to one service inside the gateway." active={gatewayWorkspaceTab === "route"} />
+            <StepHint index="03" title="Create route" body="Attach a public path to one service. The gateway's security mode applies automatically." active={gatewayWorkspaceTab === "route"} />
             <div className="grid gap-3 rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[var(--surface-muted)] p-4 md:grid-cols-3">
               <PreviewStat label="Gateway" value={routeForm.gatewayId || "select_gateway"} />
-              <PreviewStat label="Security policy" value={routeForm.authType} />
+              <PreviewStat label="Security policy" value={inheritedSecurity} />
               <PreviewStat label="Example request" value={exampleCall} mono />
             </div>
           </CardContent>
