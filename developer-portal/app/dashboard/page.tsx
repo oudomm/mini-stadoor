@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   Bell,
   Grid2x2,
-  Moon,
   Route,
   Search,
   Server,
@@ -169,7 +168,6 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
               <div className="ml-auto flex items-center gap-2">
                 <ThemeToggle />
-                <TopCircle icon={<Moon className="h-4 w-4" />} />
                 <TopCircle icon={<Bell className="h-4 w-4" />} />
                 <div className="ml-1 flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] px-2.5 py-1.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--accent)] text-sm font-semibold text-[var(--accent-contrast)]">
