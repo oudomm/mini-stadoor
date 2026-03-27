@@ -124,8 +124,14 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <div className="grid min-h-screen xl:grid-cols-[252px_minmax(0,1fr)]">
         <aside className="flex flex-col border-r border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_82%,var(--background))]">
           <div className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] px-6 py-7">
-            <p className="text-4xl font-semibold tracking-[-0.055em] text-[var(--text-strong)]">Stadoor</p>
-            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">Developer Portal</p>
+            <Link
+              href="/"
+              className="block transition hover:opacity-85"
+              aria-label="Go to home page"
+            >
+              <p className="text-4xl font-semibold tracking-[-0.055em] text-[var(--text-strong)]">Stadoor</p>
+              <p className="mt-1 text-[1rem] text-[var(--text-muted)]">Developer Portal</p>
+            </Link>
           </div>
 
           <nav className="space-y-1 px-3 py-4">

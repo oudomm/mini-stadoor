@@ -28,30 +28,30 @@
 }
 
 html[data-theme="dark"] {
-  --background: #1b1313;
-  --foreground: #f3efe9;
-  --surface: #221919;
-  --surface-muted: #2a1f1f;
-  --surface-soft: #302323;
-  --border-soft: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(86, 227, 64, 0.22);
+  --background: #040504;
+  --foreground: #f5f8f2;
+  --surface: #0a0d0b;
+  --surface-muted: #0e120f;
+  --surface-soft: #141915;
+  --border-soft: rgba(234, 243, 232, 0.06);
+  --border-strong: rgba(86, 227, 64, 0.16);
   --accent: #56e340;
-  --accent-bright: #72ef5d;
-  --accent-soft: #9cf08f;
-  --accent-contrast: #1b1313;
-  --text-strong: #f7f2eb;
-  --text-muted: rgba(247, 242, 235, 0.7);
-  --text-faint: rgba(247, 242, 235, 0.42);
-  --field: #2b2121;
-  --code: #161111;
-  --glow: rgba(86, 227, 64, 0.12);
-  --mascot-core: #233324;
-  --mascot-core-bright: #315636;
+  --accent-bright: #7bf466;
+  --accent-soft: #aff6a4;
+  --accent-contrast: #040504;
+  --text-strong: #f5f8f2;
+  --text-muted: rgba(245, 248, 242, 0.72);
+  --text-faint: rgba(245, 248, 242, 0.42);
+  --field: #0d110d;
+  --code: #070907;
+  --glow: rgba(86, 227, 64, 0.05);
+  --mascot-core: #162019;
+  --mascot-core-bright: #223726;
   --mascot-flame: #43cd34;
   --mascot-flame-bright: #92ff7f;
   --mascot-eye: #f6ffe9;
   --mascot-pupil: #0f3b0c;
-  --mascot-glow: rgba(86, 227, 64, 0.35);
+  --mascot-glow: rgba(86, 227, 64, 0.26);
 }
 
 @theme inline {
@@ -81,9 +81,9 @@ html[data-theme="dark"] {
 
 body {
   background:
-    radial-gradient(circle at top left, var(--glow), transparent 28%),
-    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 24%),
-    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 92%, black) 100%);
+    radial-gradient(circle at top left, var(--glow), transparent 24%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 20%),
+    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 94%, black) 100%);
   color: var(--foreground);
   font-family: var(--font-display), sans-serif;
 }
