@@ -19,6 +19,23 @@ export const metadata: Metadata = {
   description: "Developer website for registering services and creating dynamic routes in the Mini Stadoor demo.",
 };
 
+const themeInitScript = `
+(() => {
+  try {
+    const storedTheme = window.localStorage.getItem("mini-stadoor-theme");
+    const resolvedTheme =
+      storedTheme === "light" || storedTheme === "dark"
+        ? storedTheme
+        : window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+    document.documentElement.dataset.theme = resolvedTheme;
+  } catch {
+    document.documentElement.dataset.theme = "light";
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +45,12 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${displayFont.variable} ${monoFont.variable} h-full antialiased`}
-      data-theme="dark"
+      data-theme="light"
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <ThemeProvider>{children}</ThemeProvider>
       </body>

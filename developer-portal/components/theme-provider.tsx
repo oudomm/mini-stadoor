@@ -14,14 +14,23 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 function resolveSystemTheme(): ThemeMode {
   if (typeof window === "undefined") {
-    return "dark";
+    return "light";
   }
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>("dark");
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    if (typeof document !== "undefined") {
+      const currentTheme = document.documentElement.dataset.theme;
+      if (currentTheme === "light" || currentTheme === "dark") {
+        return currentTheme;
+      }
+    }
+
+    return "light";
+  });
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("mini-stadoor-theme") as ThemeMode | null;
