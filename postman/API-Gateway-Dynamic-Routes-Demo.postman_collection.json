@@ -3,7 +3,7 @@
     "_postman_id": "f9a8ab4b-4c4d-4f74-9c36-6ef0a2b7f0d1",
     "name": "API Gateway Dynamic Routes Demo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Simple demo collection for gateway-scoped service registration and route security using standard-gateway, gateway-management-service, consumer-service, and product-service."
+    "description": "Demo collection for developer IAM, dynamic gateway registration, consumer credential issuance, and protected route calls across NONE, BASIC, API_KEY, JWT, and optional OAUTH2 flows."
   },
   "variable": [
     {
@@ -106,7 +106,7 @@
                 "gateways"
               ]
             },
-            "description": "Creates the top-level gateway workspace for the authenticated developer with a gateway default auth policy. This sample uses NONE so later requests can demonstrate route-level overrides."
+            "description": "Creates an open gateway workspace with the default policy NONE. Use this folder only for the public no-auth example."
           },
           "response": []
         },
@@ -138,7 +138,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the authenticated developer's gateway workspace. This sample leaves authType null so each route can choose its own auth policy. Set authType to BASIC, API_KEY, JWT, or NONE if you want every route in this service to inherit one policy."
+            "description": "Registers product-service into the open gateway. authType null keeps the service on the gateway default NONE policy."
           },
           "response": []
         },
@@ -169,7 +169,7 @@
                 "routes"
               ]
             },
-            "description": "Creates an open route inside the authenticated developer's e-commerce gateway. Because the service authType is null and this route authType is null, the route inherits the gateway default NONE policy."
+            "description": "Creates an open route inside the NONE gateway. Because the service authType is null and this route authType is null, the route inherits NONE from the gateway."
           },
           "response": []
         },
@@ -235,7 +235,26 @@
                 "register"
               ]
             },
-            "description": "Registers a consumer-service user. The returned API key is stored in the collection variable registeredApiKey."
+            "description": "Registers a reusable consumer identity in consumer-service. The returned API key is stored in registeredApiKey for later API_KEY requests."
+          },
+          "response": []
+        },
+        {
+          "name": "2. List Consumers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{consumerServiceBaseUrl}}/api/users",
+              "host": [
+                "{{consumerServiceBaseUrl}}"
+              ],
+              "path": [
+                "api",
+                "users"
+              ]
+            },
+            "description": "Lists consumer identities with API key previews so you can confirm which clients are available for BASIC, API_KEY, and JWT flows."
           },
           "response": []
         }
@@ -470,7 +489,7 @@
       "name": "Basic Auth",
       "item": [
         {
-          "name": "1. Create Basic Auth Route",
+          "name": "1. Create Basic Auth Gateway",
           "request": {
             "method": "POST",
             "header": [
@@ -485,7 +504,70 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-basic\",\n  \"path\": \"/basic/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"BASIC\"\n}"
+              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"gatewayName\": \"Basic Auth Gateway\",\n  \"description\": \"Gateway workspace for username/password protected product APIs.\",\n  \"authType\": \"BASIC\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            },
+            "description": "Creates a gateway whose default policy is BASIC. Services and routes under this gateway must stay on BASIC or inherit it."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Register Basic Product Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"basic-auth\"],\n  \"authType\": null\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers product-service into the BASIC gateway. authType null keeps the service on the gateway default BASIC policy."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Basic Auth Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"id\": \"product-route-basic\",\n  \"path\": \"/basic/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -496,12 +578,12 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by Basic Auth. This works because the service was registered with authType null, so this route can override the gateway default with BASIC."
+            "description": "Creates a route inside the BASIC gateway. With route authType null, the route inherits BASIC from the gateway."
           },
           "response": []
         },
         {
-          "name": "2. Call Basic Auth Route",
+          "name": "4. Call Basic Auth Route",
           "request": {
             "method": "GET",
             "auth": {
@@ -530,7 +612,7 @@
                 "products"
               ]
             },
-            "description": "Calls a Basic Auth protected route through standard-gateway using the consumer credentials created earlier."
+            "description": "Calls the BASIC protected route with the consumer username and password created earlier."
           },
           "response": []
         }
@@ -540,7 +622,7 @@
       "name": "API Key",
       "item": [
         {
-          "name": "1. Create API Key Route",
+          "name": "1. Create API Key Gateway",
           "request": {
             "method": "POST",
             "header": [
@@ -555,7 +637,70 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-api-key\",\n  \"path\": \"/api-key/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"API_KEY\"\n}"
+              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"gatewayName\": \"API Key Gateway\",\n  \"description\": \"Gateway workspace for partner-facing APIs secured with X-API-Key.\",\n  \"authType\": \"API_KEY\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            },
+            "description": "Creates a gateway whose default policy is API_KEY."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Register API Key Product Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"api-key\"],\n  \"authType\": null\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers product-service into the API_KEY gateway. authType null keeps the service on the gateway default API_KEY policy."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create API Key Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"id\": \"product-route-api-key\",\n  \"path\": \"/api-key/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -566,12 +711,12 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by API key validation. This route sets API_KEY directly because the service authType is still null."
+            "description": "Creates a route inside the API_KEY gateway. With route authType null, the route inherits API_KEY from the gateway."
           },
           "response": []
         },
         {
-          "name": "2. Call API Key Route",
+          "name": "4. Call API Key Route",
           "request": {
             "method": "GET",
             "header": [
@@ -590,7 +735,7 @@
                 "products"
               ]
             },
-            "description": "Calls an API key protected route through standard-gateway using the API key returned by consumer registration."
+            "description": "Calls the API_KEY protected route using the API key returned during consumer registration."
           },
           "response": []
         }
@@ -600,7 +745,7 @@
       "name": "JWT",
       "item": [
         {
-          "name": "1. Create JWT Route",
+          "name": "1. Create JWT Gateway",
           "request": {
             "method": "POST",
             "header": [
@@ -615,7 +760,70 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-jwt\",\n  \"path\": \"/jwt/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"JWT\"\n}"
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"gatewayName\": \"JWT Gateway\",\n  \"description\": \"Gateway workspace for bearer-token protected product APIs.\",\n  \"authType\": \"JWT\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            },
+            "description": "Creates a gateway whose default policy is JWT."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Register JWT Product Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"jwt\"],\n  \"authType\": null\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers product-service into the JWT gateway. authType null keeps the service on the gateway default JWT policy."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create JWT Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"id\": \"product-route-jwt\",\n  \"path\": \"/jwt/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -626,12 +834,12 @@
                 "routes"
               ]
             },
-            "description": "Creates a route protected by JWT bearer token validation. This route sets JWT directly because the service authType is still null."
+            "description": "Creates a route inside the JWT gateway. With route authType null, the route inherits JWT from the gateway."
           },
           "response": []
         },
         {
-          "name": "2. Login To Issue Access And Refresh Tokens",
+          "name": "4. Login To Issue Access And Refresh Tokens",
           "event": [
             {
               "listen": "test",
@@ -671,7 +879,7 @@
           "response": []
         },
         {
-          "name": "3. Validate Access Token",
+          "name": "5. Validate Access Token",
           "request": {
             "method": "POST",
             "header": [
@@ -691,12 +899,12 @@
                 "validate"
               ]
             },
-            "description": "Validates an issued JWT access token."
+            "description": "Validates an issued JWT access token before using it on the gateway route."
           },
           "response": []
         },
         {
-          "name": "4. Call JWT Route",
+          "name": "6. Call JWT Route",
           "request": {
             "method": "GET",
             "header": [
@@ -715,7 +923,7 @@
                 "products"
               ]
             },
-            "description": "Calls a JWT protected route through standard-gateway with the bearer token issued by consumer-service."
+            "description": "Calls the JWT protected route with the bearer token issued by consumer-service."
           },
           "response": []
         }
@@ -725,7 +933,7 @@
       "name": "OAuth2",
       "item": [
         {
-          "name": "1. Create OAuth2 Route",
+          "name": "1. Create OAuth2 Gateway",
           "request": {
             "method": "POST",
             "header": [
@@ -740,7 +948,70 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-oauth2\",\n  \"path\": \"/oauth2/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": \"OAUTH2\"\n}"
+              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"gatewayName\": \"OAuth2 Gateway\",\n  \"description\": \"Gateway workspace for IAM-backed bearer token enforcement.\",\n  \"authType\": \"OAUTH2\"\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/gateways",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "gateways"
+              ]
+            },
+            "description": "Optional example: creates a gateway whose default policy is OAUTH2."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Register OAuth2 Product Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"oauth2\"],\n  \"authType\": null\n}"
+            },
+            "url": {
+              "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
+              "host": [
+                "{{gatewayManagementServiceBaseUrl}}"
+              ],
+              "path": [
+                "services",
+                "register"
+              ]
+            },
+            "description": "Registers product-service into the OAUTH2 gateway. authType null keeps the service on the gateway default OAUTH2 policy."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create OAuth2 Route",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{platformAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"id\": \"product-route-oauth2\",\n  \"path\": \"/oauth2/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -751,12 +1022,12 @@
                 "routes"
               ]
             },
-            "description": "Optional IAM-backed example: creates a route protected by OAuth2 bearer token validation through iam-server. Like the other route-level examples, this works because the service authType is null."
+            "description": "Creates a route inside the OAUTH2 gateway. With route authType null, the route inherits OAUTH2 from the gateway."
           },
           "response": []
         },
         {
-          "name": "2. Request OAuth2 Access Token",
+          "name": "4. Request OAuth2 Access Token",
           "event": [
             {
               "listen": "test",
@@ -822,7 +1093,7 @@
           "response": []
         },
         {
-          "name": "3. Call OAuth2 Route",
+          "name": "5. Call OAuth2 Route",
           "request": {
             "method": "GET",
             "header": [

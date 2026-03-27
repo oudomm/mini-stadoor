@@ -1,5 +1,6 @@
 package dev.oudom.consumer_service.service;
 
+import dev.oudom.consumer_service.dto.ConsumerUserSummaryResponse;
 import dev.oudom.consumer_service.dto.UserRegistrationRequest;
 import dev.oudom.consumer_service.dto.UserRegistrationResponse;
 import dev.oudom.consumer_service.entity.ConsumerUserEntity;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.UUID;
+import java.util.List;
 
 @Service
 public class ConsumerUserStore {
@@ -82,6 +84,13 @@ public class ConsumerUserStore {
             .subscribeOn(Schedulers.boundedElastic());
     }
 
+    public Mono<List<ConsumerUserSummaryResponse>> findAllUsers() {
+        return Mono.fromCallable(() -> consumerUserRepository.findAllByOrderByCreatedAtDesc().stream()
+                .map(this::toSummary)
+                .toList())
+            .subscribeOn(Schedulers.boundedElastic());
+    }
+
     @Transactional
     protected UserRegistrationResponse registerBlocking(UserRegistrationRequest request) {
         String normalizedUsername = normalizeUsername(request.username());
@@ -102,6 +111,27 @@ public class ConsumerUserStore {
 
     private String generateApiKey() {
         return "stadoor_" + UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private ConsumerUserSummaryResponse toSummary(ConsumerUserEntity user) {
+        return new ConsumerUserSummaryResponse(
+            user.getId(),
+            user.getUsername(),
+            maskApiKey(user.getApiKey()),
+            user.getStatus(),
+            user.getCreatedAt()
+        );
+    }
+
+    private String maskApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            return "Unavailable";
+        }
+        if (apiKey.length() <= 10) {
+            return apiKey;
+        }
+
+        return apiKey.substring(0, 10) + "..." + apiKey.substring(apiKey.length() - 4);
     }
 
     private String normalizeUsername(String username) {

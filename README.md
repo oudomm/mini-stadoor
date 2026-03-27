@@ -7,6 +7,7 @@ It proves:
 - developers create `Gateway -> Service -> Route`
 - management data is owner-scoped per developer
 - `standard-gateway` resolves auth from gateway defaults, optional service policies, and route overrides
+- consumer identities are created once in `consumer-service` and then reused for `BASIC`, `API_KEY`, and `JWT` routes
 
 ## Services
 
@@ -73,14 +74,17 @@ Recommended order:
 5. `Platform IAM -> Exchange Portal Authorization Code`
 6. `Gateway Setup + Non Auth`
 7. `Consumer User -> Register Consumer User`
-8. `Basic Auth`, `API Key`, or `JWT`
-9. optional: `OAuth2`
+8. `Consumer User -> List Consumers`
+9. run one protected flow: `Basic Auth`, `API Key`, or `JWT`
+10. optional: `OAuth2`
 
 Postman demo notes:
 
 - `Create Gateway` sets the gateway default policy
-- `Register Product Service` currently uses `authType: null`, so later route requests can choose their own auth type
-- to lock an entire service to one policy, rerun service registration with `authType` set and then create routes with `authType: null`
+- each protected Postman folder now creates its own matching gateway before registering the service and route
+- `Consumer User` creates a reusable client identity; use that same identity for `BASIC`, `API_KEY`, or `JWT`
+- `JWT` includes both token issuance and token validation before the protected route call
+- keep service `authType: null` if you want it to inherit the gateway default; set service `authType` when you want the whole service locked to one matching policy
 
 Demo IAM credentials:
 

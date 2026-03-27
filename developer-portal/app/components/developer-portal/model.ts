@@ -73,6 +73,43 @@ export type StatusState = {
   payload?: unknown;
 } | null;
 
+export type ConsumerSummary = {
+  id: string;
+  username: string;
+  apiKeyPreview: string;
+  status: string;
+  createdAt: string;
+};
+
+export type ConsumerForm = {
+  username: string;
+  password: string;
+};
+
+export type ConsumerLoginForm = {
+  username: string;
+  password: string;
+};
+
+export type ConsumerRegistrationResult = {
+  username: string;
+  apiKey: string;
+};
+
+export type ConsumerTokenResult = {
+  accessToken: string;
+  refreshToken: string;
+  tokenType: string;
+  expiresIn: number;
+  principal: string;
+};
+
+export type ConsumerTokenValidationResult = {
+  authenticated: boolean;
+  authenticationType: string;
+  principal: string;
+};
+
 export type DeveloperPortalProps = {
   activeTab: DashboardTab;
   operatorName?: string;
@@ -109,6 +146,16 @@ export const initialRouteForm: RouteForm = {
   path: "/open/products/**",
   uri: "lb://product-service",
   authType: "",
+};
+
+export const initialConsumerForm: ConsumerForm = {
+  username: "partner-client-1",
+  password: "qwer1234",
+};
+
+export const initialConsumerLoginForm: ConsumerLoginForm = {
+  username: "",
+  password: "",
 };
 
 export const gatewayPresets = [

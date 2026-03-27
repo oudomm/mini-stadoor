@@ -8,10 +8,14 @@ import {
   ChevronLeft,
   ChevronRight,
   CircleAlert,
+  Copy,
+  KeyRound,
   Plus,
+  RefreshCcw,
   Route,
   Server,
   Shield,
+  ShieldCheck,
   Trash2,
   UserRound,
   Waypoints,
@@ -22,11 +26,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  initialConsumerForm,
+  initialConsumerLoginForm,
   futureSecurityModes,
   initialGatewayForm,
   initialRouteForm,
   initialServiceForm,
   supportedSecurityModes,
+  type ConsumerForm,
+  type ConsumerLoginForm,
+  type ConsumerRegistrationResult,
+  type ConsumerSummary,
+  type ConsumerTokenResult,
+  type ConsumerTokenValidationResult,
   type DashboardTab,
   type DeveloperPortalProps,
   type GatewayForm,
@@ -58,6 +70,18 @@ export function DeveloperPortal({
   const [serviceBaseUrl, setServiceBaseUrl] = useState("http://localhost:8082");
 
   const [showRouteForm, setShowRouteForm] = useState(false);
+  const [consumers, setConsumers] = useState<ConsumerSummary[]>([]);
+  const [showConsumerForm, setShowConsumerForm] = useState(false);
+  const [consumerForm, setConsumerForm] = useState<ConsumerForm>(initialConsumerForm);
+  const [consumerLoginForm, setConsumerLoginForm] = useState<ConsumerLoginForm>(initialConsumerLoginForm);
+  const [selectedConsumerUsername, setSelectedConsumerUsername] = useState("");
+  const [consumerStatus, setConsumerStatus] = useState<StatusState>(null);
+  const [consumerJwtStatus, setConsumerJwtStatus] = useState<StatusState>(null);
+  const [consumerTokenValidationStatus, setConsumerTokenValidationStatus] = useState<StatusState>(null);
+  const [issuedConsumerToken, setIssuedConsumerToken] = useState<ConsumerTokenResult | null>(null);
+  const [validatedConsumerToken, setValidatedConsumerToken] = useState<ConsumerTokenValidationResult | null>(null);
+  const [tokenToValidate, setTokenToValidate] = useState("");
+  const [recentConsumerCredential, setRecentConsumerCredential] = useState<(ConsumerRegistrationResult & { password: string }) | null>(null);
 
   const [profileName, setProfileName] = useState(operatorName);
   const [profileEmail, setProfileEmail] = useState(operatorEmail);
@@ -75,6 +99,10 @@ export function DeveloperPortal({
     void loadGateways();
   }, []);
 
+  useEffect(() => {
+    void loadConsumers();
+  }, []);
+
   async function loadGateways(preferredGatewayId?: string, preferredServiceId?: string) {
     startTransition(() => {
       void (async () => {
@@ -85,6 +113,50 @@ export function DeveloperPortal({
         syncSelections(gatewayList, preferredGatewayId, preferredServiceId);
       })();
     });
+  }
+
+  async function loadConsumers(preferredUsername?: string) {
+    startTransition(() => {
+      void (async () => {
+        const response = await fetch("/api/consumers", { cache: "no-store" });
+        const data = (await response.json().catch(() => [])) as ConsumerSummary[] | { message?: string };
+        const consumerList = Array.isArray(data) ? data : [];
+        setConsumers(consumerList);
+
+        const nextUsername =
+          preferredUsername && consumerList.some((consumer) => consumer.username === preferredUsername)
+            ? preferredUsername
+            : selectedConsumerUsername && consumerList.some((consumer) => consumer.username === selectedConsumerUsername)
+              ? selectedConsumerUsername
+              : consumerList[0]?.username ?? "";
+
+        setSelectedConsumerUsername(nextUsername);
+        if (nextUsername) {
+          setConsumerLoginForm((current) => ({
+            password:
+              recentConsumerCredential?.username === nextUsername
+                ? recentConsumerCredential.password
+                : current.username === nextUsername
+                  ? current.password
+                  : "",
+            username: nextUsername,
+          }));
+        }
+      })();
+    });
+  }
+
+  function selectConsumer(username: string) {
+    setSelectedConsumerUsername(username);
+    setConsumerLoginForm({
+      username,
+      password: recentConsumerCredential?.username === username ? recentConsumerCredential.password : "",
+    });
+    setConsumerJwtStatus(null);
+    setConsumerTokenValidationStatus(null);
+    setIssuedConsumerToken(null);
+    setValidatedConsumerToken(null);
+    setTokenToValidate("");
   }
 
   function syncSelections(gatewayList: GatewaySummary[], preferredGatewayId?: string, preferredServiceId?: string) {
@@ -249,6 +321,114 @@ export function DeveloperPortal({
     }
   }
 
+  async function submitConsumer(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setConsumerStatus({ tone: "loading", message: "Registering consumer..." });
+
+    const response = await fetch("/api/consumers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(consumerForm),
+    });
+
+    const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
+      | ConsumerRegistrationResult
+      | { message?: string };
+
+    setConsumerStatus({
+      tone: response.ok ? "success" : "error",
+      message: response.ok ? "Consumer registered successfully." : "Failed to register consumer.",
+      payload: data,
+    });
+
+    if (response.ok && "username" in data && "apiKey" in data) {
+      setRecentConsumerCredential({
+        username: data.username,
+        apiKey: data.apiKey,
+        password: consumerForm.password,
+      });
+      setConsumerLoginForm({
+        username: data.username,
+        password: consumerForm.password,
+      });
+      setSelectedConsumerUsername(data.username);
+      setConsumerForm(initialConsumerForm);
+      setShowConsumerForm(false);
+      void loadConsumers(data.username);
+    }
+  }
+
+  async function issueConsumerJwt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setConsumerJwtStatus({ tone: "loading", message: "Issuing consumer JWT..." });
+
+    const response = await fetch("/api/consumers/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(consumerLoginForm),
+    });
+
+    const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
+      | ConsumerTokenResult
+      | { message?: string };
+
+    setConsumerJwtStatus({
+      tone: response.ok ? "success" : "error",
+      message: response.ok ? "JWT issued for selected consumer." : "Failed to issue JWT.",
+      payload: data,
+    });
+
+    if (response.ok && "accessToken" in data) {
+      setIssuedConsumerToken(data);
+      setValidatedConsumerToken(null);
+      setTokenToValidate(data.accessToken);
+    }
+  }
+
+  async function validateConsumerJwt(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setConsumerTokenValidationStatus({ tone: "loading", message: "Validating token..." });
+
+    const response = await fetch("/api/consumers/token/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: tokenToValidate }),
+    });
+
+    const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
+      | ConsumerTokenValidationResult
+      | { message?: string };
+
+    setConsumerTokenValidationStatus({
+      tone: response.ok ? "success" : "error",
+      message: response.ok ? "Token validation completed." : "Failed to validate token.",
+      payload: data,
+    });
+
+    if (response.ok && "authenticated" in data) {
+      setValidatedConsumerToken(data);
+    }
+  }
+
+  async function copyValue(value: string, successMessage: string) {
+    if (!value) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setConsumerStatus({
+        tone: "success",
+        message: successMessage,
+      });
+    } catch {
+      setConsumerStatus({
+        tone: "error",
+        message: "Clipboard copy failed.",
+      });
+    }
+  }
+
   function handleRouteGatewayChange(gatewayId: string) {
     const gateway = gateways.find((item) => item.gatewayId === gatewayId);
     const firstService = gateway?.services[0];
@@ -284,6 +464,8 @@ export function DeveloperPortal({
     gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId) ?? gateways[0] ?? null;
   const selectedServiceGateway =
     gateways.find((gateway) => gateway.gatewayId === serviceForm.gatewayId) ?? gateways[0] ?? null;
+  const selectedConsumer =
+    consumers.find((consumer) => consumer.username === selectedConsumerUsername) ?? consumers[0] ?? null;
   const selectedRouteService =
     selectedRouteGateway?.services.find((service) => service.serviceId === routeForm.serviceId) ?? null;
   const inheritedServiceAuthType = selectedRouteService?.authType ?? null;
@@ -308,6 +490,19 @@ export function DeveloperPortal({
   const gatewayCount = gateways.length;
   const serviceCount = allServices.length;
   const routeCount = allRoutes.length;
+  const protectedGateways = gateways
+    .filter((gateway) => (gateway.authType ?? "NONE") !== "NONE")
+    .map((gateway) => ({
+      gatewayId: gateway.gatewayId,
+      gatewayName: gateway.gatewayName,
+      authType: gateway.authType ?? "NONE",
+      routeCount: gateway.services.reduce((total, service) => total + service.routes.length, 0),
+      serviceCount: gateway.services.length,
+    }));
+  const protectedGatewayCount = protectedGateways.length;
+  const basicGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "BASIC").length;
+  const apiKeyGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "API_KEY").length;
+  const jwtGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "JWT").length;
 
   const gatewayRows = useMemo(
     () =>
@@ -1031,36 +1226,397 @@ export function DeveloperPortal({
     if (tab === "consumers") {
       return (
         <section className="space-y-4">
-          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
-            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Consumer Access</p>
-            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
-              Manage user and credential flows for Basic Auth, API Key, and JWT protected routes.
-            </p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <ConsumerBlock
-                icon={<UserRound className="h-5 w-5" />}
-                title="Register consumer user"
-                endpoint="POST /api/users/register"
-                detail="Create platform-level consumer identities for protected routes."
-              />
-              <ConsumerBlock
-                icon={<Shield className="h-5 w-5" />}
-                title="Issue JWT"
-                endpoint="POST /api/login"
-                detail="Exchange username/password for access token and refresh token."
-              />
-              <ConsumerBlock
-                icon={<Shield className="h-5 w-5" />}
-                title="Validate token"
-                endpoint="POST /api/token/validate"
-                detail="Validate bearer token before forwarding secured route traffic."
-              />
-              <ConsumerBlock
-                icon={<Server className="h-5 w-5" />}
-                title="API key policy"
-                endpoint="Header: X-API-Key"
-                detail="Apply key-based route protection for partner-facing APIs."
-              />
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="flex flex-wrap items-start justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <div>
+                <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Consumers</p>
+                <p className="mt-1 max-w-3xl text-[1rem] text-[var(--text-muted)]">
+                  Create reusable client identities, hand off credentials, and test JWT issuance for Basic Auth, API Key,
+                  and JWT protected gateways.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                  onClick={() => void loadConsumers(selectedConsumer?.username)}
+                >
+                  <RefreshCcw className="h-4 w-4" />
+                  Refresh
+                </Button>
+                <Button
+                  type="button"
+                  variant="brand"
+                  className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                  onClick={() => setShowConsumerForm((current) => !current)}
+                >
+                  {showConsumerForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {showConsumerForm ? "Close form" : "Add Consumer"}
+                </Button>
+              </div>
+            </header>
+
+            <div className="space-y-4 px-4 py-4">
+              <StatusPanel status={consumerStatus} />
+              {showConsumerForm ? (
+                <form
+                  onSubmit={submitConsumer}
+                  className="grid gap-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                >
+                  <Field label="Consumer Username">
+                    <Input
+                      value={consumerForm.username}
+                      onChange={(event) => setConsumerForm((current) => ({ ...current, username: event.target.value }))}
+                      placeholder="e.g., partner-client-1"
+                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
+                  <Field label="Temporary Password">
+                    <Input
+                      type="password"
+                      value={consumerForm.password}
+                      onChange={(event) => setConsumerForm((current) => ({ ...current, password: event.target.value }))}
+                      placeholder="Choose the password used for BASIC and JWT login"
+                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
+                  <div className="flex items-end gap-2">
+                    <Button
+                      type="submit"
+                      variant="brand"
+                      className="h-11 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Register Consumer
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="h-11 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                      onClick={() => setShowConsumerForm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                  <p className="text-sm text-[var(--text-muted)] xl:col-span-3">
+                    Flow: create the identity once, then reuse the same username/password or API key on any gateway that
+                    expects the matching auth type.
+                  </p>
+                </form>
+              ) : null}
+            </div>
+          </section>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              icon={<UserRound className="h-5 w-5" />}
+              value={consumers.length}
+              label="Registered Consumers"
+              helper={consumers.length > 0 ? "Reusable identities across protected traffic" : "Create your first consumer"}
+            />
+            <MetricCard
+              icon={<Shield className="h-5 w-5" />}
+              value={basicGatewayCount}
+              label="Basic Auth Gateways"
+              helper="Username + password traffic"
+            />
+            <MetricCard
+              icon={<KeyRound className="h-5 w-5" />}
+              value={apiKeyGatewayCount}
+              label="API Key Gateways"
+              helper="Header-based partner access"
+            />
+            <MetricCard
+              icon={<ShieldCheck className="h-5 w-5" />}
+              value={jwtGatewayCount}
+              label="JWT Gateways"
+              helper="Token issuance and bearer validation"
+            />
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+              <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+                <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Consumer Registry</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  Kong-style identity list: pick a consumer, inspect credentials, then test the auth surface on the right.
+                </p>
+              </header>
+              <div className="space-y-3 px-4 py-4">
+                {consumers.length === 0 ? (
+                  <EmptyRow message="No consumers yet. Add a consumer first so you can issue JWTs or hand off API keys." />
+                ) : (
+                  consumers.map((consumer) => {
+                    const isSelected = selectedConsumer?.username === consumer.username;
+                    return (
+                      <button
+                        key={consumer.id}
+                        type="button"
+                        onClick={() => selectConsumer(consumer.username)}
+                        className={`w-full rounded-[0.9rem] border px-4 py-4 text-left transition ${
+                          isSelected
+                            ? "border-[color:color-mix(in_srgb,var(--accent)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)]"
+                            : "border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] hover:border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] hover:bg-[var(--surface-soft)]"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-[0.8rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)] text-[var(--accent-soft)]">
+                                <UserRound className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">{consumer.username}</p>
+                                <p className="text-sm text-[var(--text-muted)]">Created {formatShortDate(consumer.createdAt)}</p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <StatusBadge label={consumer.status} tone="success" />
+                              <AuthChip label="BASIC" active={basicGatewayCount > 0} />
+                              <AuthChip label="API_KEY" active={apiKeyGatewayCount > 0} />
+                              <AuthChip label="JWT" active={jwtGatewayCount > 0} />
+                            </div>
+                            <p className="mt-3 font-mono text-sm text-[var(--accent-soft)]">{consumer.apiKeyPreview}</p>
+                          </div>
+                          <ChevronRight className={`mt-1 h-4 w-4 ${isSelected ? "text-[var(--accent-soft)]" : "text-[var(--text-muted)]"}`} />
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+              <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+                <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Credential Workspace</p>
+                <p className="mt-1 text-sm text-[var(--text-muted)]">
+                  Select a consumer, then issue JWTs, validate bearer tokens, or hand off the API key to an API client.
+                </p>
+              </header>
+
+              <div className="space-y-4 px-4 py-4">
+                {selectedConsumer ? (
+                  <>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
+                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Identity</p>
+                        <div className="mt-3 space-y-2">
+                          <InfoLine label="Username" value={selectedConsumer.username} />
+                          <InfoLine label="Status" value={selectedConsumer.status} />
+                          <InfoLine label="Created" value={formatShortDate(selectedConsumer.createdAt)} />
+                          <InfoLine label="API Key Preview" value={selectedConsumer.apiKeyPreview} mono />
+                        </div>
+                      </div>
+
+                      <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
+                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Credential Handoff</p>
+                        {recentConsumerCredential?.username === selectedConsumer.username ? (
+                          <div className="mt-3 space-y-3">
+                            <CredentialLine
+                              label="Username"
+                              value={recentConsumerCredential.username}
+                              onCopy={() => void copyValue(recentConsumerCredential.username, "Username copied")}
+                            />
+                            <CredentialLine
+                              label="Password"
+                              value={recentConsumerCredential.password}
+                              onCopy={() => void copyValue(recentConsumerCredential.password, "Password copied")}
+                            />
+                            <CredentialLine
+                              label="API Key"
+                              value={recentConsumerCredential.apiKey}
+                              onCopy={() => void copyValue(recentConsumerCredential.apiKey, "API key copied")}
+                              mono
+                            />
+                            <p className="text-sm text-[var(--text-muted)]">
+                              Full API key is only shown right after registration. Store it now, then use the preview for later reference.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-3 space-y-3">
+                            <p className="text-[1rem] text-[var(--text-muted)]">
+                              Passwords are not retrievable after creation. Use the original password for BASIC auth and JWT login,
+                              and hand off the stored API key to clients that call API_KEY gateways.
+                            </p>
+                            <CredentialLine
+                              label="API Key Preview"
+                              value={selectedConsumer.apiKeyPreview}
+                              mono
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <StatusPanel status={consumerJwtStatus} />
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <form
+                        onSubmit={issueConsumerJwt}
+                        className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
+                      >
+                        <div>
+                          <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Issue JWT</p>
+                          <p className="mt-1 text-sm text-[var(--text-muted)]">
+                            Use the consumer username/password pair to mint an access token for JWT-protected gateways.
+                          </p>
+                        </div>
+                        <Field label="Consumer Username">
+                          <Input
+                            value={consumerLoginForm.username}
+                            onChange={(event) =>
+                              setConsumerLoginForm((current) => ({ ...current, username: event.target.value }))
+                            }
+                            className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                          />
+                        </Field>
+                        <Field label="Password">
+                          <Input
+                            type="password"
+                            value={consumerLoginForm.password}
+                            onChange={(event) =>
+                              setConsumerLoginForm((current) => ({ ...current, password: event.target.value }))
+                            }
+                            placeholder="Enter the consumer password"
+                            className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                          />
+                        </Field>
+                        <Button
+                          type="submit"
+                          variant="brand"
+                          className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Issue Access Token
+                        </Button>
+                      </form>
+
+                      <form
+                        onSubmit={validateConsumerJwt}
+                        className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
+                      >
+                        <div>
+                          <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Validate JWT</p>
+                          <p className="mt-1 text-sm text-[var(--text-muted)]">
+                            Paste a bearer token or pull in the latest token issued from this workspace.
+                          </p>
+                        </div>
+                        <Field label="Access Token">
+                          <Textarea
+                            value={tokenToValidate}
+                            onChange={(event) => setTokenToValidate(event.target.value)}
+                            placeholder="Paste bearer token here"
+                            className="min-h-[132px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] font-mono text-sm"
+                          />
+                        </Field>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="submit"
+                            variant="brand"
+                            className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                          >
+                            <Shield className="h-4 w-4" />
+                            Validate Token
+                          </Button>
+                          {issuedConsumerToken ? (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                              onClick={() => setTokenToValidate(issuedConsumerToken.accessToken)}
+                            >
+                              Use latest token
+                            </Button>
+                          ) : null}
+                        </div>
+                      </form>
+                    </div>
+
+                    <StatusPanel status={consumerTokenValidationStatus} />
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <CodePanel
+                        title="Latest JWT Session"
+                        emptyMessage="Issue a JWT to see access and refresh tokens here."
+                        primaryAction={
+                          issuedConsumerToken
+                            ? {
+                                label: "Copy access token",
+                                onClick: () => void copyValue(issuedConsumerToken.accessToken, "Access token copied"),
+                              }
+                            : null
+                        }
+                      >
+                        {issuedConsumerToken ? (
+                          <div className="space-y-3">
+                            <InfoLine label="Principal" value={issuedConsumerToken.principal} />
+                            <InfoLine label="Type" value={issuedConsumerToken.tokenType} />
+                            <InfoLine label="Expires In" value={`${issuedConsumerToken.expiresIn} seconds`} />
+                            <CredentialLine label="Access Token" value={issuedConsumerToken.accessToken} mono />
+                            <CredentialLine label="Refresh Token" value={issuedConsumerToken.refreshToken} mono />
+                          </div>
+                        ) : null}
+                      </CodePanel>
+
+                      <CodePanel
+                        title="Validation Result"
+                        emptyMessage="Run token validation to confirm the JWT before calling the protected route."
+                      >
+                        {validatedConsumerToken ? (
+                          <div className="space-y-2">
+                            <InfoLine
+                              label="Authenticated"
+                              value={validatedConsumerToken.authenticated ? "true" : "false"}
+                            />
+                            <InfoLine label="Principal" value={validatedConsumerToken.principal} />
+                            <InfoLine label="Type" value={validatedConsumerToken.authenticationType} />
+                          </div>
+                        ) : null}
+                      </CodePanel>
+                    </div>
+                  </>
+                ) : (
+                  <EmptyRow message="Pick a consumer from the registry or register a new one to start issuing credentials." />
+                )}
+              </div>
+            </section>
+          </div>
+
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Protected Gateway Coverage</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                Consumers are reusable identities. Choose the credential format that matches the gateway security type, then
+                call the route through the standard gateway.
+              </p>
+            </header>
+
+            <div className="space-y-3 px-4 py-4">
+              {protectedGateways.length === 0 ? (
+                <EmptyRow message="No protected gateways yet. Create BASIC, API_KEY, or JWT gateways to make this tab operational." />
+              ) : (
+                protectedGateways.map((gateway) => (
+                  <div
+                    key={gateway.gatewayId}
+                    className="flex flex-wrap items-center gap-3 rounded-[0.9rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-3"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-[0.8rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)] text-[var(--accent-soft)]">
+                      <Waypoints className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-[220px] flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">{gateway.gatewayName}</p>
+                        <AuthChip label={gateway.authType} active />
+                      </div>
+                      <p className="mt-1 text-sm text-[var(--text-muted)]">
+                        {gateway.serviceCount} services • {gateway.routeCount} routes • {consumerFlowHint(gateway.authType)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </section>
         </section>
@@ -1213,27 +1769,6 @@ function StatusPanel({ status }: { status: StatusState }) {
   );
 }
 
-function ConsumerBlock({
-  icon,
-  title,
-  endpoint,
-  detail,
-}: {
-  icon: ReactNode;
-  title: string;
-  endpoint: string;
-  detail: string;
-}) {
-  return (
-    <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[var(--surface)] px-4 py-4">
-      <div className="flex items-center gap-2 text-[var(--accent-soft)]">{icon}</div>
-      <p className="mt-2 text-[1.08rem] font-semibold text-[var(--text-strong)]">{title}</p>
-      <p className="mt-1 font-mono text-sm text-[var(--accent-soft)]">{endpoint}</p>
-      <p className="mt-1 text-sm text-[var(--text-muted)]">{detail}</p>
-    </div>
-  );
-}
-
 function ToggleRow({
   label,
   detail,
@@ -1289,4 +1824,154 @@ function EmptyRow({ message }: { message: string }) {
       {message}
     </div>
   );
+}
+
+function StatusBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "success" | "neutral";
+}) {
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+        tone === "success"
+          ? "bg-[color:color-mix(in_srgb,var(--surface-soft)_90%,transparent)] text-[var(--accent-soft)]"
+          : "bg-[color:color-mix(in_srgb,var(--surface-muted)_90%,transparent)] text-[var(--text-muted)]"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function AuthChip({ label, active }: { label: string; active: boolean }) {
+  return (
+    <span
+      className={`rounded-full border px-2.5 py-1 text-xs font-semibold tracking-[0.18em] ${
+        active
+          ? "border-[color:color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_90%,transparent)] text-[var(--accent-soft)]"
+          : "border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] text-[var(--text-muted)]"
+      }`}
+    >
+      {label}
+    </span>
+  );
+}
+
+function InfoLine({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="grid grid-cols-[120px_minmax(0,1fr)] gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_60%,transparent)] py-2 last:border-0">
+      <p className="text-sm text-[var(--text-muted)]">{label}</p>
+      <p className={`text-sm text-[var(--text-strong)] ${mono ? "font-mono" : ""}`}>{value}</p>
+    </div>
+  );
+}
+
+function CredentialLine({
+  label,
+  value,
+  mono = false,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  onCopy?: () => void;
+}) {
+  return (
+    <div className="rounded-[0.8rem] border border-[color:color-mix(in_srgb,var(--border-soft)_74%,transparent)] bg-[var(--surface)] px-3 py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-muted)]">{label}</p>
+          <p className={`mt-1 break-all text-sm text-[var(--text-strong)] ${mono ? "font-mono" : ""}`}>{value}</p>
+        </div>
+        {onCopy ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-9 rounded-[0.65rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+            onClick={onCopy}
+          >
+            <Copy className="h-4 w-4" />
+            Copy
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CodePanel({
+  title,
+  emptyMessage,
+  primaryAction,
+  children,
+}: {
+  title: string;
+  emptyMessage: string;
+  primaryAction?: { label: string; onClick: () => void } | null;
+  children: ReactNode;
+}) {
+  const hasContent = Boolean(children);
+
+  return (
+    <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">{title}</p>
+        {primaryAction ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-9 rounded-[0.65rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+            onClick={primaryAction.onClick}
+          >
+            <Copy className="h-4 w-4" />
+            {primaryAction.label}
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="mt-3">
+        {hasContent ? (
+          children
+        ) : (
+          <p className="text-sm text-[var(--text-muted)]">{emptyMessage}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function formatShortDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
+
+function consumerFlowHint(authType: string) {
+  if (authType === "BASIC") {
+    return "Use the consumer username and password directly on the route.";
+  }
+
+  if (authType === "API_KEY") {
+    return "Hand off the issued API key and send it as X-API-Key.";
+  }
+
+  if (authType === "JWT") {
+    return "Login here first, then forward the access token as Bearer.";
+  }
+
+  return "Open route with no consumer credential required.";
 }
