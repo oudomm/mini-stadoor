@@ -75,6 +75,8 @@ export type StatusState = {
 
 export type ConsumerSummary = {
   id: string;
+  gatewayId: string;
+  consumerName: string;
   username: string;
   apiKeyPreview: string;
   status: string;
@@ -82,16 +84,22 @@ export type ConsumerSummary = {
 };
 
 export type ConsumerForm = {
+  gatewayId: string;
+  consumerName: string;
   username: string;
   password: string;
 };
 
 export type ConsumerLoginForm = {
+  gatewayId: string;
   username: string;
   password: string;
 };
 
 export type ConsumerRegistrationResult = {
+  id: string;
+  gatewayId: string;
+  consumerName: string;
   username: string;
   apiKey: string;
 };
@@ -102,6 +110,7 @@ export type ConsumerTokenResult = {
   tokenType: string;
   expiresIn: number;
   principal: string;
+  gatewayId: string;
 };
 
 export type ConsumerTokenValidationResult = {
@@ -149,11 +158,14 @@ export const initialRouteForm: RouteForm = {
 };
 
 export const initialConsumerForm: ConsumerForm = {
+  gatewayId: "ecommerce-gateway",
+  consumerName: "Partner Client 1",
   username: "partner-client-1",
   password: "qwer1234",
 };
 
 export const initialConsumerLoginForm: ConsumerLoginForm = {
+  gatewayId: "ecommerce-gateway",
   username: "",
   password: "",
 };

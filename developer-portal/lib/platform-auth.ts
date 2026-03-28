@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 export type PortalSession = {
+  userUuid: string;
   username: string;
   email?: string;
   displayName?: string;
@@ -39,11 +40,14 @@ export async function getPortalSession(): Promise<PortalSession | null> {
   }
 
   try {
-    const parsed = JSON.parse(Buffer.from(rawSession, "base64url").toString("utf8")) as PortalSession;
-    if (!parsed.accessToken || parsed.expiresAt <= Date.now()) {
+    const parsed = JSON.parse(Buffer.from(rawSession, "base64url").toString("utf8")) as Partial<PortalSession>;
+    if (!parsed.accessToken || !parsed.username || !parsed.expiresAt || parsed.expiresAt <= Date.now()) {
       return null;
     }
-    return parsed;
+    return {
+      ...parsed,
+      userUuid: parsed.userUuid ?? parsed.username,
+    } as PortalSession;
   } catch {
     return null;
   }
@@ -81,6 +85,7 @@ export function createPortalSession(tokenResponse: {
   const displayName = resolveDisplayName(claims);
 
   return {
+    userUuid: readClaim(claims, "sub") ?? readClaim(claims, "username") ?? "developer",
     username: readClaim(claims, "username") ?? readClaim(claims, "sub") ?? "developer",
     email: readClaim(claims, "email") ?? undefined,
     displayName,

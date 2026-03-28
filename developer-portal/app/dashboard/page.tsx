@@ -56,20 +56,14 @@ const tabMeta: Record<
   gateways: {
     title: "Gateways",
     description: "Create and configure gateway workspaces for grouped service ownership.",
-    ctaLabel: "Add Gateway",
-    ctaHref: "/dashboard?tab=gateways",
   },
   services: {
     title: "Services",
     description: "Register and manage backend services for your gateways.",
-    ctaLabel: "Add Service",
-    ctaHref: "/dashboard?tab=services",
   },
   routes: {
     title: "Routes",
     description: "Configure API routes and map public endpoints to backend services.",
-    ctaLabel: "Add Route",
-    ctaHref: "/dashboard?tab=routes",
   },
   security: {
     title: "Security",

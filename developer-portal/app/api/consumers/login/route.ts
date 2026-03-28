@@ -14,6 +14,7 @@ export async function POST(request: Request) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "X-Owner-User-Uuid": session.userUuid,
     },
     body: JSON.stringify(body),
     cache: "no-store",

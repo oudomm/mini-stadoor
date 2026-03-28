@@ -65,12 +65,14 @@ export function DeveloperPortal({
   const [isPending, startTransition] = useTransition();
 
   const [gatewayStep, setGatewayStep] = useState<WizardStep>(1);
+  const [showGatewayForm, setShowGatewayForm] = useState(false);
 
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [serviceBaseUrl, setServiceBaseUrl] = useState("http://localhost:8082");
 
   const [showRouteForm, setShowRouteForm] = useState(false);
   const [consumers, setConsumers] = useState<ConsumerSummary[]>([]);
+  const [selectedConsumerGatewayId, setSelectedConsumerGatewayId] = useState(initialConsumerForm.gatewayId);
   const [showConsumerForm, setShowConsumerForm] = useState(false);
   const [consumerForm, setConsumerForm] = useState<ConsumerForm>(initialConsumerForm);
   const [consumerLoginForm, setConsumerLoginForm] = useState<ConsumerLoginForm>(initialConsumerLoginForm);
@@ -100,8 +102,27 @@ export function DeveloperPortal({
   }, []);
 
   useEffect(() => {
-    void loadConsumers();
-  }, []);
+    if (gateways.length === 0) {
+      setConsumers([]);
+      setSelectedConsumerUsername("");
+      return;
+    }
+
+    const nextGatewayId = gateways.some((gateway) => gateway.gatewayId === selectedConsumerGatewayId)
+      ? selectedConsumerGatewayId
+      : gateways[0].gatewayId;
+
+    if (nextGatewayId !== selectedConsumerGatewayId) {
+      setSelectedConsumerGatewayId(nextGatewayId);
+      return;
+    }
+
+    setConsumerForm((current) => (current.gatewayId === nextGatewayId ? current : { ...current, gatewayId: nextGatewayId }));
+    setConsumerLoginForm((current) =>
+      current.gatewayId === nextGatewayId ? current : { ...current, gatewayId: nextGatewayId },
+    );
+    void loadConsumers(nextGatewayId);
+  }, [gateways, selectedConsumerGatewayId]);
 
   async function loadGateways(preferredGatewayId?: string, preferredServiceId?: string) {
     startTransition(() => {
@@ -115,10 +136,10 @@ export function DeveloperPortal({
     });
   }
 
-  async function loadConsumers(preferredUsername?: string) {
+  async function loadConsumers(gatewayId: string, preferredUsername?: string) {
     startTransition(() => {
       void (async () => {
-        const response = await fetch("/api/consumers", { cache: "no-store" });
+        const response = await fetch(`/api/consumers?gatewayId=${encodeURIComponent(gatewayId)}`, { cache: "no-store" });
         const data = (await response.json().catch(() => [])) as ConsumerSummary[] | { message?: string };
         const consumerList = Array.isArray(data) ? data : [];
         setConsumers(consumerList);
@@ -133,6 +154,7 @@ export function DeveloperPortal({
         setSelectedConsumerUsername(nextUsername);
         if (nextUsername) {
           setConsumerLoginForm((current) => ({
+            gatewayId,
             password:
               recentConsumerCredential?.username === nextUsername
                 ? recentConsumerCredential.password
@@ -149,6 +171,7 @@ export function DeveloperPortal({
   function selectConsumer(username: string) {
     setSelectedConsumerUsername(username);
     setConsumerLoginForm({
+      gatewayId: selectedConsumerGatewayId,
       username,
       password: recentConsumerCredential?.username === username ? recentConsumerCredential.password : "",
     });
@@ -328,7 +351,10 @@ export function DeveloperPortal({
     const response = await fetch("/api/consumers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(consumerForm),
+      body: JSON.stringify({
+        ...consumerForm,
+        gatewayId: selectedConsumerGatewayId,
+      }),
     });
 
     const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
@@ -343,18 +369,25 @@ export function DeveloperPortal({
 
     if (response.ok && "username" in data && "apiKey" in data) {
       setRecentConsumerCredential({
+        id: data.id,
+        gatewayId: data.gatewayId,
+        consumerName: data.consumerName,
         username: data.username,
         apiKey: data.apiKey,
         password: consumerForm.password,
       });
       setConsumerLoginForm({
+        gatewayId: data.gatewayId,
         username: data.username,
         password: consumerForm.password,
       });
       setSelectedConsumerUsername(data.username);
-      setConsumerForm(initialConsumerForm);
+      setConsumerForm((current) => ({
+        ...initialConsumerForm,
+        gatewayId: current.gatewayId,
+      }));
       setShowConsumerForm(false);
-      void loadConsumers(data.username);
+      void loadConsumers(data.gatewayId, data.username);
     }
   }
 
@@ -365,7 +398,10 @@ export function DeveloperPortal({
     const response = await fetch("/api/consumers/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(consumerLoginForm),
+      body: JSON.stringify({
+        ...consumerLoginForm,
+        gatewayId: selectedConsumer?.gatewayId ?? selectedConsumerGatewayId,
+      }),
     });
 
     const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
@@ -392,7 +428,10 @@ export function DeveloperPortal({
     const response = await fetch("/api/consumers/token/validate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: tokenToValidate }),
+      body: JSON.stringify({
+        gatewayId: selectedConsumer?.gatewayId ?? selectedConsumerGatewayId,
+        token: tokenToValidate,
+      }),
     });
 
     const data = (await response.json().catch(() => ({ message: "Unable to parse response" }))) as
@@ -464,6 +503,8 @@ export function DeveloperPortal({
     gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId) ?? gateways[0] ?? null;
   const selectedServiceGateway =
     gateways.find((gateway) => gateway.gatewayId === serviceForm.gatewayId) ?? gateways[0] ?? null;
+  const selectedConsumerGateway =
+    gateways.find((gateway) => gateway.gatewayId === selectedConsumerGatewayId) ?? gateways[0] ?? null;
   const selectedConsumer =
     consumers.find((consumer) => consumer.username === selectedConsumerUsername) ?? consumers[0] ?? null;
   const selectedRouteService =
@@ -503,6 +544,11 @@ export function DeveloperPortal({
   const basicGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "BASIC").length;
   const apiKeyGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "API_KEY").length;
   const jwtGatewayCount = protectedGateways.filter((gateway) => gateway.authType === "JWT").length;
+  const selectedConsumerGatewayProtectedRouteCount =
+    selectedConsumerGateway?.services.reduce(
+      (total, service) => total + service.routes.filter((route) => (route.authType ?? "NONE") !== "NONE").length,
+      0,
+    ) ?? 0;
 
   const gatewayRows = useMemo(
     () =>
@@ -614,127 +660,142 @@ export function DeveloperPortal({
       return (
         <section className="space-y-4">
           <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
-            <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
-              <p className="text-[2.15rem] font-semibold tracking-[-0.05em] text-[var(--text-strong)]">Create New Gateway</p>
-              <p className="text-[1rem] text-[var(--text-muted)]">Set up a new gateway workspace for your services and routes.</p>
-            </header>
-
-            <div className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
-              <div className="grid gap-3 md:grid-cols-4">
-                {gatewayWizardSteps.map((step, index) => {
-                  const isActive = step.id === gatewayStep;
-                  const isDone = step.id < gatewayStep;
-                  return (
-                    <div key={step.id} className="flex items-center gap-2.5">
-                      <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
-                          isActive || isDone
-                            ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                            : "bg-[color:color-mix(in_srgb,var(--surface-muted)_96%,transparent)] text-[var(--text-muted)]"
-                        }`}
-                      >
-                        {isDone ? <Check className="h-4 w-4" /> : step.id}
-                      </div>
-                      <p className="text-[1rem] font-medium text-[var(--accent-soft)]">{step.label}</p>
-                      {index < gatewayWizardSteps.length - 1 ? (
-                        <div className="hidden h-px flex-1 bg-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] md:block" />
-                      ) : null}
-                    </div>
-                  );
-                })}
+            <header className="flex items-center justify-between gap-3 border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+              <div>
+                <p className="text-[2.15rem] font-semibold tracking-[-0.05em] text-[var(--text-strong)]">Create New Gateway</p>
+                <p className="text-[1rem] text-[var(--text-muted)]">Set up a new gateway workspace for your services and routes.</p>
               </div>
-            </div>
-
-            <div className="px-5 py-5">
-              {gatewayStep === 1 ? (
-                <div className="space-y-4">
-                  <Field label="Gateway Name">
-                    <Input
-                      value={gatewayForm.gatewayName}
-                      onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayName: event.target.value })}
-                      placeholder="e.g., E-Commerce API Gateway"
-                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
-                    />
-                  </Field>
-                  <Field label="Gateway ID">
-                    <Input
-                      value={gatewayForm.gatewayId}
-                      onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayId: event.target.value })}
-                      placeholder="e.g., ecommerce-gateway"
-                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
-                    />
-                  </Field>
-                  <Field label="Description (optional)">
-                    <Textarea
-                      value={gatewayForm.description}
-                      onChange={(event) => setGatewayForm({ ...gatewayForm, description: event.target.value })}
-                      placeholder="What this gateway is for (e.g., product, checkout, partner APIs)"
-                      className="min-h-[96px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
-                    />
-                  </Field>
-                  <Field label="Gateway Default Security">
-                    <select
-                      className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
-                      value={gatewayForm.authType}
-                      onChange={(event) =>
-                        setGatewayForm((current) => ({
-                          ...current,
-                          authType: event.target.value as GatewayForm["authType"],
-                        }))
-                      }
-                    >
-                      {supportedSecurityModes.map((mode) => (
-                        <option key={mode.label} value={mode.label}>
-                          {mode.label}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-              ) : null}
-
-              {gatewayStep === 2 ? (
-                <div className="space-y-4">
-                  <p className="text-[1.2rem] font-semibold text-[var(--accent-soft)]">Review Configuration</p>
-                  <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-4">
-                    <ReviewRow label="Gateway Name" value={gatewayForm.gatewayName || "-"} />
-                    <ReviewRow label="Gateway ID" value={gatewayForm.gatewayId || "-"} />
-                    <ReviewRow label="Default Security" value={gatewayForm.authType || "NONE"} />
-                    <ReviewRow label="Description" value={gatewayForm.description || "No description"} />
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <footer className="flex items-center justify-between gap-3 border-t border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
-                onClick={() => setGatewayStep((current) => (current > 1 ? ((current - 1) as WizardStep) : current))}
-                disabled={gatewayStep === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Back
-              </Button>
-
               <Button
                 type="button"
                 variant="brand"
-                className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)] disabled:opacity-50"
-                disabled={!canGoNext || isPending}
-                onClick={() => {
-                  if (gatewayStep < 2) {
-                    setGatewayStep((current) => (current + 1) as WizardStep);
-                    return;
-                  }
-                  void submitGateway();
-                }}
+                className="h-10 rounded-[0.72rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                onClick={() => setShowGatewayForm((current) => !current)}
               >
-                {gatewayStep === 2 ? "Create Gateway" : "Next"}
-                {gatewayStep < 2 ? <ChevronRight className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                {showGatewayForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                {showGatewayForm ? "Close" : "Add Gateway"}
               </Button>
-            </footer>
+            </header>
+
+            {showGatewayForm ? (
+              <>
+                <div className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+                  <div className="grid gap-3 md:grid-cols-4">
+                    {gatewayWizardSteps.map((step, index) => {
+                      const isActive = step.id === gatewayStep;
+                      const isDone = step.id < gatewayStep;
+                      return (
+                        <div key={step.id} className="flex items-center gap-2.5">
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
+                              isActive || isDone
+                                ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
+                                : "bg-[color:color-mix(in_srgb,var(--surface-muted)_96%,transparent)] text-[var(--text-muted)]"
+                            }`}
+                          >
+                            {isDone ? <Check className="h-4 w-4" /> : step.id}
+                          </div>
+                          <p className="text-[1rem] font-medium text-[var(--accent-soft)]">{step.label}</p>
+                          {index < gatewayWizardSteps.length - 1 ? (
+                            <div className="hidden h-px flex-1 bg-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] md:block" />
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="px-5 py-5">
+                  {gatewayStep === 1 ? (
+                    <div className="space-y-4">
+                      <Field label="Gateway Name">
+                        <Input
+                          value={gatewayForm.gatewayName}
+                          onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayName: event.target.value })}
+                          placeholder="e.g., E-Commerce API Gateway"
+                          className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                        />
+                      </Field>
+                      <Field label="Gateway ID">
+                        <Input
+                          value={gatewayForm.gatewayId}
+                          onChange={(event) => setGatewayForm({ ...gatewayForm, gatewayId: event.target.value })}
+                          placeholder="e.g., ecommerce-gateway"
+                          className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                        />
+                      </Field>
+                      <Field label="Description (optional)">
+                        <Textarea
+                          value={gatewayForm.description}
+                          onChange={(event) => setGatewayForm({ ...gatewayForm, description: event.target.value })}
+                          placeholder="What this gateway is for (e.g., product, checkout, partner APIs)"
+                          className="min-h-[96px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                        />
+                      </Field>
+                      <Field label="Gateway Default Security">
+                        <select
+                          className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                          value={gatewayForm.authType}
+                          onChange={(event) =>
+                            setGatewayForm((current) => ({
+                              ...current,
+                              authType: event.target.value as GatewayForm["authType"],
+                            }))
+                          }
+                        >
+                          {supportedSecurityModes.map((mode) => (
+                            <option key={mode.label} value={mode.label}>
+                              {mode.label}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    </div>
+                  ) : null}
+
+                  {gatewayStep === 2 ? (
+                    <div className="space-y-4">
+                      <p className="text-[1.2rem] font-semibold text-[var(--accent-soft)]">Review Configuration</p>
+                      <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-4">
+                        <ReviewRow label="Gateway Name" value={gatewayForm.gatewayName || "-"} />
+                        <ReviewRow label="Gateway ID" value={gatewayForm.gatewayId || "-"} />
+                        <ReviewRow label="Default Security" value={gatewayForm.authType || "NONE"} />
+                        <ReviewRow label="Description" value={gatewayForm.description || "No description"} />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <footer className="flex items-center justify-between gap-3 border-t border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-5 py-4">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                    onClick={() => setGatewayStep((current) => (current > 1 ? ((current - 1) as WizardStep) : current))}
+                    disabled={gatewayStep === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Back
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="brand"
+                    className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)] disabled:opacity-50"
+                    disabled={!canGoNext || isPending}
+                    onClick={() => {
+                      if (gatewayStep < 2) {
+                        setGatewayStep((current) => (current + 1) as WizardStep);
+                        return;
+                      }
+                      void submitGateway();
+                    }}
+                  >
+                    {gatewayStep === 2 ? "Create Gateway" : "Next"}
+                    {gatewayStep < 2 ? <ChevronRight className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+                  </Button>
+                </footer>
+              </>
+            ) : null}
           </section>
           <StatusPanel status={gatewayStatus} />
 
@@ -1240,7 +1301,7 @@ export function DeveloperPortal({
                   type="button"
                   variant="secondary"
                   className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
-                  onClick={() => void loadConsumers(selectedConsumer?.username)}
+                  onClick={() => void loadConsumers(selectedConsumerGatewayId, selectedConsumer?.username)}
                 >
                   <RefreshCcw className="h-4 w-4" />
                   Refresh
@@ -1259,11 +1320,44 @@ export function DeveloperPortal({
 
             <div className="space-y-4 px-4 py-4">
               <StatusPanel status={consumerStatus} />
+              <div className="grid gap-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+                <Field label="Gateway Workspace">
+                  <select
+                    value={selectedConsumerGatewayId}
+                    onChange={(event) => setSelectedConsumerGatewayId(event.target.value)}
+                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
+                  >
+                    {gateways.map((gateway) => (
+                      <option key={gateway.gatewayId} value={gateway.gatewayId}>
+                        {gateway.gatewayName}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3">
+                  <p className="text-sm font-medium text-[var(--accent-soft)]">Gateway Scope</p>
+                  <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+                    Consumers in <span className="font-semibold text-[var(--text-strong)]">{selectedConsumerGateway?.gatewayName ?? "this gateway"}</span> can
+                    authenticate only against routes resolved inside this gateway.
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--text-muted)]">
+                    {selectedConsumerGatewayProtectedRouteCount} protected routes currently depend on consumer credentials here.
+                  </p>
+                </div>
+              </div>
               {showConsumerForm ? (
                 <form
                   onSubmit={submitConsumer}
                   className="grid gap-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                 >
+                  <Field label="Consumer Name">
+                    <Input
+                      value={consumerForm.consumerName}
+                      onChange={(event) => setConsumerForm((current) => ({ ...current, consumerName: event.target.value }))}
+                      placeholder="e.g., Partner Mobile App"
+                      className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                    />
+                  </Field>
                   <Field label="Consumer Username">
                     <Input
                       value={consumerForm.username}
@@ -1300,8 +1394,8 @@ export function DeveloperPortal({
                     </Button>
                   </div>
                   <p className="text-sm text-[var(--text-muted)] xl:col-span-3">
-                    Flow: create the identity once, then reuse the same username/password or API key on any gateway that
-                    expects the matching auth type.
+                    Flow: create the identity in one gateway workspace, then use its username/password or API key only on
+                    routes that resolve inside that same gateway.
                   </p>
                 </form>
               ) : null}
@@ -1313,7 +1407,7 @@ export function DeveloperPortal({
               icon={<UserRound className="h-5 w-5" />}
               value={consumers.length}
               label="Registered Consumers"
-              helper={consumers.length > 0 ? "Reusable identities across protected traffic" : "Create your first consumer"}
+              helper={consumers.length > 0 ? "Gateway-scoped client identities" : "Create your first consumer"}
             />
             <MetricCard
               icon={<Shield className="h-5 w-5" />}
@@ -1335,254 +1429,285 @@ export function DeveloperPortal({
             />
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
-              <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
-                <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Consumer Registry</p>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">
-                  Kong-style identity list: pick a consumer, inspect credentials, then test the auth surface on the right.
-                </p>
-              </header>
-              <div className="space-y-3 px-4 py-4">
-                {consumers.length === 0 ? (
-                  <EmptyRow message="No consumers yet. Add a consumer first so you can issue JWTs or hand off API keys." />
-                ) : (
-                  consumers.map((consumer) => {
-                    const isSelected = selectedConsumer?.username === consumer.username;
-                    return (
-                      <button
-                        key={consumer.id}
-                        type="button"
-                        onClick={() => selectConsumer(consumer.username)}
-                        className={`w-full rounded-[0.9rem] border px-4 py-4 text-left transition ${
-                          isSelected
-                            ? "border-[color:color-mix(in_srgb,var(--accent)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)]"
-                            : "border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] hover:border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] hover:bg-[var(--surface-soft)]"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Registered Consumers</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                Manage gateway-scoped client identities the same way you manage services and routes, then open a consumer to issue JWTs or copy credentials.
+              </p>
+            </header>
+            <div className="overflow-x-auto px-4 py-4">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-[0.16em] text-[var(--text-faint)]">
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Consumer</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Gateway</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Credentials</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">API Key</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Status</th>
+                    <th className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-3 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {consumers.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-5 text-[1rem] text-[var(--text-muted)]" colSpan={6}>
+                        No consumers yet. Add a consumer first so you can issue JWTs or hand off API keys.
+                      </td>
+                    </tr>
+                  ) : (
+                    consumers.map((consumer) => {
+                      const isSelected = selectedConsumer?.id === consumer.id;
+                      return (
+                        <tr
+                          key={consumer.id}
+                          className={`text-[1rem] text-[var(--text-strong)] ${isSelected ? "bg-[color:color-mix(in_srgb,var(--surface-soft)_38%,transparent)]" : ""}`}
+                        >
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <p className="font-semibold">{consumer.consumerName}</p>
+                            <p className="text-sm text-[var(--text-muted)]">
+                              {consumer.username} • Created {formatShortDate(consumer.createdAt)}
+                            </p>
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            {selectedConsumerGateway?.gatewayId === consumer.gatewayId
+                              ? selectedConsumerGateway.gatewayName
+                              : gateways.find((gateway) => gateway.gatewayId === consumer.gatewayId)?.gatewayName ?? consumer.gatewayId}
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
                             <div className="flex flex-wrap items-center gap-2">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-[0.8rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)] text-[var(--accent-soft)]">
-                                <UserRound className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">{consumer.username}</p>
-                                <p className="text-sm text-[var(--text-muted)]">Created {formatShortDate(consumer.createdAt)}</p>
-                              </div>
-                            </div>
-                            <div className="mt-3 flex flex-wrap items-center gap-2">
-                              <StatusBadge label={consumer.status} tone="success" />
                               <AuthChip label="BASIC" active={basicGatewayCount > 0} />
                               <AuthChip label="API_KEY" active={apiKeyGatewayCount > 0} />
                               <AuthChip label="JWT" active={jwtGatewayCount > 0} />
                             </div>
-                            <p className="mt-3 font-mono text-sm text-[var(--accent-soft)]">{consumer.apiKeyPreview}</p>
-                          </div>
-                          <ChevronRight className={`mt-1 h-4 w-4 ${isSelected ? "text-[var(--accent-soft)]" : "text-[var(--text-muted)]"}`} />
-                        </div>
-                      </button>
-                    );
-                  })
-                )}
-              </div>
-            </section>
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3 font-mono text-sm text-[var(--accent-soft)]">
+                            {consumer.apiKeyPreview}
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <StatusBadge label={consumer.status} tone="success" />
+                          </td>
+                          <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant={isSelected ? "brand" : "secondary"}
+                                className={`h-9 rounded-[0.7rem] ${
+                                  isSelected
+                                    ? "border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                                    : "border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                                }`}
+                                onClick={() => selectConsumer(consumer.username)}
+                              >
+                                {isSelected ? "Selected" : "Manage"}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-            <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
-              <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
-                <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Credential Workspace</p>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">
-                  Select a consumer, then issue JWTs, validate bearer tokens, or hand off the API key to an API client.
-                </p>
-              </header>
+          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
+            <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
+              <p className="text-[1.3rem] font-semibold tracking-[-0.04em] text-[var(--text-strong)]">Credential Workspace</p>
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
+                Select a consumer from the table above, then issue JWTs, validate bearer tokens, or hand off the API key to an API client.
+              </p>
+            </header>
 
-              <div className="space-y-4 px-4 py-4">
-                {selectedConsumer ? (
-                  <>
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
-                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Identity</p>
-                        <div className="mt-3 space-y-2">
-                          <InfoLine label="Username" value={selectedConsumer.username} />
-                          <InfoLine label="Status" value={selectedConsumer.status} />
-                          <InfoLine label="Created" value={formatShortDate(selectedConsumer.createdAt)} />
-                          <InfoLine label="API Key Preview" value={selectedConsumer.apiKeyPreview} mono />
-                        </div>
-                      </div>
-
-                      <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
-                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Credential Handoff</p>
-                        {recentConsumerCredential?.username === selectedConsumer.username ? (
-                          <div className="mt-3 space-y-3">
-                            <CredentialLine
-                              label="Username"
-                              value={recentConsumerCredential.username}
-                              onCopy={() => void copyValue(recentConsumerCredential.username, "Username copied")}
-                            />
-                            <CredentialLine
-                              label="Password"
-                              value={recentConsumerCredential.password}
-                              onCopy={() => void copyValue(recentConsumerCredential.password, "Password copied")}
-                            />
-                            <CredentialLine
-                              label="API Key"
-                              value={recentConsumerCredential.apiKey}
-                              onCopy={() => void copyValue(recentConsumerCredential.apiKey, "API key copied")}
-                              mono
-                            />
-                            <p className="text-sm text-[var(--text-muted)]">
-                              Full API key is only shown right after registration. Store it now, then use the preview for later reference.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="mt-3 space-y-3">
-                            <p className="text-[1rem] text-[var(--text-muted)]">
-                              Passwords are not retrievable after creation. Use the original password for BASIC auth and JWT login,
-                              and hand off the stored API key to clients that call API_KEY gateways.
-                            </p>
-                            <CredentialLine
-                              label="API Key Preview"
-                              value={selectedConsumer.apiKeyPreview}
-                              mono
-                            />
-                          </div>
-                        )}
+            <div className="space-y-4 px-4 py-4">
+              {selectedConsumer ? (
+                <>
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
+                      <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Identity</p>
+                      <div className="mt-3 space-y-2">
+                        <InfoLine label="Consumer Name" value={selectedConsumer.consumerName} />
+                        <InfoLine label="Username" value={selectedConsumer.username} />
+                        <InfoLine label="Gateway" value={selectedConsumerGateway?.gatewayName ?? selectedConsumer.gatewayId} />
+                        <InfoLine label="Status" value={selectedConsumer.status} />
+                        <InfoLine label="Created" value={formatShortDate(selectedConsumer.createdAt)} />
+                        <InfoLine label="API Key Preview" value={selectedConsumer.apiKeyPreview} mono />
                       </div>
                     </div>
 
-                    <StatusPanel status={consumerJwtStatus} />
-
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <form
-                        onSubmit={issueConsumerJwt}
-                        className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
-                      >
-                        <div>
-                          <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Issue JWT</p>
-                          <p className="mt-1 text-sm text-[var(--text-muted)]">
-                            Use the consumer username/password pair to mint an access token for JWT-protected gateways.
+                    <div className="rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4">
+                      <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Credential Handoff</p>
+                      {recentConsumerCredential?.username === selectedConsumer.username ? (
+                        <div className="mt-3 space-y-3">
+                          <CredentialLine
+                            label="Username"
+                            value={recentConsumerCredential.username}
+                            onCopy={() => void copyValue(recentConsumerCredential.username, "Username copied")}
+                          />
+                          <CredentialLine
+                            label="Password"
+                            value={recentConsumerCredential.password}
+                            onCopy={() => void copyValue(recentConsumerCredential.password, "Password copied")}
+                          />
+                          <CredentialLine
+                            label="API Key"
+                            value={recentConsumerCredential.apiKey}
+                            onCopy={() => void copyValue(recentConsumerCredential.apiKey, "API key copied")}
+                            mono
+                          />
+                          <p className="text-sm text-[var(--text-muted)]">
+                            Full API key is only shown right after registration. Store it now, then use the preview for later reference.
                           </p>
                         </div>
-                        <Field label="Consumer Username">
-                          <Input
-                            value={consumerLoginForm.username}
-                            onChange={(event) =>
-                              setConsumerLoginForm((current) => ({ ...current, username: event.target.value }))
-                            }
-                            className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                      ) : (
+                        <div className="mt-3 space-y-3">
+                          <p className="text-[1rem] text-[var(--text-muted)]">
+                            Passwords are not retrievable after creation. Use the original password for BASIC auth and JWT login,
+                            and hand off the stored API key to clients that call API_KEY gateways.
+                          </p>
+                          <CredentialLine
+                            label="API Key Preview"
+                            value={selectedConsumer.apiKeyPreview}
+                            mono
                           />
-                        </Field>
-                        <Field label="Password">
-                          <Input
-                            type="password"
-                            value={consumerLoginForm.password}
-                            onChange={(event) =>
-                              setConsumerLoginForm((current) => ({ ...current, password: event.target.value }))
-                            }
-                            placeholder="Enter the consumer password"
-                            className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
-                          />
-                        </Field>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <StatusPanel status={consumerJwtStatus} />
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <form
+                      onSubmit={issueConsumerJwt}
+                      className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
+                    >
+                      <div>
+                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Issue JWT</p>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">
+                          Use the consumer username/password pair to mint an access token scoped to the selected gateway.
+                        </p>
+                      </div>
+                      <Field label="Consumer Username">
+                        <Input
+                          value={consumerLoginForm.username}
+                          onChange={(event) =>
+                            setConsumerLoginForm((current) => ({ ...current, username: event.target.value }))
+                          }
+                          className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                        />
+                      </Field>
+                      <Field label="Password">
+                        <Input
+                          type="password"
+                          value={consumerLoginForm.password}
+                          onChange={(event) =>
+                            setConsumerLoginForm((current) => ({ ...current, password: event.target.value }))
+                          }
+                          placeholder="Enter the consumer password"
+                          className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
+                        />
+                      </Field>
+                      <Button
+                        type="submit"
+                        variant="brand"
+                        className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
+                      >
+                        <ShieldCheck className="h-4 w-4" />
+                        Issue Access Token
+                      </Button>
+                    </form>
+
+                    <form
+                      onSubmit={validateConsumerJwt}
+                      className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
+                    >
+                      <div>
+                        <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Validate JWT</p>
+                        <p className="mt-1 text-sm text-[var(--text-muted)]">
+                          Paste a bearer token or pull in the latest token issued from this workspace.
+                        </p>
+                      </div>
+                      <Field label="Access Token">
+                        <Textarea
+                          value={tokenToValidate}
+                          onChange={(event) => setTokenToValidate(event.target.value)}
+                          placeholder="Paste bearer token here"
+                          className="min-h-[132px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] font-mono text-sm"
+                        />
+                      </Field>
+                      <div className="flex flex-wrap items-center gap-2">
                         <Button
                           type="submit"
                           variant="brand"
                           className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
                         >
-                          <ShieldCheck className="h-4 w-4" />
-                          Issue Access Token
+                          <Shield className="h-4 w-4" />
+                          Validate Token
                         </Button>
-                      </form>
-
-                      <form
-                        onSubmit={validateConsumerJwt}
-                        className="space-y-4 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_96%,transparent)] px-4 py-4"
-                      >
-                        <div>
-                          <p className="text-[1.08rem] font-semibold text-[var(--text-strong)]">Validate JWT</p>
-                          <p className="mt-1 text-sm text-[var(--text-muted)]">
-                            Paste a bearer token or pull in the latest token issued from this workspace.
-                          </p>
-                        </div>
-                        <Field label="Access Token">
-                          <Textarea
-                            value={tokenToValidate}
-                            onChange={(event) => setTokenToValidate(event.target.value)}
-                            placeholder="Paste bearer token here"
-                            className="min-h-[132px] border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] font-mono text-sm"
-                          />
-                        </Field>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            type="submit"
-                            variant="brand"
-                            className="h-10 rounded-[0.7rem] border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] hover:bg-[var(--accent-bright)]"
-                          >
-                            <Shield className="h-4 w-4" />
-                            Validate Token
-                          </Button>
-                          {issuedConsumerToken ? (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
-                              onClick={() => setTokenToValidate(issuedConsumerToken.accessToken)}
-                            >
-                              Use latest token
-                            </Button>
-                          ) : null}
-                        </div>
-                      </form>
-                    </div>
-
-                    <StatusPanel status={consumerTokenValidationStatus} />
-
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <CodePanel
-                        title="Latest JWT Session"
-                        emptyMessage="Issue a JWT to see access and refresh tokens here."
-                        primaryAction={
-                          issuedConsumerToken
-                            ? {
-                                label: "Copy access token",
-                                onClick: () => void copyValue(issuedConsumerToken.accessToken, "Access token copied"),
-                              }
-                            : null
-                        }
-                      >
                         {issuedConsumerToken ? (
-                          <div className="space-y-3">
-                            <InfoLine label="Principal" value={issuedConsumerToken.principal} />
-                            <InfoLine label="Type" value={issuedConsumerToken.tokenType} />
-                            <InfoLine label="Expires In" value={`${issuedConsumerToken.expiresIn} seconds`} />
-                            <CredentialLine label="Access Token" value={issuedConsumerToken.accessToken} mono />
-                            <CredentialLine label="Refresh Token" value={issuedConsumerToken.refreshToken} mono />
-                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            className="h-10 rounded-[0.7rem] border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-transparent text-[var(--accent-soft)] hover:bg-[var(--surface-soft)]"
+                            onClick={() => setTokenToValidate(issuedConsumerToken.accessToken)}
+                          >
+                            Use latest token
+                          </Button>
                         ) : null}
-                      </CodePanel>
+                      </div>
+                    </form>
+                  </div>
 
-                      <CodePanel
-                        title="Validation Result"
-                        emptyMessage="Run token validation to confirm the JWT before calling the protected route."
-                      >
-                        {validatedConsumerToken ? (
-                          <div className="space-y-2">
-                            <InfoLine
-                              label="Authenticated"
-                              value={validatedConsumerToken.authenticated ? "true" : "false"}
-                            />
-                            <InfoLine label="Principal" value={validatedConsumerToken.principal} />
-                            <InfoLine label="Type" value={validatedConsumerToken.authenticationType} />
-                          </div>
-                        ) : null}
-                      </CodePanel>
-                    </div>
-                  </>
-                ) : (
-                  <EmptyRow message="Pick a consumer from the registry or register a new one to start issuing credentials." />
-                )}
-              </div>
-            </section>
-          </div>
+                  <StatusPanel status={consumerTokenValidationStatus} />
+
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <CodePanel
+                      title="Latest JWT Session"
+                      emptyMessage="Issue a JWT to see access and refresh tokens here."
+                      primaryAction={
+                        issuedConsumerToken
+                          ? {
+                              label: "Copy access token",
+                              onClick: () => void copyValue(issuedConsumerToken.accessToken, "Access token copied"),
+                            }
+                          : null
+                      }
+                    >
+                      {issuedConsumerToken ? (
+                        <div className="space-y-3">
+                          <InfoLine label="Principal" value={issuedConsumerToken.principal} />
+                          <InfoLine label="Type" value={issuedConsumerToken.tokenType} />
+                          <InfoLine label="Expires In" value={`${issuedConsumerToken.expiresIn} seconds`} />
+                          <CredentialLine label="Access Token" value={issuedConsumerToken.accessToken} mono />
+                          <CredentialLine label="Refresh Token" value={issuedConsumerToken.refreshToken} mono />
+                        </div>
+                      ) : null}
+                    </CodePanel>
+
+                    <CodePanel
+                      title="Validation Result"
+                      emptyMessage="Run token validation to confirm the JWT before calling the protected route."
+                    >
+                      {validatedConsumerToken ? (
+                        <div className="space-y-2">
+                          <InfoLine
+                            label="Authenticated"
+                            value={validatedConsumerToken.authenticated ? "true" : "false"}
+                          />
+                          <InfoLine label="Principal" value={validatedConsumerToken.principal} />
+                          <InfoLine label="Type" value={validatedConsumerToken.authenticationType} />
+                        </div>
+                      ) : null}
+                    </CodePanel>
+                  </div>
+                </>
+              ) : (
+                <EmptyRow message="Choose a consumer from the table above or register a new one to start issuing credentials." />
+              )}
+            </div>
+          </section>
 
           <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)]">
             <header className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] px-4 py-4">
