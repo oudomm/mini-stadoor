@@ -1,7 +1,7 @@
 package dev.oudom.consumer_service.service;
 
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
-import org.springframework.http.HttpHeaders;
+import dev.oudom.consumer_service.entity.ConsumerUserEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,16 +19,17 @@ public class BasicAuthValidationService {
         this.consumerUserStore = consumerUserStore;
     }
 
-    public Mono<AuthValidationResponse> validate(String authorizationHeader) {
-        return authenticateHeader(authorizationHeader)
-            .map(principal -> new AuthValidationResponse(true, "BASIC", principal));
+    public Mono<AuthValidationResponse> validate(String gatewayId, String authorizationHeader) {
+        return authenticateHeader(gatewayId, authorizationHeader)
+            .map(consumer -> new AuthValidationResponse(true, "BASIC", consumer.getUsername(), consumer.getGatewayId(), consumer.getId()));
     }
 
-    public Mono<String> authenticate(String providedUsername, String providedPassword) {
-        return consumerUserStore.authenticate(providedUsername, providedPassword);
+    public Mono<String> authenticate(String gatewayId, String providedUsername, String providedPassword) {
+        return consumerUserStore.authenticate(gatewayId, providedUsername, providedPassword)
+            .map(ConsumerUserEntity::getUsername);
     }
 
-    private Mono<String> authenticateHeader(String authorizationHeader) {
+    private Mono<ConsumerUserEntity> authenticateHeader(String gatewayId, String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing Authorization header"));
         }
@@ -53,6 +54,6 @@ public class BasicAuthValidationService {
         String providedUsername = decodedCredentials.substring(0, separatorIndex);
         String providedPassword = decodedCredentials.substring(separatorIndex + 1);
 
-        return authenticate(providedUsername, providedPassword);
+        return consumerUserStore.authenticate(gatewayId, providedUsername, providedPassword);
     }
 }

@@ -15,6 +15,8 @@ import java.util.Base64;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class ConsumerAuthValidationTests {
 
+    private static final String GATEWAY_ID = "ecommerce-gateway";
+
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -29,6 +31,7 @@ class ConsumerAuthValidationTests {
     void returnsUnauthorizedForMissingAuthorizationHeader() {
         webTestClient.post()
             .uri("/internal/auth/basic/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .exchange()
             .expectStatus().isUnauthorized();
     }
@@ -37,6 +40,7 @@ class ConsumerAuthValidationTests {
     void validatesCorrectBasicCredentials() {
         webTestClient.post()
             .uri("/internal/auth/basic/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header(HttpHeaders.AUTHORIZATION, basicAuth("enduser", "enduser123"))
             .exchange()
             .expectStatus().isOk()
@@ -50,6 +54,7 @@ class ConsumerAuthValidationTests {
     void rejectsWrongBasicCredentials() {
         webTestClient.post()
             .uri("/internal/auth/basic/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header(HttpHeaders.AUTHORIZATION, basicAuth("enduser", "wrong-password"))
             .exchange()
             .expectStatus().isUnauthorized();
@@ -59,6 +64,7 @@ class ConsumerAuthValidationTests {
     void validatesCorrectApiKey() {
         webTestClient.post()
             .uri("/internal/auth/api-key/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header("X-API-Key", "stadoor-demo-key")
             .exchange()
             .expectStatus().isOk()
@@ -72,6 +78,7 @@ class ConsumerAuthValidationTests {
     void rejectsWrongApiKey() {
         webTestClient.post()
             .uri("/internal/auth/api-key/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header("X-API-Key", "wrong-key")
             .exchange()
             .expectStatus().isUnauthorized();
@@ -84,6 +91,7 @@ class ConsumerAuthValidationTests {
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue("""
                 {
+                  "gatewayId": "ecommerce-gateway",
                   "username": "enduser",
                   "password": "enduser123"
                 }
@@ -99,6 +107,7 @@ class ConsumerAuthValidationTests {
 
         webTestClient.post()
             .uri("/internal/auth/jwt/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
             .exchange()
             .expectStatus().isOk()
@@ -112,6 +121,7 @@ class ConsumerAuthValidationTests {
     void rejectsInvalidJwtAccessToken() {
         webTestClient.post()
             .uri("/internal/auth/jwt/validate")
+            .header("X-Gateway-Id", GATEWAY_ID)
             .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token")
             .exchange()
             .expectStatus().isUnauthorized();

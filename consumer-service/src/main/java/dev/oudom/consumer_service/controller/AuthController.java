@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,23 +30,30 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String OWNER_USER_HEADER = "X-Owner-User-Uuid";
+
     private final JwtAuthService jwtAuthService;
     private final ConsumerUserStore consumerUserStore;
 
-    @GetMapping("/users")
-    public Mono<List<ConsumerUserSummaryResponse>> listUsers() {
-        return consumerUserStore.findAllUsers();
+    @GetMapping({"/users", "/consumers"})
+    public Mono<List<ConsumerUserSummaryResponse>> listUsers(
+        @RequestParam String gatewayId
+    ) {
+        return consumerUserStore.findAllUsers(gatewayId);
     }
 
-    @PostMapping("/users/register")
+    @PostMapping({"/users/register", "/consumers"})
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<UserRegistrationResponse> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
-        return consumerUserStore.register(request);
+    public Mono<UserRegistrationResponse> registerUser(
+        @RequestHeader(value = OWNER_USER_HEADER, required = false) String ownerUserUuid,
+        @Valid @RequestBody UserRegistrationRequest request
+    ) {
+        return consumerUserStore.register(ownerUserUuid, request);
     }
 
     @PostMapping("/login")
     public Mono<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return jwtAuthService.login(request.username(), request.password());
+        return jwtAuthService.login(request.gatewayId(), request.username(), request.password());
     }
 
     @PostMapping("/token/validate")
@@ -53,7 +61,11 @@ public class AuthController {
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader,
         @Valid @RequestBody(required = false) TokenValidationRequest request
     ) {
-        String token = request != null ? request.token() : authorizationHeader;
-        return jwtAuthService.validateAccessToken(token);
+        if (request == null) {
+            return Mono.error(new org.springframework.web.server.ResponseStatusException(HttpStatus.BAD_REQUEST, "gatewayId and token are required"));
+        }
+
+        String token = request.token() != null && !request.token().isBlank() ? request.token() : authorizationHeader;
+        return jwtAuthService.validateAccessToken(request.gatewayId(), token);
     }
 }

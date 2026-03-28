@@ -18,6 +18,8 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class InternalAuthController {
 
+    private static final String GATEWAY_ID_HEADER = "X-Gateway-Id";
+
     private final BasicAuthValidationService basicAuthValidationService;
     private final ApiKeyValidationService apiKeyValidationService;
     private final JwtAuthService jwtAuthService;
@@ -27,23 +29,26 @@ public class InternalAuthController {
 
     @PostMapping("/basic/validate")
     public Mono<AuthValidationResponse> validateBasic(
+        @RequestHeader(GATEWAY_ID_HEADER) String gatewayId,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
-        return basicAuthValidationService.validate(authorizationHeader);
+        return basicAuthValidationService.validate(gatewayId, authorizationHeader);
     }
 
     @PostMapping("/api-key/validate")
     public Mono<AuthValidationResponse> validateApiKey(
+        @RequestHeader(GATEWAY_ID_HEADER) String gatewayId,
         @RequestHeader HttpHeaders headers
     ) {
         String apiKey = headers.getFirst(apiKeyHeaderName);
-        return apiKeyValidationService.validate(apiKey);
+        return apiKeyValidationService.validate(gatewayId, apiKey);
     }
 
     @PostMapping("/jwt/validate")
     public Mono<AuthValidationResponse> validateJwt(
+        @RequestHeader(GATEWAY_ID_HEADER) String gatewayId,
         @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authorizationHeader
     ) {
-        return jwtAuthService.validateAccessToken(authorizationHeader);
+        return jwtAuthService.validateAccessToken(gatewayId, authorizationHeader);
     }
 }

@@ -4,6 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record LoginRequest(
+    @NotBlank(message = "gatewayId must not be blank")
+    @Size(max = 128, message = "gatewayId must be at most 128 characters")
+    String gatewayId,
     @NotBlank(message = "username must not be blank")
     @Size(max = 64, message = "username must be at most 64 characters")
     String username,

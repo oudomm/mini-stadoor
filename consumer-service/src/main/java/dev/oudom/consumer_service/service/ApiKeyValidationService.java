@@ -13,8 +13,8 @@ public class ApiKeyValidationService {
         this.consumerUserStore = consumerUserStore;
     }
 
-    public Mono<AuthValidationResponse> validate(String apiKey) {
-        return consumerUserStore.findPrincipalByApiKey(apiKey)
-            .map(principal -> new AuthValidationResponse(true, "API_KEY", principal));
+    public Mono<AuthValidationResponse> validate(String gatewayId, String apiKey) {
+        return consumerUserStore.findByApiKey(gatewayId, apiKey)
+            .map(consumer -> new AuthValidationResponse(true, "API_KEY", consumer.getUsername(), consumer.getGatewayId(), consumer.getId()));
     }
 }

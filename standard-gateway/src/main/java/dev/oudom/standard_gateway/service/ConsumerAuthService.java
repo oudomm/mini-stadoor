@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
@@ -31,9 +32,10 @@ public class ConsumerAuthService {
         this.webClient = webClientBuilder.baseUrl(consumerServiceBaseUrl).build();
     }
 
-    public Mono<AuthValidationResponse> validateBasic(String authorizationHeader) {
+    public Mono<AuthValidationResponse> validateBasic(String gatewayId, String authorizationHeader) {
         return webClient.post()
             .uri("/internal/auth/basic/validate")
+            .header("X-Gateway-Id", gatewayId)
             .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
             .retrieve()
             .onStatus(status -> status.value() == 401, response -> unauthorizedFromConsumer(
@@ -42,6 +44,12 @@ public class ConsumerAuthService {
                 "BASIC",
                 "Basic realm=\"stadoor\"",
                 "Basic authentication failed"
+            ))
+            .onStatus(status -> status.is4xxClientError(), response -> clientErrorFromConsumer(
+                response,
+                "consumer_basic_request_rejected",
+                "BASIC",
+                "Basic authentication request was rejected"
             ))
             .onStatus(status -> status.is5xxServerError(), response -> Mono.error(
                 new RouteSecurityException(
@@ -53,15 +61,23 @@ public class ConsumerAuthService {
                 )))
             .bodyToMono(AuthValidationResponse.class)
             .onErrorMap(ResponseStatusException.class, exception -> exception)
+            .onErrorMap(WebClientResponseException.class, exception -> new RouteSecurityException(
+                HttpStatus.BAD_GATEWAY,
+                buildMessage("consumer-service rejected the Basic authentication request", extractMessage(exception.getResponseBodyAsString())),
+                "consumer_basic_request_rejected",
+                "BASIC",
+                null
+            ))
             .onErrorMap(exception -> new ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "consumer-service is unavailable",
                 exception));
     }
 
-    public Mono<AuthValidationResponse> validateApiKey(String apiKey) {
+    public Mono<AuthValidationResponse> validateApiKey(String gatewayId, String apiKey) {
         return webClient.post()
             .uri("/internal/auth/api-key/validate")
+            .header("X-Gateway-Id", gatewayId)
             .header("X-API-Key", apiKey)
             .retrieve()
             .onStatus(status -> status.value() == 401, response -> unauthorizedFromConsumer(
@@ -70,6 +86,12 @@ public class ConsumerAuthService {
                 "API_KEY",
                 null,
                 "API key validation failed"
+            ))
+            .onStatus(status -> status.is4xxClientError(), response -> clientErrorFromConsumer(
+                response,
+                "consumer_api_key_request_rejected",
+                "API_KEY",
+                "API key validation request was rejected"
             ))
             .onStatus(status -> status.is5xxServerError(), response -> Mono.error(
                 new RouteSecurityException(
@@ -81,15 +103,23 @@ public class ConsumerAuthService {
                 )))
             .bodyToMono(AuthValidationResponse.class)
             .onErrorMap(ResponseStatusException.class, exception -> exception)
+            .onErrorMap(WebClientResponseException.class, exception -> new RouteSecurityException(
+                HttpStatus.BAD_GATEWAY,
+                buildMessage("consumer-service rejected the API key validation request", extractMessage(exception.getResponseBodyAsString())),
+                "consumer_api_key_request_rejected",
+                "API_KEY",
+                null
+            ))
             .onErrorMap(exception -> new ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "consumer-service is unavailable",
                 exception));
     }
 
-    public Mono<AuthValidationResponse> validateJwt(String authorizationHeader) {
+    public Mono<AuthValidationResponse> validateJwt(String gatewayId, String authorizationHeader) {
         return webClient.post()
             .uri("/internal/auth/jwt/validate")
+            .header("X-Gateway-Id", gatewayId)
             .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
             .retrieve()
             .onStatus(status -> status.value() == 401, response -> unauthorizedFromConsumer(
@@ -98,6 +128,12 @@ public class ConsumerAuthService {
                 "JWT",
                 "Bearer",
                 "JWT validation failed"
+            ))
+            .onStatus(status -> status.is4xxClientError(), response -> clientErrorFromConsumer(
+                response,
+                "consumer_jwt_request_rejected",
+                "JWT",
+                "JWT validation request was rejected"
             ))
             .onStatus(status -> status.is5xxServerError(), response -> Mono.error(
                 new RouteSecurityException(
@@ -109,6 +145,13 @@ public class ConsumerAuthService {
                 )))
             .bodyToMono(AuthValidationResponse.class)
             .onErrorMap(ResponseStatusException.class, exception -> exception)
+            .onErrorMap(WebClientResponseException.class, exception -> new RouteSecurityException(
+                HttpStatus.BAD_GATEWAY,
+                buildMessage("consumer-service rejected the JWT validation request", extractMessage(exception.getResponseBodyAsString())),
+                "consumer_jwt_request_rejected",
+                "JWT",
+                null
+            ))
             .onErrorMap(exception -> new ResponseStatusException(
                 HttpStatus.SERVICE_UNAVAILABLE,
                 "consumer-service is unavailable",
@@ -130,6 +173,23 @@ public class ConsumerAuthService {
                 code,
                 authType,
                 wwwAuthenticate
+            ));
+    }
+
+    private Mono<? extends Throwable> clientErrorFromConsumer(
+        ClientResponse response,
+        String code,
+        String authType,
+        String fallbackPrefix
+    ) {
+        return response.bodyToMono(String.class)
+            .defaultIfEmpty("")
+            .map(body -> new RouteSecurityException(
+                HttpStatus.BAD_GATEWAY,
+                buildMessage(fallbackPrefix, extractMessage(body)),
+                code,
+                authType,
+                null
             ));
     }
 

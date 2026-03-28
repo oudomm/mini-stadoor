@@ -5,19 +5,37 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "consumer_users")
+@Table(
+    name = "consumer_users",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_consumer_gateway_owner_username",
+            columnNames = {"gateway_id", "owner_user_uuid", "username"}
+        )
+    }
+)
 public class ConsumerUserEntity {
 
     @Id
     @Column(nullable = false, updatable = false, length = 36)
     private String id;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(name = "gateway_id", nullable = false, length = 128)
+    private String gatewayId;
+
+    @Column(name = "owner_user_uuid", nullable = false, length = 128)
+    private String ownerUserUuid;
+
+    @Column(name = "consumer_name", nullable = false, length = 128)
+    private String consumerName;
+
+    @Column(nullable = false, length = 64)
     private String username;
 
     @Column(name = "password_hash", nullable = false, length = 512)
@@ -36,11 +54,17 @@ public class ConsumerUserEntity {
     }
 
     public ConsumerUserEntity(
+        String gatewayId,
+        String ownerUserUuid,
+        String consumerName,
         String username,
         String passwordHash,
         String apiKey,
         String status
     ) {
+        this.gatewayId = gatewayId;
+        this.ownerUserUuid = ownerUserUuid;
+        this.consumerName = consumerName;
         this.username = username;
         this.passwordHash = passwordHash;
         this.apiKey = apiKey;
@@ -63,6 +87,18 @@ public class ConsumerUserEntity {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getGatewayId() {
+        return gatewayId;
+    }
+
+    public String getOwnerUserUuid() {
+        return ownerUserUuid;
+    }
+
+    public String getConsumerName() {
+        return consumerName;
     }
 
     public String getPasswordHash() {

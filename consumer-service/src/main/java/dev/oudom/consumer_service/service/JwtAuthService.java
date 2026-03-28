@@ -2,6 +2,7 @@ package dev.oudom.consumer_service.service;
 
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
 import dev.oudom.consumer_service.dto.LoginResponse;
+import dev.oudom.consumer_service.entity.ConsumerUserEntity;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
@@ -25,38 +26,39 @@ public class JwtAuthService {
     private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
 
-    private final BasicAuthValidationService basicAuthValidationService;
+    private final ConsumerUserStore consumerUserStore;
     private final SecretKey signingKey;
     private final String issuer;
     private final long accessTokenExpirationSeconds;
     private final long refreshTokenExpirationSeconds;
 
     public JwtAuthService(
-        BasicAuthValidationService basicAuthValidationService,
+        ConsumerUserStore consumerUserStore,
         @Value("${consumer.security.jwt.secret}") String secret,
         @Value("${consumer.security.jwt.issuer}") String issuer,
         @Value("${consumer.security.jwt.access-token-expiration-seconds}") long accessTokenExpirationSeconds,
         @Value("${consumer.security.jwt.refresh-token-expiration-seconds}") long refreshTokenExpirationSeconds
     ) {
-        this.basicAuthValidationService = basicAuthValidationService;
+        this.consumerUserStore = consumerUserStore;
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.issuer = issuer;
         this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
         this.refreshTokenExpirationSeconds = refreshTokenExpirationSeconds;
     }
 
-    public Mono<LoginResponse> login(String username, String password) {
-        return basicAuthValidationService.authenticate(username, password)
-            .map(principal -> new LoginResponse(
-                generateToken(principal, ACCESS_TOKEN_TYPE, accessTokenExpirationSeconds),
-                generateToken(principal, REFRESH_TOKEN_TYPE, refreshTokenExpirationSeconds),
+    public Mono<LoginResponse> login(String gatewayId, String username, String password) {
+        return consumerUserStore.authenticate(gatewayId, username, password)
+            .map(consumer -> new LoginResponse(
+                generateToken(consumer, ACCESS_TOKEN_TYPE, accessTokenExpirationSeconds),
+                generateToken(consumer, REFRESH_TOKEN_TYPE, refreshTokenExpirationSeconds),
                 "Bearer",
                 accessTokenExpirationSeconds,
-                principal
+                consumer.getUsername(),
+                consumer.getGatewayId()
             ));
     }
 
-    public Mono<AuthValidationResponse> validateAccessToken(String tokenOrAuthorizationHeader) {
+    public Mono<AuthValidationResponse> validateAccessToken(String gatewayId, String tokenOrAuthorizationHeader) {
         String token = extractBearerToken(tokenOrAuthorizationHeader);
         Claims claims = parseToken(token);
         String tokenType = claims.get("token_type", String.class);
@@ -64,24 +66,33 @@ public class JwtAuthService {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token is required"));
         }
 
+        String tokenGatewayId = claims.get("gateway_id", String.class);
+        if (tokenGatewayId == null || !tokenGatewayId.equals(gatewayId)) {
+            return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT token does not belong to this gateway"));
+        }
+
         return Mono.just(new AuthValidationResponse(
             true,
             "JWT",
-            claims.getSubject()
+            claims.getSubject(),
+            tokenGatewayId,
+            claims.get("consumer_id", String.class)
         ));
     }
 
-    private String generateToken(String principal, String tokenType, long expirationSeconds) {
+    private String generateToken(ConsumerUserEntity consumer, String tokenType, long expirationSeconds) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plusSeconds(expirationSeconds);
 
         return Jwts.builder()
-            .subject(principal)
+            .subject(consumer.getUsername())
             .issuer(issuer)
             .issuedAt(Date.from(issuedAt))
             .expiration(Date.from(expiresAt))
             .id(UUID.randomUUID().toString())
             .claim("token_type", tokenType)
+            .claim("gateway_id", consumer.getGatewayId())
+            .claim("consumer_id", consumer.getId())
             .claim("scope", tokenType.equals(ACCESS_TOKEN_TYPE) ? "gateway:access" : "gateway:refresh")
             .signWith(signingKey)
             .compact();

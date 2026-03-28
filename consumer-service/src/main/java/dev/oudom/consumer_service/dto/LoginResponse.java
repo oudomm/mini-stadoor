@@ -5,6 +5,7 @@ public record LoginResponse(
     String refreshToken,
     String tokenType,
     long expiresIn,
-    String principal
+    String principal,
+    String gatewayId
 ) {
 }

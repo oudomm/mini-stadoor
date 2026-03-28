@@ -23,6 +23,10 @@ eureka:
   instance:
     prefer-ip-address: false
 consumer:
+  seed:
+    gateway-id: ecommerce-gateway
+    owner-user-uuid: demo-owner
+    consumer-name: Demo Consumer
   security:
     basic:
       username: enduser

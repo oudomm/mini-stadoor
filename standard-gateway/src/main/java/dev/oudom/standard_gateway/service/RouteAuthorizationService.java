@@ -49,7 +49,7 @@ public class RouteAuthorizationService {
                 ));
             }
 
-            return consumerAuthService.validateBasic(authorizationHeader).then();
+            return consumerAuthService.validateBasic(matchingRoute.get().gatewayId(), authorizationHeader).then();
         }
 
         if (matchingRoute.get().authType() == AuthType.API_KEY) {
@@ -63,7 +63,7 @@ public class RouteAuthorizationService {
                 ));
             }
 
-            return consumerAuthService.validateApiKey(apiKey).then();
+            return consumerAuthService.validateApiKey(matchingRoute.get().gatewayId(), apiKey).then();
         }
 
         if (matchingRoute.get().authType() == AuthType.JWT) {
@@ -77,7 +77,7 @@ public class RouteAuthorizationService {
                 ));
             }
 
-            return consumerAuthService.validateJwt(authorizationHeader).then();
+            return consumerAuthService.validateJwt(matchingRoute.get().gatewayId(), authorizationHeader).then();
         }
 
         if (matchingRoute.get().authType() == AuthType.OAUTH2) {

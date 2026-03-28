@@ -8,11 +8,13 @@ import java.util.List;
 
 public interface ConsumerUserRepository extends JpaRepository<ConsumerUserEntity, String> {
 
-    Optional<ConsumerUserEntity> findByUsernameAndStatus(String username, String status);
+    Optional<ConsumerUserEntity> findByGatewayIdAndUsernameAndStatus(String gatewayId, String username, String status);
 
-    Optional<ConsumerUserEntity> findByApiKeyAndStatus(String apiKey, String status);
+    Optional<ConsumerUserEntity> findByGatewayIdAndApiKeyAndStatus(String gatewayId, String apiKey, String status);
 
-    boolean existsByUsername(String username);
+    boolean existsByGatewayIdAndUsername(String gatewayId, String username);
 
-    List<ConsumerUserEntity> findAllByOrderByCreatedAtDesc();
+    List<ConsumerUserEntity> findAllByGatewayIdOrderByCreatedAtDesc(String gatewayId);
+
+    boolean existsByGatewayIdAndConsumerName(String gatewayId, String consumerName);
 }
