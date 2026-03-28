@@ -59,6 +59,10 @@
       "value": ""
     },
     {
+      "key": "consumerGatewayId",
+      "value": "basic-gateway"
+    },
+    {
       "key": "jwtAccessToken",
       "value": ""
     },
@@ -222,20 +226,19 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
+              "raw": "{\n  \"gatewayId\": \"{{consumerGatewayId}}\",\n  \"consumerName\": \"Partner Client {{consumerGatewayId}}\",\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
             },
             "url": {
-              "raw": "{{consumerServiceBaseUrl}}/api/users/register",
+              "raw": "{{consumerServiceBaseUrl}}/api/consumers",
               "host": [
                 "{{consumerServiceBaseUrl}}"
               ],
               "path": [
                 "api",
-                "users",
-                "register"
+                "consumers"
               ]
             },
-            "description": "Registers a reusable consumer identity in consumer-service. The returned API key is stored in registeredApiKey for later API_KEY requests."
+            "description": "Registers a gateway-scoped consumer identity in consumer-service. Set consumerGatewayId to the gateway you want to test, then reuse the returned API key or username/password only inside that gateway."
           },
           "response": []
         },
@@ -245,16 +248,22 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{consumerServiceBaseUrl}}/api/users",
+              "raw": "{{consumerServiceBaseUrl}}/api/consumers?gatewayId={{consumerGatewayId}}",
               "host": [
                 "{{consumerServiceBaseUrl}}"
               ],
               "path": [
                 "api",
-                "users"
+                "consumers"
+              ],
+              "query": [
+                {
+                  "key": "gatewayId",
+                  "value": "{{consumerGatewayId}}"
+                }
               ]
             },
-            "description": "Lists consumer identities with API key previews so you can confirm which clients are available for BASIC, API_KEY, and JWT flows."
+            "description": "Lists consumer identities for the selected gateway workspace so you can confirm which clients are available for BASIC, API_KEY, and JWT flows."
           },
           "response": []
         }
@@ -862,7 +871,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"username\": \"{{registeredUsername}}\",\n  \"password\": \"{{registeredPassword}}\"\n}"
             },
             "url": {
               "raw": "{{consumerServiceBaseUrl}}/api/login",
@@ -874,7 +883,7 @@
                 "login"
               ]
             },
-            "description": "Issues signed access and refresh tokens from consumer-service for the registered consumer user."
+            "description": "Issues signed access and refresh tokens from consumer-service for a consumer that belongs to the JWT gateway."
           },
           "response": []
         },
@@ -886,8 +895,16 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{jwtAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"token\": \"{{jwtAccessToken}}\"\n}"
+            },
             "url": {
               "raw": "{{consumerServiceBaseUrl}}/api/token/validate",
               "host": [
@@ -899,7 +916,7 @@
                 "validate"
               ]
             },
-            "description": "Validates an issued JWT access token before using it on the gateway route."
+            "description": "Validates an issued JWT access token and confirms it belongs to the JWT gateway before using it on the protected route."
           },
           "response": []
         },

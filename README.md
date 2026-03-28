@@ -7,7 +7,8 @@ It proves:
 - developers create `Gateway -> Service -> Route`
 - management data is owner-scoped per developer
 - `standard-gateway` resolves auth from gateway defaults, optional service policies, and route overrides
-- consumer identities are created once in `consumer-service` and then reused for `BASIC`, `API_KEY`, and `JWT` routes
+- consumer identities are created inside a gateway workspace in `consumer-service`
+- `standard-gateway` validates `BASIC`, `API_KEY`, and `JWT` credentials against both the credential and the owning gateway
 
 ## Services
 
@@ -26,7 +27,7 @@ It proves:
 ## Auth Model
 
 - Platform users live in `iam-server`
-- Consumer users for `BASIC`, `API_KEY`, and `JWT` live in `consumer-service`
+- Gateway-scoped consumer identities for `BASIC`, `API_KEY`, and `JWT` live in `consumer-service`
 - `gateway-management-service` requires IAM bearer tokens
 - gateway defines a default security type (`NONE`, `BASIC`, `API_KEY`, or `JWT`)
 - service can optionally define its own security type; if set, all routes under that service inherit it
@@ -34,6 +35,7 @@ It proves:
 - if route security is not set, route falls back to the gateway default
 - effective precedence is `service -> route -> gateway default`
 - `standard-gateway` enforces the resolved auth type on each route
+- consumer credentials are valid only inside the gateway that owns the consumer
 
 ## Run
 
@@ -82,7 +84,8 @@ Postman demo notes:
 
 - `Create Gateway` sets the gateway default policy
 - each protected Postman folder now creates its own matching gateway before registering the service and route
-- `Consumer User` creates a reusable client identity; use that same identity for `BASIC`, `API_KEY`, or `JWT`
+- `Consumer User` now needs a `consumerGatewayId`; set it to the gateway you want to test before registering or logging in a consumer
+- consumer identities are reusable inside their gateway workspace, not across every gateway globally
 - `JWT` includes both token issuance and token validation before the protected route call
 - keep service `authType: null` if you want it to inherit the gateway default; set service `authType` when you want the whole service locked to one matching policy
 
@@ -101,7 +104,7 @@ Postman OAuth client:
 - `gateway-management-service` stores gateways, services, and routes in Postgres
 - `gateway-management-service` uses the `gateway_management_service_db` database
 - `gateway-management-service` ownership is tied to the authenticated IAM developer
-- `consumer-service` stores consumer users in Postgres
+- `consumer-service` stores gateway-scoped consumers in Postgres
 - `consumer-service` uses the `consumer_service_db` database
 - `iam-server` stores identity and OAuth2/OIDC data in `iam-postgres`
 - `standard-gateway` loads routes dynamically at runtime, not from static config
