@@ -5,8 +5,6 @@ import dev.oudom.consumer_service.dto.UserRegistrationRequest;
 import dev.oudom.consumer_service.dto.UserRegistrationResponse;
 import dev.oudom.consumer_service.entity.ConsumerUserEntity;
 import dev.oudom.consumer_service.repository.ConsumerUserRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,49 +23,13 @@ public class ConsumerUserStore {
 
     private final ConsumerUserRepository consumerUserRepository;
     private final PasswordHashingService passwordHashingService;
-    private final String seedGatewayId;
-    private final String seedOwnerUserUuid;
-    private final String seedConsumerName;
-    private final String seedUsername;
-    private final String seedPassword;
-    private final String seedApiKey;
 
     public ConsumerUserStore(
         ConsumerUserRepository consumerUserRepository,
-        PasswordHashingService passwordHashingService,
-        @Value("${consumer.seed.gateway-id}") String seedGatewayId,
-        @Value("${consumer.seed.owner-user-uuid}") String seedOwnerUserUuid,
-        @Value("${consumer.seed.consumer-name}") String seedConsumerName,
-        @Value("${consumer.security.basic.username}") String seedUsername,
-        @Value("${consumer.security.basic.password}") String seedPassword,
-        @Value("${consumer.security.api-key.value}") String seedApiKey
+        PasswordHashingService passwordHashingService
     ) {
         this.consumerUserRepository = consumerUserRepository;
         this.passwordHashingService = passwordHashingService;
-        this.seedGatewayId = normalizeRequired(seedGatewayId, "Seed gatewayId must not be blank");
-        this.seedOwnerUserUuid = normalizeRequired(seedOwnerUserUuid, "Seed owner user UUID must not be blank");
-        this.seedConsumerName = normalizeRequired(seedConsumerName, "Seed consumer name must not be blank");
-        this.seedUsername = normalizeUsername(seedUsername);
-        this.seedPassword = seedPassword;
-        this.seedApiKey = seedApiKey.trim();
-    }
-
-    @org.springframework.context.event.EventListener(ApplicationReadyEvent.class)
-    @Transactional
-    public void initializeSeedUser() {
-        if (consumerUserRepository.existsByGatewayIdAndUsername(seedGatewayId, seedUsername)) {
-            return;
-        }
-
-        consumerUserRepository.save(new ConsumerUserEntity(
-            seedGatewayId,
-            seedOwnerUserUuid,
-            seedConsumerName,
-            seedUsername,
-            passwordHashingService.hash(seedPassword),
-            seedApiKey,
-            ACTIVE
-        ));
     }
 
     public Mono<ConsumerUserEntity> authenticate(String gatewayId, String username, String password) {

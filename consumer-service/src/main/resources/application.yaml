@@ -23,17 +23,9 @@ eureka:
   instance:
     prefer-ip-address: false
 consumer:
-  seed:
-    gateway-id: ecommerce-gateway
-    owner-user-uuid: demo-owner
-    consumer-name: Demo Consumer
   security:
-    basic:
-      username: enduser
-      password: enduser123
     api-key:
       header-name: X-API-Key
-      value: stadoor-demo-key
     jwt:
       issuer: consumer-service
       secret: stadoor-jwt-demo-secret-key-that-is-at-least-32-bytes
