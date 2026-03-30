@@ -10,10 +10,12 @@ public record GatewayRequest(
     @NotBlank(message = "gatewayName must not be blank")
     String gatewayName,
     String description,
-    AuthType authType
+    AuthType authType,
+    GatewayWorkspaceType workspaceType
 ) {
     public GatewayRequest {
         description = description == null ? "" : description.trim();
         authType = authType == null ? AuthType.NONE : authType;
+        workspaceType = workspaceType == null ? GatewayWorkspaceType.API : workspaceType;
     }
 }

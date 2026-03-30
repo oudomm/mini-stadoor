@@ -1,57 +1,49 @@
 package dev.oudom.gateway_management_service.entity;
 
-import dev.oudom.gateway_management_service.dto.AuthType;
+import dev.oudom.gateway_management_service.dto.GatewayWorkspaceType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
+
 @Entity
-@Table(name = "external_services")
+@Table(name = "gateway_workspaces")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExternalServiceEntity {
-
-    @Column(nullable = false)
-    private String gatewayId;
+public class GatewayWorkspaceEntity {
 
     @Id
     @Column(nullable = false, updatable = false)
-    private String serviceId;
+    private String workspaceId;
 
     @Column(nullable = false)
-    private String serviceName;
-
-    @Column(nullable = false)
-    private String address;
-
-    @Column(nullable = false)
-    private Integer port;
-
-    @Column(nullable = false)
-    private String tags;
-
-    @Column(nullable = false)
-    private String upstreamId;
+    private String workspaceName;
 
     @Enumerated(EnumType.STRING)
-    @Column
-    private AuthType authType;
+    @Column(nullable = false)
+    private GatewayWorkspaceType type;
 
-    @Column
+    @Column(nullable = false)
     private String ownerUserUuid;
 
-    @Column
-    private String ownerUsername;
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @Column
-    private String ownerEmail;
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 }

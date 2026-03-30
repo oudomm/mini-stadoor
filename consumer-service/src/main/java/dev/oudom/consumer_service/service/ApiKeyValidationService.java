@@ -15,6 +15,12 @@ public class ApiKeyValidationService {
 
     public Mono<AuthValidationResponse> validate(String gatewayId, String apiKey) {
         return consumerUserStore.findByApiKey(gatewayId, apiKey)
-            .map(consumer -> new AuthValidationResponse(true, "API_KEY", consumer.getUsername(), consumer.getGatewayId(), consumer.getId()));
+            .map(consumer -> new AuthValidationResponse(
+                true,
+                "API_KEY",
+                consumer.username(),
+                consumer.gatewayId(),
+                consumer.consumerId()
+            ));
     }
 }

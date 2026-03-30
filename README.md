@@ -5,9 +5,12 @@ Mini Stadoor is a demo for dynamic API gateway registration with hierarchical se
 It proves:
 - developers sign in through `iam-server`
 - developers create `Gateway -> Service -> Route`
+- gateways are grouped into an internal `GatewayWorkspace` layer (`API` or `BFF`)
+- each registered service creates an `Upstream` with one or more runtime `Target` entries
 - management data is owner-scoped per developer
 - `standard-gateway` resolves auth from gateway defaults, optional service policies, and route overrides
-- consumer identities are created inside a gateway workspace in `consumer-service`
+- consumer identities are created inside a gateway in `consumer-service`
+- `consumer-service` stores `Consumer -> BasicAuthCredential / ApiKeyCredential / JwtProvisioning`
 - `standard-gateway` validates `BASIC`, `API_KEY`, and `JWT` credentials against both the credential and the owning gateway
 
 ## Services
@@ -102,9 +105,10 @@ Postman OAuth client:
 ## Notes
 
 - `gateway-management-service` stores gateways, services, and routes in Postgres
+- `gateway-management-service` also materializes `gateway_workspaces`, `upstreams`, and `targets` to stay closer to the Stadoor ERD
 - `gateway-management-service` uses the `gateway_management_service_db` database
 - `gateway-management-service` ownership is tied to the authenticated IAM developer
-- `consumer-service` stores gateway-scoped consumers in Postgres
+- `consumer-service` stores gateway-scoped consumers and credential tables in Postgres
 - `consumer-service` uses the `consumer_service_db` database
 - `iam-server` stores identity and OAuth2/OIDC data in `iam-postgres`
 - `standard-gateway` loads routes dynamically at runtime, not from static config

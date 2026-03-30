@@ -5,19 +5,20 @@ export type DashboardTab =
   | "gateways"
   | "services"
   | "routes"
-  | "security"
   | "consumers"
   | "settings";
 export type SupportedAuthType = "NONE" | "BASIC" | "API_KEY" | "JWT";
 export type FutureAuthType = "OAUTH2";
 export type GatewayAuthType = SupportedAuthType | FutureAuthType;
 export type GatewayWorkspaceTab = "gateway" | "service" | "route";
+export type GatewayWorkspaceType = "API" | "BFF";
 
 export type GatewayForm = {
   gatewayId: string;
   gatewayName: string;
   description: string;
   authType: GatewayAuthType;
+  workspaceType: GatewayWorkspaceType;
 };
 
 export type ServiceForm = {
@@ -55,6 +56,13 @@ export type ServiceSummary = {
   address: string;
   port: number;
   tags: string[];
+  upstreamId?: string;
+  targets?: {
+    targetId: string;
+    host: string;
+    port: number;
+    weight: number;
+  }[];
   authType?: GatewayAuthType;
   routes: RouteSummary[];
 };
@@ -63,6 +71,9 @@ export type GatewaySummary = {
   gatewayId: string;
   gatewayName: string;
   description: string;
+  workspaceId?: string;
+  workspaceName?: string;
+  workspaceType?: GatewayWorkspaceType;
   authType?: GatewayAuthType;
   services: ServiceSummary[];
 };
@@ -136,6 +147,7 @@ export const initialGatewayForm: GatewayForm = {
   gatewayName: "E-Commerce Gateway",
   description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
   authType: "NONE",
+  workspaceType: "API",
 };
 
 export const initialServiceForm: ServiceForm = {
@@ -178,6 +190,7 @@ export const gatewayPresets = [
       gatewayName: "E-Commerce Gateway",
       description: "Gateway workspace for catalog, cart, checkout, and customer-facing APIs.",
       authType: "JWT" as const,
+      workspaceType: "API" as const,
     },
   },
   {
@@ -187,6 +200,7 @@ export const gatewayPresets = [
       gatewayName: "Partner Gateway",
       description: "Expose supplier and partner endpoints with isolated routing and security rules.",
       authType: "API_KEY" as const,
+      workspaceType: "API" as const,
     },
   },
 ] as const;

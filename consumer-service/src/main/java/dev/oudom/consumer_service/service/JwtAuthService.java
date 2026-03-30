@@ -2,10 +2,10 @@ package dev.oudom.consumer_service.service;
 
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
 import dev.oudom.consumer_service.dto.LoginResponse;
-import dev.oudom.consumer_service.entity.ConsumerUserEntity;
+import dev.oudom.consumer_service.entity.JwtProvisioningEntity;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -29,8 +29,6 @@ public class JwtAuthService {
     private final ConsumerUserStore consumerUserStore;
     private final SecretKey signingKey;
     private final String issuer;
-    private final long accessTokenExpirationSeconds;
-    private final long refreshTokenExpirationSeconds;
 
     public JwtAuthService(
         ConsumerUserStore consumerUserStore,
@@ -42,20 +40,29 @@ public class JwtAuthService {
         this.consumerUserStore = consumerUserStore;
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.issuer = issuer;
-        this.accessTokenExpirationSeconds = accessTokenExpirationSeconds;
-        this.refreshTokenExpirationSeconds = refreshTokenExpirationSeconds;
     }
 
     public Mono<LoginResponse> login(String gatewayId, String username, String password) {
         return consumerUserStore.authenticate(gatewayId, username, password)
-            .map(consumer -> new LoginResponse(
-                generateToken(consumer, ACCESS_TOKEN_TYPE, accessTokenExpirationSeconds),
-                generateToken(consumer, REFRESH_TOKEN_TYPE, refreshTokenExpirationSeconds),
-                "Bearer",
-                accessTokenExpirationSeconds,
-                consumer.getUsername(),
-                consumer.getGatewayId()
-            ));
+            .flatMap(consumer -> consumerUserStore.findJwtProvisioning(consumer.consumerId())
+                .map(jwtProvisioning -> new LoginResponse(
+                    generateToken(
+                        consumer,
+                        jwtProvisioning,
+                        ACCESS_TOKEN_TYPE,
+                        jwtProvisioning.getAccessTokenExpirationSeconds()
+                    ),
+                    generateToken(
+                        consumer,
+                        jwtProvisioning,
+                        REFRESH_TOKEN_TYPE,
+                        jwtProvisioning.getRefreshTokenExpirationSeconds()
+                    ),
+                    "Bearer",
+                    jwtProvisioning.getAccessTokenExpirationSeconds(),
+                    consumer.username(),
+                    consumer.gatewayId()
+                )));
     }
 
     public Mono<AuthValidationResponse> validateAccessToken(String gatewayId, String tokenOrAuthorizationHeader) {
@@ -71,28 +78,35 @@ public class JwtAuthService {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "JWT token does not belong to this gateway"));
         }
 
-        return Mono.just(new AuthValidationResponse(
-            true,
-            "JWT",
-            claims.getSubject(),
-            tokenGatewayId,
-            claims.get("consumer_id", String.class)
-        ));
+        String consumerId = claims.get("consumer_id", String.class);
+        return consumerUserStore.findActiveConsumer(tokenGatewayId, consumerId)
+            .map(consumer -> new AuthValidationResponse(
+                true,
+                "JWT",
+                consumer.username(),
+                consumer.gatewayId(),
+                consumer.consumerId()
+            ));
     }
 
-    private String generateToken(ConsumerUserEntity consumer, String tokenType, long expirationSeconds) {
+    private String generateToken(
+        ConsumerAccessIdentity consumer,
+        JwtProvisioningEntity jwtProvisioning,
+        String tokenType,
+        long expirationSeconds
+    ) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plusSeconds(expirationSeconds);
 
         return Jwts.builder()
-            .subject(consumer.getUsername())
-            .issuer(issuer)
+            .subject(consumer.username())
+            .issuer(jwtProvisioning.getIssuer())
             .issuedAt(Date.from(issuedAt))
             .expiration(Date.from(expiresAt))
             .id(UUID.randomUUID().toString())
             .claim("token_type", tokenType)
-            .claim("gateway_id", consumer.getGatewayId())
-            .claim("consumer_id", consumer.getId())
+            .claim("gateway_id", consumer.gatewayId())
+            .claim("consumer_id", consumer.consumerId())
             .claim("scope", tokenType.equals(ACCESS_TOKEN_TYPE) ? "gateway:access" : "gateway:refresh")
             .signWith(signingKey)
             .compact();

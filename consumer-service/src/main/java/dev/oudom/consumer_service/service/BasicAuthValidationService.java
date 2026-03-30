@@ -1,7 +1,6 @@
 package dev.oudom.consumer_service.service;
 
 import dev.oudom.consumer_service.dto.AuthValidationResponse;
-import dev.oudom.consumer_service.entity.ConsumerUserEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,15 +20,21 @@ public class BasicAuthValidationService {
 
     public Mono<AuthValidationResponse> validate(String gatewayId, String authorizationHeader) {
         return authenticateHeader(gatewayId, authorizationHeader)
-            .map(consumer -> new AuthValidationResponse(true, "BASIC", consumer.getUsername(), consumer.getGatewayId(), consumer.getId()));
+            .map(consumer -> new AuthValidationResponse(
+                true,
+                "BASIC",
+                consumer.username(),
+                consumer.gatewayId(),
+                consumer.consumerId()
+            ));
     }
 
     public Mono<String> authenticate(String gatewayId, String providedUsername, String providedPassword) {
         return consumerUserStore.authenticate(gatewayId, providedUsername, providedPassword)
-            .map(ConsumerUserEntity::getUsername);
+            .map(ConsumerAccessIdentity::username);
     }
 
-    private Mono<ConsumerUserEntity> authenticateHeader(String gatewayId, String authorizationHeader) {
+    private Mono<ConsumerAccessIdentity> authenticateHeader(String gatewayId, String authorizationHeader) {
         if (authorizationHeader == null || authorizationHeader.isBlank()) {
             return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing Authorization header"));
         }

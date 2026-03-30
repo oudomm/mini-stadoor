@@ -8,7 +8,6 @@ import {
   Search,
   Server,
   Settings,
-  Shield,
   Users,
   Waypoints,
 } from "lucide-react";
@@ -35,7 +34,6 @@ const sidebarItems: Array<{
   { key: "gateways", label: "Gateways", icon: Waypoints },
   { key: "services", label: "Services", icon: Server },
   { key: "routes", label: "Routes", icon: Route },
-  { key: "security", label: "Security", icon: Shield },
   { key: "consumers", label: "Consumers", icon: Users },
   { key: "settings", label: "Settings", icon: Settings },
 ];
@@ -65,10 +63,6 @@ const tabMeta: Record<
     title: "Routes",
     description: "Configure API routes and map public endpoints to backend services.",
   },
-  security: {
-    title: "Security",
-    description: "Track route protection strategy across BASIC, API_KEY, JWT, and planned OAuth2.",
-  },
   consumers: {
     title: "Consumers",
     description: "Manage consumer access for Basic Auth, API Key, and JWT protected routes.",
@@ -87,7 +81,7 @@ function normalizeTab(tab?: string): DashboardTab {
     return "gateways";
   }
   if (tab === "iam") {
-    return "security";
+    return "dashboard";
   }
   return sidebarItems.some((item) => item.key === tab) ? (tab as DashboardTab) : "dashboard";
 }

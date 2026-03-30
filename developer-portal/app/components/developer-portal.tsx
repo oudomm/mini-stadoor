@@ -28,7 +28,6 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   initialConsumerForm,
   initialConsumerLoginForm,
-  futureSecurityModes,
   initialGatewayForm,
   initialRouteForm,
   initialServiceForm,
@@ -242,6 +241,7 @@ export function DeveloperPortal({
         gatewayName: gatewayForm.gatewayName.trim(),
         description,
         authType: gatewayForm.authType,
+        workspaceType: gatewayForm.workspaceType,
       }),
     });
 
@@ -261,6 +261,7 @@ export function DeveloperPortal({
         gatewayName: "",
         description: "",
         authType: initialGatewayForm.authType,
+        workspaceType: initialGatewayForm.workspaceType,
       }));
     }
   }
@@ -749,6 +750,44 @@ export function DeveloperPortal({
                           ))}
                         </select>
                       </Field>
+                      <Field label="Gateway Type">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {[
+                            {
+                              label: "API Gateway",
+                              value: "API" as const,
+                              hint: "General-purpose gateway for APIs, partners, and service traffic.",
+                            },
+                            {
+                              label: "BFF Gateway",
+                              value: "BFF" as const,
+                              hint: "Backend-for-frontend gateway optimized for web or mobile clients.",
+                            },
+                          ].map((option) => {
+                            const active = gatewayForm.workspaceType === option.value;
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() =>
+                                  setGatewayForm((current) => ({
+                                    ...current,
+                                    workspaceType: option.value,
+                                  }))
+                                }
+                                className={`rounded-[0.85rem] border px-4 py-4 text-left transition ${
+                                  active
+                                    ? "border-[var(--border-strong)] bg-[color:color-mix(in_srgb,var(--accent)_10%,var(--surface))]"
+                                    : "border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] hover:bg-[var(--surface-soft)]"
+                                }`}
+                              >
+                                <p className="text-[1rem] font-semibold text-[var(--text-strong)]">{option.label}</p>
+                                <p className="mt-1 text-[0.9rem] text-[var(--text-muted)]">{option.hint}</p>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </Field>
                     </div>
                   ) : null}
 
@@ -758,6 +797,7 @@ export function DeveloperPortal({
                       <div className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-4">
                         <ReviewRow label="Gateway Name" value={gatewayForm.gatewayName || "-"} />
                         <ReviewRow label="Gateway ID" value={gatewayForm.gatewayId || "-"} />
+                        <ReviewRow label="Gateway Type" value={gatewayForm.workspaceType === "BFF" ? "BFF Gateway" : "API Gateway"} />
                         <ReviewRow label="Default Security" value={gatewayForm.authType || "NONE"} />
                         <ReviewRow label="Description" value={gatewayForm.description || "No description"} />
                       </div>
@@ -1239,47 +1279,6 @@ export function DeveloperPortal({
             </div>
           </section>
           <StatusPanel status={routeStatus} />
-        </section>
-      );
-    }
-
-    if (tab === "security") {
-      return (
-        <section className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-            <MetricCard icon={<Shield className="h-5 w-5" />} value={openRouteCount} label="Open (NONE)" helper="no auth policy" />
-            <MetricCard icon={<Shield className="h-5 w-5" />} value={basicRouteCount} label="Basic Auth" helper="username/password" />
-            <MetricCard icon={<Shield className="h-5 w-5" />} value={apiKeyRouteCount} label="API Key" helper="header or query key" />
-            <MetricCard icon={<Shield className="h-5 w-5" />} value={jwtRouteCount} label="JWT" helper="token protected" />
-            <MetricCard icon={<Shield className="h-5 w-5" />} value={oauth2RouteCount} label="OAuth2" helper="IAM bearer token" />
-          </div>
-
-          <section className="rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[var(--surface)] px-4 py-4">
-            <p className="text-[2rem] font-semibold tracking-[-0.045em] text-[var(--text-strong)]">Route Security Matrix</p>
-            <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
-              Security resolves in this order: service policy (if set), otherwise route policy, otherwise gateway default.
-            </p>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {supportedSecurityModes.map((mode) => (
-                <div
-                  key={mode.label}
-                  className="rounded-[0.85rem] border border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 py-3"
-                >
-                  <p className="text-[1.08rem] font-semibold text-[var(--accent-soft)]">{mode.label}</p>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">{mode.detail}</p>
-                </div>
-              ))}
-              {futureSecurityModes.map((mode) => (
-                <div
-                  key={mode.label}
-                  className="rounded-[0.85rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_76%,transparent)] px-4 py-3"
-                >
-                  <p className="text-[1.08rem] font-semibold text-[var(--text-muted)]">{mode.label}</p>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">{mode.detail}</p>
-                </div>
-              ))}
-            </div>
-          </section>
         </section>
       );
     }

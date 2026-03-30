@@ -4,9 +4,13 @@ import dev.oudom.gateway_management_service.dto.AuthType;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.ExternalServiceEntity;
 import dev.oudom.gateway_management_service.entity.GatewayEntity;
+import dev.oudom.gateway_management_service.entity.TargetEntity;
+import dev.oudom.gateway_management_service.entity.UpstreamEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
 import dev.oudom.gateway_management_service.repository.RouteRepository;
+import dev.oudom.gateway_management_service.repository.TargetRepository;
+import dev.oudom.gateway_management_service.repository.UpstreamRepository;
 import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,12 +38,16 @@ public class ExternalServiceRegistrationService {
     private final ExternalServiceRepository externalServiceRepository;
     private final GatewayRepository gatewayRepository;
     private final RouteRepository routeRepository;
+    private final UpstreamRepository upstreamRepository;
+    private final TargetRepository targetRepository;
 
     public ExternalServiceRegistrationService(
         RestClient.Builder restClientBuilder,
         ExternalServiceRepository externalServiceRepository,
         GatewayRepository gatewayRepository,
         RouteRepository routeRepository,
+        UpstreamRepository upstreamRepository,
+        TargetRepository targetRepository,
         @Value("${eureka-api.base-url}") String eurekaApiBaseUrl
     ) {
         this.restClient = restClientBuilder
@@ -48,13 +56,16 @@ public class ExternalServiceRegistrationService {
         this.externalServiceRepository = externalServiceRepository;
         this.gatewayRepository = gatewayRepository;
         this.routeRepository = routeRepository;
+        this.upstreamRepository = upstreamRepository;
+        this.targetRepository = targetRepository;
     }
 
     public ServiceRegistrationRequest register(ServiceRegistrationRequest request, DeveloperIdentity owner) {
         GatewayEntity gateway = resolveGateway(request.gatewayId(), owner);
         validateServiceAuthType(request, gateway);
+        UpstreamEntity upstream = createOrUpdateUpstream(request, owner);
         registerWithEureka(request);
-        externalServiceRepository.save(toEntity(request, owner));
+        externalServiceRepository.save(toEntity(request, upstream.getUpstreamId(), owner));
         if (request.authType() != null) {
             applyServiceSecurityToExistingRoutes(request, owner, request.authType());
         }
@@ -182,7 +193,37 @@ public class ExternalServiceRegistrationService {
         return instance;
     }
 
-    private ExternalServiceEntity toEntity(ServiceRegistrationRequest request, DeveloperIdentity owner) {
+    private UpstreamEntity createOrUpdateUpstream(ServiceRegistrationRequest request, DeveloperIdentity owner) {
+        UpstreamEntity upstream = upstreamRepository.findByGatewayIdAndServiceIdAndOwnerUserUuid(
+                request.gatewayId(),
+                request.serviceId(),
+                owner.userUuid()
+            )
+            .orElse(new UpstreamEntity(
+                request.serviceId() + "-upstream",
+                request.gatewayId(),
+                request.serviceId(),
+                request.serviceName() + "-upstream",
+                "ROUND_ROBIN",
+                owner.userUuid(),
+                null
+            ));
+
+        upstream.setUpstreamName(request.serviceName() + "-upstream");
+        UpstreamEntity savedUpstream = upstreamRepository.save(upstream);
+
+        targetRepository.deleteAllByUpstreamId(savedUpstream.getUpstreamId());
+        targetRepository.save(new TargetEntity(
+            savedUpstream.getUpstreamId(),
+            request.address(),
+            request.port(),
+            100,
+            owner.userUuid()
+        ));
+        return savedUpstream;
+    }
+
+    private ExternalServiceEntity toEntity(ServiceRegistrationRequest request, String upstreamId, DeveloperIdentity owner) {
         return new ExternalServiceEntity(
             request.gatewayId(),
             request.serviceId(),
@@ -190,6 +231,7 @@ public class ExternalServiceRegistrationService {
             request.address(),
             request.port(),
             request.tagsAsCsv(),
+            upstreamId,
             request.authType(),
             owner.userUuid(),
             owner.username(),
@@ -205,7 +247,8 @@ public class ExternalServiceRegistrationService {
             entity.getAddress(),
             entity.getPort(),
             ServiceRegistrationRequest.tagsFromCsv(entity.getTags()),
-            entity.getAuthType()
+            entity.getAuthType(),
+            entity.getUpstreamId()
         );
     }
 }
