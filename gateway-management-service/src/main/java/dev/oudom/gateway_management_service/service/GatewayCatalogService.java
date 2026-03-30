@@ -5,14 +5,11 @@ import dev.oudom.gateway_management_service.dto.GatewayRequest;
 import dev.oudom.gateway_management_service.dto.GatewayWorkspaceType;
 import dev.oudom.gateway_management_service.dto.RouteRequest;
 import dev.oudom.gateway_management_service.dto.ServiceCatalogResponse;
-import dev.oudom.gateway_management_service.dto.TargetCatalogResponse;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.GatewayEntity;
 import dev.oudom.gateway_management_service.entity.GatewayWorkspaceEntity;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
 import dev.oudom.gateway_management_service.repository.GatewayWorkspaceRepository;
-import dev.oudom.gateway_management_service.repository.TargetRepository;
-import dev.oudom.gateway_management_service.repository.UpstreamRepository;
 import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,8 +26,6 @@ public class GatewayCatalogService {
 
     private final GatewayRepository gatewayRepository;
     private final GatewayWorkspaceRepository gatewayWorkspaceRepository;
-    private final UpstreamRepository upstreamRepository;
-    private final TargetRepository targetRepository;
     private final ExternalServiceRegistrationService externalServiceRegistrationService;
     private final RouteStorageService routeStorageService;
 
@@ -63,31 +58,16 @@ public class GatewayCatalogService {
 
     private List<ServiceCatalogResponse> findServicesForGateway(String gatewayId, DeveloperIdentity owner) {
         return externalServiceRegistrationService.findAllByGatewayId(gatewayId, owner).stream()
-            .map(service -> {
-                List<TargetCatalogResponse> targets = targetRepository.findAllByUpstreamIdOrderByCreatedAtAsc(
-                        service.upstreamId()
-                    ).stream()
-                    .map(target -> new TargetCatalogResponse(
-                        target.getTargetId(),
-                        target.getHost(),
-                        target.getPort(),
-                        target.getWeight()
-                    ))
-                    .toList();
-
-                return new ServiceCatalogResponse(
-                    service.gatewayId(),
-                    service.serviceId(),
-                    service.serviceName(),
-                    service.address(),
-                    service.port(),
-                    service.normalizedTags(),
-                    service.upstreamId(),
-                    targets,
-                    service.authType(),
-                    findRoutesForService(gatewayId, service.serviceId(), owner)
-                );
-            })
+            .map(service -> new ServiceCatalogResponse(
+                service.gatewayId(),
+                service.serviceId(),
+                service.serviceName(),
+                service.address(),
+                service.port(),
+                service.normalizedTags(),
+                service.authType(),
+                findRoutesForService(gatewayId, service.serviceId(), owner)
+            ))
             .toList();
     }
 

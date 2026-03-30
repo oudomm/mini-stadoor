@@ -6,7 +6,7 @@ It proves:
 - developers sign in through `iam-server`
 - developers create `Gateway -> Service -> Route`
 - gateways are grouped into an internal `GatewayWorkspace` layer (`API` or `BFF`)
-- each registered service creates an `Upstream` with one or more runtime `Target` entries
+- each registered service is advertised through Eureka, and the gateway relies on service discovery for instance routing
 - management data is owner-scoped per developer
 - `standard-gateway` resolves auth from gateway defaults, optional service policies, and route overrides
 - consumer identities are created inside a gateway in `consumer-service`
@@ -90,7 +90,7 @@ Postman demo notes:
 - `Consumer User` now needs a `consumerGatewayId`; set it to the gateway you want to test before registering or logging in a consumer
 - consumer identities are reusable inside their gateway workspace, not across every gateway globally
 - `JWT` includes both token issuance and token validation before the protected route call
-- keep service `authType: null` if you want it to inherit the gateway default; set service `authType` when you want the whole service locked to one matching policy
+- services and routes now inherit security automatically from the gateway, so their request bodies no longer need `authType`
 
 Demo IAM credentials:
 
@@ -104,8 +104,7 @@ Postman OAuth client:
 
 ## Notes
 
-- `gateway-management-service` stores gateways, services, and routes in Postgres
-- `gateway-management-service` also materializes `gateway_workspaces`, `upstreams`, and `targets` to stay closer to the Stadoor ERD
+- `gateway-management-service` stores gateway workspaces, gateways, services, and routes while relying on Eureka for instance discovery and load balancing
 - `gateway-management-service` uses the `gateway_management_service_db` database
 - `gateway-management-service` ownership is tied to the authenticated IAM developer
 - `consumer-service` stores gateway-scoped consumers and credential tables in Postgres

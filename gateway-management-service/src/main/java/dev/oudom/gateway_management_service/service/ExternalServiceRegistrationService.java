@@ -4,13 +4,9 @@ import dev.oudom.gateway_management_service.dto.AuthType;
 import dev.oudom.gateway_management_service.dto.ServiceRegistrationRequest;
 import dev.oudom.gateway_management_service.entity.ExternalServiceEntity;
 import dev.oudom.gateway_management_service.entity.GatewayEntity;
-import dev.oudom.gateway_management_service.entity.TargetEntity;
-import dev.oudom.gateway_management_service.entity.UpstreamEntity;
 import dev.oudom.gateway_management_service.repository.ExternalServiceRepository;
 import dev.oudom.gateway_management_service.repository.GatewayRepository;
 import dev.oudom.gateway_management_service.repository.RouteRepository;
-import dev.oudom.gateway_management_service.repository.TargetRepository;
-import dev.oudom.gateway_management_service.repository.UpstreamRepository;
 import dev.oudom.gateway_management_service.security.DeveloperIdentity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -38,16 +33,12 @@ public class ExternalServiceRegistrationService {
     private final ExternalServiceRepository externalServiceRepository;
     private final GatewayRepository gatewayRepository;
     private final RouteRepository routeRepository;
-    private final UpstreamRepository upstreamRepository;
-    private final TargetRepository targetRepository;
 
     public ExternalServiceRegistrationService(
         RestClient.Builder restClientBuilder,
         ExternalServiceRepository externalServiceRepository,
         GatewayRepository gatewayRepository,
         RouteRepository routeRepository,
-        UpstreamRepository upstreamRepository,
-        TargetRepository targetRepository,
         @Value("${eureka-api.base-url}") String eurekaApiBaseUrl
     ) {
         this.restClient = restClientBuilder
@@ -56,21 +47,24 @@ public class ExternalServiceRegistrationService {
         this.externalServiceRepository = externalServiceRepository;
         this.gatewayRepository = gatewayRepository;
         this.routeRepository = routeRepository;
-        this.upstreamRepository = upstreamRepository;
-        this.targetRepository = targetRepository;
     }
 
     public ServiceRegistrationRequest register(ServiceRegistrationRequest request, DeveloperIdentity owner) {
         GatewayEntity gateway = resolveGateway(request.gatewayId(), owner);
-        validateServiceAuthType(request, gateway);
-        UpstreamEntity upstream = createOrUpdateUpstream(request, owner);
+        AuthType effectiveAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
         registerWithEureka(request);
-        externalServiceRepository.save(toEntity(request, upstream.getUpstreamId(), owner));
-        if (request.authType() != null) {
-            applyServiceSecurityToExistingRoutes(request, owner, request.authType());
-        }
+        externalServiceRepository.save(toEntity(request, owner, effectiveAuthType));
+        applyServiceSecurityToExistingRoutes(request, owner, effectiveAuthType);
 
-        return request;
+        return new ServiceRegistrationRequest(
+            request.gatewayId(),
+            request.serviceId(),
+            request.serviceName(),
+            request.address(),
+            request.port(),
+            request.normalizedTags(),
+            effectiveAuthType
+        );
     }
 
     public List<ServiceRegistrationRequest> findAll(DeveloperIdentity owner) {
@@ -91,21 +85,6 @@ public class ExternalServiceRegistrationService {
     private GatewayEntity resolveGateway(String gatewayId, DeveloperIdentity owner) {
         return gatewayRepository.findByGatewayIdAndOwnerUserUuid(gatewayId, owner.userUuid())
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Gateway not found: " + gatewayId));
-    }
-
-    private void validateServiceAuthType(ServiceRegistrationRequest request, GatewayEntity gateway) {
-        if (request.authType() == null) {
-            return;
-        }
-
-        AuthType gatewayAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
-        if (request.authType() != gatewayAuthType) {
-            throw new ResponseStatusException(
-                BAD_REQUEST,
-                "Service authType " + request.authType() + " is not allowed in gateway " + gateway.getGatewayId()
-                    + ". Gateway security is " + gatewayAuthType
-            );
-        }
     }
 
     private void applyServiceSecurityToExistingRoutes(
@@ -193,37 +172,11 @@ public class ExternalServiceRegistrationService {
         return instance;
     }
 
-    private UpstreamEntity createOrUpdateUpstream(ServiceRegistrationRequest request, DeveloperIdentity owner) {
-        UpstreamEntity upstream = upstreamRepository.findByGatewayIdAndServiceIdAndOwnerUserUuid(
-                request.gatewayId(),
-                request.serviceId(),
-                owner.userUuid()
-            )
-            .orElse(new UpstreamEntity(
-                request.serviceId() + "-upstream",
-                request.gatewayId(),
-                request.serviceId(),
-                request.serviceName() + "-upstream",
-                "ROUND_ROBIN",
-                owner.userUuid(),
-                null
-            ));
-
-        upstream.setUpstreamName(request.serviceName() + "-upstream");
-        UpstreamEntity savedUpstream = upstreamRepository.save(upstream);
-
-        targetRepository.deleteAllByUpstreamId(savedUpstream.getUpstreamId());
-        targetRepository.save(new TargetEntity(
-            savedUpstream.getUpstreamId(),
-            request.address(),
-            request.port(),
-            100,
-            owner.userUuid()
-        ));
-        return savedUpstream;
-    }
-
-    private ExternalServiceEntity toEntity(ServiceRegistrationRequest request, String upstreamId, DeveloperIdentity owner) {
+    private ExternalServiceEntity toEntity(
+        ServiceRegistrationRequest request,
+        DeveloperIdentity owner,
+        AuthType effectiveAuthType
+    ) {
         return new ExternalServiceEntity(
             request.gatewayId(),
             request.serviceId(),
@@ -231,8 +184,7 @@ public class ExternalServiceRegistrationService {
             request.address(),
             request.port(),
             request.tagsAsCsv(),
-            upstreamId,
-            request.authType(),
+            effectiveAuthType,
             owner.userUuid(),
             owner.username(),
             owner.email()
@@ -247,8 +199,7 @@ public class ExternalServiceRegistrationService {
             entity.getAddress(),
             entity.getPort(),
             ServiceRegistrationRequest.tagsFromCsv(entity.getTags()),
-            entity.getAuthType(),
-            entity.getUpstreamId()
+            entity.getAuthType()
         );
     }
 }

@@ -39,9 +39,6 @@ public class ExternalServiceEntity {
     @Column(nullable = false)
     private String tags;
 
-    @Column(nullable = false)
-    private String upstreamId;
-
     @Enumerated(EnumType.STRING)
     @Column
     private AuthType authType;

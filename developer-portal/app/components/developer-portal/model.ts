@@ -28,7 +28,6 @@ export type ServiceForm = {
   address: string;
   port: string;
   tags: string;
-  authType: SupportedAuthType | "";
 };
 
 export type RouteForm = {
@@ -37,7 +36,6 @@ export type RouteForm = {
   id: string;
   path: string;
   uri: string;
-  authType: SupportedAuthType | "";
 };
 
 export type RouteSummary = {
@@ -56,13 +54,6 @@ export type ServiceSummary = {
   address: string;
   port: number;
   tags: string[];
-  upstreamId?: string;
-  targets?: {
-    targetId: string;
-    host: string;
-    port: number;
-    weight: number;
-  }[];
   authType?: GatewayAuthType;
   routes: RouteSummary[];
 };
@@ -157,7 +148,6 @@ export const initialServiceForm: ServiceForm = {
   address: "localhost",
   port: "8082",
   tags: "manual-registration,ecommerce,spring",
-  authType: "",
 };
 
 export const initialRouteForm: RouteForm = {
@@ -166,7 +156,6 @@ export const initialRouteForm: RouteForm = {
   id: "product-route-open",
   path: "/open/products/**",
   uri: "lb://product-service",
-  authType: "",
 };
 
 export const initialConsumerForm: ConsumerForm = {
@@ -215,7 +204,6 @@ export const servicePresets = [
       address: "localhost",
       port: "8082",
       tags: "manual-registration,ecommerce,spring",
-      authType: "",
     },
   },
   {
@@ -227,7 +215,6 @@ export const servicePresets = [
       address: "localhost",
       port: "8090",
       tags: "manual-registration,ecommerce,express",
-      authType: "",
     },
   },
   {
@@ -239,7 +226,6 @@ export const servicePresets = [
       address: "localhost",
       port: "8091",
       tags: "manual-registration,ecommerce,fastapi",
-      authType: "",
     },
   },
 ] as const;
@@ -253,7 +239,6 @@ export const routePresets = [
       id: "product-route-open",
       path: "/open/products/**",
       uri: "lb://product-service",
-      authType: "NONE" as const,
     },
   },
   {
@@ -264,7 +249,6 @@ export const routePresets = [
       id: "product-route-basic",
       path: "/basic/products/**",
       uri: "lb://product-service",
-      authType: "BASIC" as const,
     },
   },
   {
@@ -275,7 +259,6 @@ export const routePresets = [
       id: "inventory-route-api-key",
       path: "/partner/inventory/**",
       uri: "lb://inventory-service",
-      authType: "API_KEY" as const,
     },
   },
   {
@@ -286,7 +269,6 @@ export const routePresets = [
       id: "product-route-jwt",
       path: "/jwt/products/**",
       uri: "lb://product-service",
-      authType: "JWT" as const,
     },
   },
 ] as const;
