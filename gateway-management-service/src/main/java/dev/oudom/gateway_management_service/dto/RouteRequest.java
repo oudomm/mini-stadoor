@@ -1,5 +1,6 @@
 package dev.oudom.gateway_management_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
@@ -19,6 +20,7 @@ public record RouteRequest(
     @NotBlank(message = "uri must not be blank")
     @Pattern(regexp = "^(lb://|https?://).+", message = "uri must start with lb://, http://, or https://")
     String uri,
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     AuthType authType
 ) {
 }

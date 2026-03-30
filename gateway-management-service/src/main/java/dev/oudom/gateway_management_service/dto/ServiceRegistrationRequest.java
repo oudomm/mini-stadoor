@@ -1,5 +1,6 @@
 package dev.oudom.gateway_management_service.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -28,8 +29,8 @@ public record ServiceRegistrationRequest(
     @Max(value = 65535, message = "port must be less than or equal to 65535")
     Integer port,
     List<@NotBlank(message = "tags must not contain blank values") String> tags,
-    AuthType authType,
-    String upstreamId
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    AuthType authType
 ) {
     public List<String> normalizedTags() {
         return tags == null ? List.of() : List.copyOf(tags);

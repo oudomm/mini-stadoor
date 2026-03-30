@@ -15,7 +15,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @Service
@@ -28,9 +27,8 @@ public class RouteStorageService {
 
     public RouteRequest save(RouteRequest routeRequest, DeveloperIdentity owner) {
         GatewayEntity gateway = resolveGateway(routeRequest.gatewayId(), owner);
-        ExternalServiceEntity service = resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
-        validateRouteAuthType(routeRequest, service, gateway);
-        AuthType effectiveAuthType = resolveEffectiveAuthType(routeRequest.authType(), service.getAuthType(), gateway.getAuthType());
+        resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        AuthType effectiveAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
         routeRepository.save(new RouteEntity(
             routeRequest.gatewayId(),
             routeRequest.serviceId(),
@@ -58,9 +56,8 @@ public class RouteStorageService {
 
         ensureRouteOwnership(routeEntity, id, owner);
         GatewayEntity gateway = resolveGateway(routeRequest.gatewayId(), owner);
-        ExternalServiceEntity service = resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
-        validateRouteAuthType(routeRequest, service, gateway);
-        AuthType effectiveAuthType = resolveEffectiveAuthType(routeRequest.authType(), service.getAuthType(), gateway.getAuthType());
+        resolveService(routeRequest.gatewayId(), routeRequest.serviceId(), owner);
+        AuthType effectiveAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
         routeEntity.setGatewayId(routeRequest.gatewayId());
         routeEntity.setServiceId(routeRequest.serviceId());
         routeEntity.setPath(routeRequest.path());
@@ -136,54 +133,6 @@ public class RouteStorageService {
     private ExternalServiceEntity resolveService(String gatewayId, String serviceId, DeveloperIdentity owner) {
         return externalServiceRepository.findByGatewayIdAndServiceIdAndOwnerUserUuid(gatewayId, serviceId, owner.userUuid())
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Service not found in gateway: " + serviceId));
-    }
-
-    private AuthType resolveEffectiveAuthType(
-        AuthType routeAuthType,
-        AuthType serviceAuthType,
-        AuthType gatewayDefaultAuthType
-    ) {
-        if (serviceAuthType != null) {
-            return serviceAuthType;
-        }
-        if (routeAuthType != null) {
-            return routeAuthType;
-        }
-        return gatewayDefaultAuthType == null ? AuthType.NONE : gatewayDefaultAuthType;
-    }
-
-    private void validateRouteAuthType(
-        RouteRequest routeRequest,
-        ExternalServiceEntity service,
-        GatewayEntity gateway
-    ) {
-        AuthType gatewayAuthType = gateway.getAuthType() == null ? AuthType.NONE : gateway.getAuthType();
-        AuthType serviceAuthType = service.getAuthType();
-        AuthType requestedRouteAuthType = routeRequest.authType();
-
-        if (serviceAuthType != null && serviceAuthType != gatewayAuthType) {
-            throw new ResponseStatusException(
-                BAD_REQUEST,
-                "Service " + service.getServiceId() + " has authType " + serviceAuthType
-                    + " which does not match gateway security " + gatewayAuthType
-            );
-        }
-
-        if (serviceAuthType != null && requestedRouteAuthType != null && requestedRouteAuthType != serviceAuthType) {
-            throw new ResponseStatusException(
-                BAD_REQUEST,
-                "Route authType " + requestedRouteAuthType + " is not allowed because service "
-                    + service.getServiceId() + " enforces " + serviceAuthType
-            );
-        }
-
-        if (requestedRouteAuthType != null && requestedRouteAuthType != gatewayAuthType) {
-            throw new ResponseStatusException(
-                BAD_REQUEST,
-                "Route authType " + requestedRouteAuthType + " is not allowed in gateway " + gateway.getGatewayId()
-                    + ". Gateway security is " + gatewayAuthType
-            );
-        }
     }
 
     private void ensureRouteOwnership(RouteEntity routeEntity, String routeId, DeveloperIdentity owner) {

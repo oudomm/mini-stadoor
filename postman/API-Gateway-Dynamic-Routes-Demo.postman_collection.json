@@ -130,7 +130,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"],\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"proof\"]\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -142,7 +142,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the open gateway. authType null keeps the service on the gateway default NONE policy."
+            "description": "Registers product-service into the open gateway. The service automatically uses the gateway's NONE policy."
           },
           "response": []
         },
@@ -162,7 +162,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-open\",\n  \"path\": \"/open/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"ecommerce-gateway\",\n  \"serviceId\": \"product-service-manual-1\",\n  \"id\": \"product-route-open\",\n  \"path\": \"/open/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -173,7 +173,7 @@
                 "routes"
               ]
             },
-            "description": "Creates an open route inside the NONE gateway. Because the service authType is null and this route authType is null, the route inherits NONE from the gateway."
+            "description": "Creates an open route inside the NONE gateway. The route automatically uses the gateway's NONE policy."
           },
           "response": []
         },
@@ -544,7 +544,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"basic-auth\"],\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"basic-auth\"]\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -556,7 +556,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the BASIC gateway. authType null keeps the service on the gateway default BASIC policy."
+            "description": "Registers product-service into the BASIC gateway. The service automatically uses the gateway's BASIC policy."
           },
           "response": []
         },
@@ -576,7 +576,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"id\": \"product-route-basic\",\n  \"path\": \"/basic/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"basic-gateway\",\n  \"serviceId\": \"product-service-basic\",\n  \"id\": \"product-route-basic\",\n  \"path\": \"/basic/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -587,7 +587,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route inside the BASIC gateway. With route authType null, the route inherits BASIC from the gateway."
+            "description": "Creates a route inside the BASIC gateway. The route automatically uses the gateway's BASIC policy."
           },
           "response": []
         },
@@ -677,7 +677,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"api-key\"],\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"api-key\"]\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -689,7 +689,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the API_KEY gateway. authType null keeps the service on the gateway default API_KEY policy."
+            "description": "Registers product-service into the API_KEY gateway. The service automatically uses the gateway's API_KEY policy."
           },
           "response": []
         },
@@ -709,7 +709,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"id\": \"product-route-api-key\",\n  \"path\": \"/api-key/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"api-key-gateway\",\n  \"serviceId\": \"product-service-api-key\",\n  \"id\": \"product-route-api-key\",\n  \"path\": \"/api-key/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -720,7 +720,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route inside the API_KEY gateway. With route authType null, the route inherits API_KEY from the gateway."
+            "description": "Creates a route inside the API_KEY gateway. The route automatically uses the gateway's API_KEY policy."
           },
           "response": []
         },
@@ -800,7 +800,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"jwt\"],\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"jwt\"]\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -812,7 +812,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the JWT gateway. authType null keeps the service on the gateway default JWT policy."
+            "description": "Registers product-service into the JWT gateway. The service automatically uses the gateway's JWT policy."
           },
           "response": []
         },
@@ -832,7 +832,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"id\": \"product-route-jwt\",\n  \"path\": \"/jwt/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"jwt-gateway\",\n  \"serviceId\": \"product-service-jwt\",\n  \"id\": \"product-route-jwt\",\n  \"path\": \"/jwt/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -843,7 +843,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route inside the JWT gateway. With route authType null, the route inherits JWT from the gateway."
+            "description": "Creates a route inside the JWT gateway. The route automatically uses the gateway's JWT policy."
           },
           "response": []
         },
@@ -996,7 +996,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"oauth2\"],\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"serviceName\": \"product-service\",\n  \"address\": \"localhost\",\n  \"port\": 8082,\n  \"tags\": [\"manual-registration\", \"oauth2\"]\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/services/register",
@@ -1008,7 +1008,7 @@
                 "register"
               ]
             },
-            "description": "Registers product-service into the OAUTH2 gateway. authType null keeps the service on the gateway default OAUTH2 policy."
+            "description": "Registers product-service into the OAUTH2 gateway. The service automatically uses the gateway's OAUTH2 policy."
           },
           "response": []
         },
@@ -1028,7 +1028,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"id\": \"product-route-oauth2\",\n  \"path\": \"/oauth2/products/**\",\n  \"uri\": \"lb://product-service\",\n  \"authType\": null\n}"
+              "raw": "{\n  \"gatewayId\": \"oauth2-gateway\",\n  \"serviceId\": \"product-service-oauth2\",\n  \"id\": \"product-route-oauth2\",\n  \"path\": \"/oauth2/products/**\",\n  \"uri\": \"lb://product-service\"\n}"
             },
             "url": {
               "raw": "{{gatewayManagementServiceBaseUrl}}/routes",
@@ -1039,7 +1039,7 @@
                 "routes"
               ]
             },
-            "description": "Creates a route inside the OAUTH2 gateway. With route authType null, the route inherits OAUTH2 from the gateway."
+            "description": "Creates a route inside the OAUTH2 gateway. The route automatically uses the gateway's OAUTH2 policy."
           },
           "response": []
         },

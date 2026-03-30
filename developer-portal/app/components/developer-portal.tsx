@@ -282,7 +282,6 @@ export function DeveloperPortal({
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
-        authType: serviceForm.authType || null,
       };
 
       const response = await fetch("/api/services/register", {
@@ -304,7 +303,6 @@ export function DeveloperPortal({
           gatewayId: serviceForm.gatewayId,
           serviceId: serviceForm.serviceId,
           uri: `lb://${serviceForm.serviceName}`,
-          authType: "",
         }));
         setShowServiceForm(false);
         void loadGateways(serviceForm.gatewayId, serviceForm.serviceId);
@@ -321,10 +319,7 @@ export function DeveloperPortal({
     event.preventDefault();
     setRouteStatus({ tone: "loading", message: "Creating route..." });
 
-    const payload = {
-      ...routeForm,
-      authType: inheritedServiceAuthType ? null : routeForm.authType || null,
-    };
+    const payload = { ...routeForm };
 
     const response = await fetch("/api/routes", {
       method: "POST",
@@ -478,7 +473,6 @@ export function DeveloperPortal({
       gatewayId,
       serviceId: firstService?.serviceId ?? "",
       uri: firstService ? `lb://${firstService.serviceName}` : current.uri,
-      authType: "",
     }));
   }
 
@@ -488,7 +482,6 @@ export function DeveloperPortal({
       ...current,
       serviceId,
       uri: service ? `lb://${service.serviceName}` : current.uri,
-      authType: "",
     }));
   }
 
@@ -510,18 +503,8 @@ export function DeveloperPortal({
     consumers.find((consumer) => consumer.username === selectedConsumerUsername) ?? consumers[0] ?? null;
   const selectedRouteService =
     selectedRouteGateway?.services.find((service) => service.serviceId === routeForm.serviceId) ?? null;
-  const inheritedServiceAuthType = selectedRouteService?.authType ?? null;
-  const routePreviewAuthType =
-    inheritedServiceAuthType ??
-    (routeForm.authType || selectedRouteGateway?.authType || "NONE");
   const selectedServiceGatewayAuthType = selectedServiceGateway?.authType ?? "NONE";
   const selectedRouteGatewayAuthType = selectedRouteGateway?.authType ?? "NONE";
-  const allowedServiceSecurityModes = supportedSecurityModes.filter(
-    (mode) => mode.label === selectedServiceGatewayAuthType,
-  );
-  const allowedRouteSecurityModes = supportedSecurityModes.filter(
-    (mode) => mode.label === selectedRouteGatewayAuthType,
-  );
 
   const protectedRouteCount = allRoutes.filter((route) => (route.authType ?? "NONE") !== "NONE").length;
   const jwtRouteCount = allRoutes.filter((route) => route.authType === "JWT").length;
@@ -960,7 +943,6 @@ export function DeveloperPortal({
                       setServiceForm((current) => ({
                         ...current,
                         gatewayId: event.target.value,
-                        authType: "",
                       }))
                     }
                   >
@@ -988,25 +970,12 @@ export function DeveloperPortal({
                     className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
                   />
                 </Field>
-                <Field label="Service Security (optional)">
-                  <select
-                    className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
-                    value={serviceForm.authType}
-                    onChange={(event) =>
-                      setServiceForm((current) => ({
-                        ...current,
-                        authType: event.target.value as typeof current.authType,
-                      }))
-                    }
-                  >
-                    <option value="">No service-level policy (inherit {selectedServiceGatewayAuthType})</option>
-                    {allowedServiceSecurityModes.map((mode) => (
-                      <option key={mode.label} value={mode.label}>
-                        {mode.label}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+                <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
+                  <p className="text-sm font-medium text-[var(--accent-soft)]">Applied Security</p>
+                  <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+                    This service will automatically use <span className="font-semibold text-[var(--text-strong)]">{selectedServiceGatewayAuthType}</span> from its gateway.
+                  </p>
+                </div>
                 <div className="md:col-span-2 flex items-center gap-3">
                   <Button
                     type="submit"
@@ -1067,7 +1036,7 @@ export function DeveloperPortal({
                           </td>
                           <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
                             <span className="rounded-full bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-2.5 py-1 text-sm font-medium text-[var(--accent-soft)]">
-                              {service.authType ?? "Per Route"}
+                              {service.authType ?? "NONE"}
                             </span>
                           </td>
                           <td className="border-b border-[color:color-mix(in_srgb,var(--border-soft)_64%,transparent)] px-3 py-3">
@@ -1172,42 +1141,12 @@ export function DeveloperPortal({
                     className="h-11 border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)]"
                   />
                 </Field>
-                {inheritedServiceAuthType ? (
-                  <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
-                    <p className="text-sm font-medium text-[var(--accent-soft)]">Service Security (inherited)</p>
-                    <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
-                      This service enforces <span className="font-semibold text-[var(--text-strong)]">{inheritedServiceAuthType}</span>, so all routes in this service use the same security.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <Field label="Route Security">
-                      <select
-                        className="h-11 w-full rounded-[0.7rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[var(--surface)] px-3 text-[var(--text-strong)]"
-                        value={routeForm.authType}
-                        onChange={(event) =>
-                          setRouteForm((current) => ({
-                            ...current,
-                            authType: event.target.value as typeof current.authType,
-                          }))
-                        }
-                      >
-                        <option value="">Use gateway default ({selectedRouteGatewayAuthType})</option>
-                        {allowedRouteSecurityModes.map((mode) => (
-                          <option key={mode.label} value={mode.label}>
-                            {mode.label}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                    <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
-                      <p className="text-sm font-medium text-[var(--accent-soft)]">Effective Security Preview</p>
-                      <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
-                        This route will resolve to <span className="font-semibold text-[var(--text-strong)]">{routePreviewAuthType}</span>.
-                      </p>
-                    </div>
-                  </>
-                )}
+                <div className="rounded-[0.8rem] border border-dashed border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-muted)_82%,transparent)] px-4 py-3 md:col-span-2">
+                  <p className="text-sm font-medium text-[var(--accent-soft)]">Applied Security</p>
+                  <p className="mt-1 text-[1rem] text-[var(--text-muted)]">
+                    This route will automatically use <span className="font-semibold text-[var(--text-strong)]">{selectedRouteGatewayAuthType}</span> from its gateway.
+                  </p>
+                </div>
                 <div className="md:col-span-2 flex items-center gap-3">
                   <Button
                     type="submit"

@@ -85,14 +85,10 @@ export function GatewayWorkspace({
   onRouteServiceChange,
   onReloadGateways,
 }: GatewayWorkspaceProps) {
-  const selectedRouteService =
-    selectedRouteGateway?.services.find((service) => service.serviceId === routeForm.serviceId) ?? null;
   const inheritedSecurity =
-    selectedRouteService?.authType ??
-    (routeForm.authType ||
-      selectedRouteGateway?.authType ||
-      gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId)?.authType ||
-      "NONE");
+    selectedRouteGateway?.authType ||
+    gateways.find((gateway) => gateway.gatewayId === routeForm.gatewayId)?.authType ||
+    "NONE";
 
   return (
     <section className="space-y-6">
@@ -309,7 +305,6 @@ export function GatewayWorkspace({
                           id: preset.values.id,
                           path: preset.values.path,
                           uri: preset.values.uri,
-                          authType: preset.values.authType,
                         })
                       }
                     >
