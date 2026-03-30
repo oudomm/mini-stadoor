@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class StandardGatewaySyncService {
 
     private final RestClient restClient;
@@ -26,6 +28,10 @@ public class StandardGatewaySyncService {
                 .toBodilessEntity();
             return true;
         } catch (RestClientException exception) {
+            log.warn("Could not refresh standard-gateway routes: {}", exception.getMessage());
+            return false;
+        } catch (RuntimeException exception) {
+            log.warn("Unexpected error while refreshing standard-gateway routes: {}", exception.getMessage());
             return false;
         }
     }
