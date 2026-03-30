@@ -6,7 +6,7 @@ const port = process.env.PORT || 8090;
 const items = [
   { id: "i-100", name: "Laptop Stand", stock: 42, warehouse: "phnom-penh" },
   { id: "i-200", name: "Wireless Mouse", stock: 8, warehouse: "singapore" },
-  { id: "i-300", name: "USB-C Cable", stock: 120, warehouse: "bangkok" }
+  { id: "i-300", name: "USB-C Cable", stock: 120, warehouse: "shenzhen" }
 ];
 
 app.get("/inventory/items", (req, res) => {
