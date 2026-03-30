@@ -25,7 +25,7 @@ public class JwtProvisioningEntity {
     private String consumerId;
 
     @MapsId
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "consumer_id", nullable = false)
     private ConsumerEntity consumer;
 
