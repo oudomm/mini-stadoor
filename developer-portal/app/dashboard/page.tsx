@@ -1,15 +1,8 @@
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import {
   Bell,
-  Grid2x2,
-  Route,
   Search,
-  Server,
-  Settings,
-  Users,
-  Waypoints,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +11,7 @@ import { requirePortalSession } from "@/lib/platform-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { DeveloperPortal } from "../components/developer-portal";
 import type { DashboardTab } from "../components/developer-portal/model";
+import { SidebarNav } from "./sidebar-nav";
 
 type DashboardPageProps = {
   searchParams?: Promise<{
@@ -25,17 +19,17 @@ type DashboardPageProps = {
   }>;
 };
 
-const sidebarItems: Array<{
-  key: DashboardTab;
-  label: string;
-  icon: LucideIcon;
-}> = [
-  { key: "dashboard", label: "Dashboard", icon: Grid2x2 },
-  { key: "gateways", label: "Gateways", icon: Waypoints },
-  { key: "services", label: "Services", icon: Server },
-  { key: "routes", label: "Routes", icon: Route },
-  { key: "consumers", label: "Consumers", icon: Users },
-  { key: "settings", label: "Settings", icon: Settings },
+const dashboardTabs: DashboardTab[] = [
+  "dashboard",
+  "gateways",
+  "services",
+  "routes",
+  "consumers",
+  "clients",
+  "roles",
+  "users",
+  "settings",
+  "tunnel-cli",
 ];
 
 const tabMeta: Record<
@@ -65,11 +59,27 @@ const tabMeta: Record<
   },
   consumers: {
     title: "Consumers",
-    description: "Manage consumer access for Basic Auth, API Key, and JWT protected routes.",
+    description: "Manage gateway-scoped runtime identities and credential flows for protected routes.",
+  },
+  clients: {
+    title: "Client",
+    description: "Review OAuth clients and app registrations that belong to the IAM side of Stadoor.",
+  },
+  roles: {
+    title: "Role",
+    description: "Organize IAM access policies, assignment rules, and permission boundaries.",
+  },
+  users: {
+    title: "User",
+    description: "Manage gateway-scoped runtime identities and credential flows for protected routes.",
   },
   settings: {
     title: "Settings",
     description: "Configure your account, defaults, and portal preferences.",
+  },
+  "tunnel-cli": {
+    title: "Tunnel CLI",
+    description: "Set up the local tunnel workflow that lets developers expose services into Stadoor.",
   },
 };
 
@@ -81,9 +91,12 @@ function normalizeTab(tab?: string): DashboardTab {
     return "gateways";
   }
   if (tab === "iam") {
-    return "dashboard";
+    return "clients";
   }
-  return sidebarItems.some((item) => item.key === tab) ? (tab as DashboardTab) : "dashboard";
+  if (tab === "tunnel") {
+    return "tunnel-cli";
+  }
+  return dashboardTabs.includes(tab as DashboardTab) ? (tab as DashboardTab) : "dashboard";
 }
 
 function initials(name?: string, username?: string) {
@@ -122,26 +135,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </Link>
           </div>
 
-          <nav className="space-y-1 px-3 py-4">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.key === activeTab;
-              return (
-                <Link
-                  key={item.key}
-                  href={`/dashboard?tab=${item.key}`}
-                  className={`flex items-center gap-3 rounded-[0.82rem] px-3.5 py-3 text-[1.05rem] font-medium transition ${
-                    isActive
-                      ? "bg-[var(--accent)] text-[var(--accent-contrast)]"
-                      : "text-[var(--accent-soft)] hover:bg-[color:color-mix(in_srgb,var(--surface-soft)_88%,transparent)]"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
+          <SidebarNav activeTab={activeTab} />
 
           <div className="mt-auto border-t border-[color:color-mix(in_srgb,var(--border-soft)_76%,transparent)] px-6 py-5 text-sm text-[var(--text-faint)]">
             <p>Version 1.0.0</p>

@@ -6,7 +6,11 @@ export type DashboardTab =
   | "services"
   | "routes"
   | "consumers"
-  | "settings";
+  | "clients"
+  | "roles"
+  | "users"
+  | "settings"
+  | "tunnel-cli";
 export type SupportedAuthType = "NONE" | "BASIC" | "API_KEY" | "JWT";
 export type FutureAuthType = "OAUTH2";
 export type GatewayAuthType = SupportedAuthType | FutureAuthType;
