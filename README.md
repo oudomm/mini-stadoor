@@ -15,7 +15,7 @@ It proves:
 
 ## Services
 
-- `developer-portal` on `3000`
+- `mini-stadoor-ui` on `3000`
 - `standard-gateway` on `8080`
 - `consumer-service` on `8081`
 - `product-service` on `8082`
@@ -56,7 +56,7 @@ Recommended service order:
 4. `consumer-service`
 5. `product-service`
 6. `standard-gateway`
-7. `developer-portal`
+7. `mini-stadoor-ui`
 
 Useful entry points:
 

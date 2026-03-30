@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requirePortalSession } from "@/lib/platform-auth";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { DeveloperPortal } from "../components/developer-portal";
-import type { DashboardTab } from "../components/developer-portal/model";
+import { DeveloperPortal } from "@/components/mini-stadoor-ui";
+import type { DashboardTab } from "@/components/mini-stadoor-ui/model";
 import { SidebarNav } from "./sidebar-nav";
 
 type DashboardPageProps = {

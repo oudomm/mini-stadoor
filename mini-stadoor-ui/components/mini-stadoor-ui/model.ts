@@ -51,6 +51,11 @@ export type RouteSummary = {
   authType?: GatewayAuthType;
 };
 
+export type FlattenedRouteSummary = RouteSummary & {
+  serviceName: string;
+  gatewayName: string;
+};
+
 export type ServiceSummary = {
   gatewayId: string;
   serviceId: string;
@@ -71,6 +76,21 @@ export type GatewaySummary = {
   workspaceType?: GatewayWorkspaceType;
   authType?: GatewayAuthType;
   services: ServiceSummary[];
+};
+
+export type GatewayRow = {
+  gateway: GatewaySummary;
+  serviceTotal: number;
+  routeTotal: number;
+  primaryAuth: GatewayAuthType;
+};
+
+export type ProtectedGatewaySummary = {
+  gatewayId: string;
+  gatewayName: string;
+  authType: GatewayAuthType;
+  routeCount: number;
+  serviceCount: number;
 };
 
 export type StatusState = {

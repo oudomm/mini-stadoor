@@ -10,8 +10,8 @@ import type {
   GatewaySummary,
   RouteSummary,
   StatusState,
-} from "@/app/components/developer-portal/model";
-import { pretty } from "@/app/components/developer-portal/model";
+} from "@/components/mini-stadoor-ui/model";
+import { pretty } from "@/components/mini-stadoor-ui/model";
 
 export function MetricCard({
   label,

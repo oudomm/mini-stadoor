@@ -3,8 +3,8 @@
 import type { ReactNode } from "react";
 import { Activity, Network, Route, Server, ShieldCheck } from "lucide-react";
 
-import type { RecentActivityItem } from "@/app/components/developer-portal/model";
-import { ActionLink, ActivityRow, MetricCard } from "@/app/components/developer-portal/ui";
+import type { RecentActivityItem } from "@/components/mini-stadoor-ui/model";
+import { ActionLink, ActivityRow, MetricCard } from "@/components/mini-stadoor-ui/ui";
 
 type OverviewPanelProps = {
   gatewayCount: number;

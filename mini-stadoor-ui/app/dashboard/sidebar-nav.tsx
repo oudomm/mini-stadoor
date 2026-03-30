@@ -19,7 +19,7 @@ import {
   Waypoints,
 } from "lucide-react";
 
-import type { DashboardTab } from "../components/developer-portal/model";
+import type { DashboardTab } from "@/components/mini-stadoor-ui/model";
 
 type SidebarGroupKey = "gateway" | "iam";
 

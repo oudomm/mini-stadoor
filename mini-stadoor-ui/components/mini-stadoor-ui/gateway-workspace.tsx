@@ -18,7 +18,7 @@ import {
   type RouteForm,
   type ServiceForm,
   type StatusState,
-} from "@/app/components/developer-portal/model";
+} from "@/components/mini-stadoor-ui/model";
 import {
   EmptyState,
   FormField,
@@ -30,7 +30,7 @@ import {
   StatusCard,
   StepHint,
   WorkspaceStepTab,
-} from "@/app/components/developer-portal/ui";
+} from "@/components/mini-stadoor-ui/ui";
 
 type GatewayWorkspaceProps = {
   gatewayWorkspaceTab: GatewayWorkspaceTab;
