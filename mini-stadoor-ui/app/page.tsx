@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Fingerprint, Network, Route, ShieldCheck, Sparkles } from "lucide-react";
 
-import { LandingMascot } from "@/components/landing-mascot";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
@@ -42,8 +41,6 @@ const platformRoadmap = [
 export default function Home() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
-      <LandingMascot />
-
       <section
         data-guide-section="hero"
         data-guide-title="Start with one gateway"
