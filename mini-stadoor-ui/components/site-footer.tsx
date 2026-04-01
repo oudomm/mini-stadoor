@@ -43,7 +43,7 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-14 flex flex-col gap-4 border-t border-[color:color-mix(in_srgb,var(--border-soft)_70%,transparent)] pt-6 text-[11px] uppercase tracking-[0.18em] text-[var(--text-faint)] md:flex-row md:items-center md:justify-between">
-          <p>© 2026 mini_stadoor_demo. all_signals_reserved.</p>
+          <p>© 2026 stadoor platform. all_rights_reserved.</p>
           <div className="flex flex-wrap gap-5">
             <span>Privacy Policy</span>
             <span>Terms of Access</span>

@@ -33,16 +33,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("mini-stadoor-theme") as ThemeMode | null;
+    const storedTheme = (window.localStorage.getItem("stadoor-theme") ??
+      window.localStorage.getItem("mini-stadoor-theme")) as ThemeMode | null;
     const nextTheme = storedTheme === "light" || storedTheme === "dark" ? storedTheme : resolveSystemTheme();
     setThemeState(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
+    window.localStorage.setItem("stadoor-theme", nextTheme);
   }, []);
 
   function setTheme(nextTheme: ThemeMode) {
     setThemeState(nextTheme);
     document.documentElement.dataset.theme = nextTheme;
-    window.localStorage.setItem("mini-stadoor-theme", nextTheme);
+    window.localStorage.setItem("stadoor-theme", nextTheme);
   }
 
   const value = useMemo(

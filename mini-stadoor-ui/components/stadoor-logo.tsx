@@ -30,7 +30,7 @@ export function StadoorLogo({
 
       {compact ? null : (
         <div>
-          <p className={cn("text-2xl font-semibold tracking-tight text-[var(--text-strong)]", wordmarkClassName)}>Mini Stadoor</p>
+          <p className={cn("text-2xl font-semibold tracking-tight text-[var(--text-strong)]", wordmarkClassName)}>Stadoor</p>
           {showSubtitle ? (
             <p
               className={cn(

@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f5f5;
-  --foreground: #0d4804;
-  --surface: #ffffff;
-  --surface-muted: #efefef;
-  --surface-soft: #e8efe6;
-  --border-soft: rgba(13, 72, 4, 0.12);
-  --border-strong: rgba(13, 72, 4, 0.22);
-  --accent: #0d4804;
-  --accent-bright: #2c7c18;
-  --accent-soft: #2f6d28;
-  --accent-contrast: #f5f5f5;
-  --text-strong: #0d4804;
-  --text-muted: rgba(13, 72, 4, 0.68);
-  --text-faint: rgba(13, 72, 4, 0.42);
-  --field: #ffffff;
-  --code: #eef3ed;
-  --glow: rgba(13, 72, 4, 0.12);
+  --background: #f2f7f3;
+  --foreground: #102418;
+  --surface: #fcfefc;
+  --surface-muted: #e8f0ea;
+  --surface-soft: #dfebe2;
+  --border-soft: rgba(16, 43, 26, 0.13);
+  --border-strong: rgba(16, 43, 26, 0.24);
+  --accent: #1d7a3c;
+  --accent-bright: #299b4f;
+  --accent-soft: #2b8652;
+  --accent-contrast: #f7fff9;
+  --text-strong: #102418;
+  --text-muted: rgba(16, 36, 24, 0.74);
+  --text-faint: rgba(16, 36, 24, 0.54);
+  --field: #fcfffd;
+  --code: #e8f0ea;
+  --glow: rgba(41, 155, 79, 0.2);
   --mascot-core: #c9ddc4;
   --mascot-core-bright: #eef7eb;
   --mascot-flame: #1e7f1b;
@@ -83,9 +83,25 @@ body {
   background:
     radial-gradient(circle at top left, var(--glow), transparent 24%),
     radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 20%),
-    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 94%, black) 100%);
+    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 93%, var(--surface-muted)) 100%);
   color: var(--foreground);
   font-family: var(--font-display), sans-serif;
+  font-feature-settings: "cv11" 1, "ss01" 1, "kern" 1;
+  text-rendering: optimizeLegibility;
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 32%),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 34%),
+    linear-gradient(180deg, #fbfdfb 0%, var(--background) 35%, color-mix(in srgb, var(--background) 90%, #dae6de) 100%);
+}
+
+html[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at top left, var(--glow), transparent 24%),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 20%),
+    linear-gradient(180deg, var(--background) 0%, color-mix(in srgb, var(--background) 94%, black) 100%);
 }
 
 .animate-rise {
@@ -98,6 +114,93 @@ body {
 
 .signal-drift {
   animation: signal-drift 14s ease-in-out infinite;
+}
+
+.poster-grid {
+  background-image:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
+  background-size: 92px 92px;
+  animation: poster-grid-shift 22s linear infinite;
+}
+
+html[data-theme="light"] .home-hero .poster-grid {
+  opacity: 0.36;
+}
+
+html[data-theme="dark"] .home-hero .poster-grid {
+  opacity: 0.55;
+}
+
+.scan-line {
+  opacity: 0.6;
+  animation: scan-sweep 7.5s ease-in-out infinite;
+}
+
+html[data-theme="light"] .home-hero .scan-line {
+  opacity: 0.42;
+}
+
+.orbit-float {
+  animation: orbit-float 10s ease-in-out infinite;
+}
+
+.marquee-wrap {
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-run 30s linear infinite;
+}
+
+.policy-ring-spin {
+  animation: policy-spin 24s linear infinite;
+}
+
+.policy-pulse {
+  animation: policy-pulse 7s ease-in-out infinite;
+}
+
+.pipeline-packet {
+  animation: pipeline-run 8.2s linear infinite;
+}
+
+.flow-node {
+  transition: transform 280ms ease, border-color 280ms ease;
+}
+
+.flow-node:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.lane-glide {
+  animation: lane-shift 11s ease-in-out infinite;
+}
+
+.console-caret {
+  animation: caret-blink 1s steps(2, end) infinite;
+}
+
+.feature-sheen {
+  animation: sheen-slide 9s linear infinite;
+  opacity: 0.22;
+}
+
+html[data-theme="light"] .site-header {
+  border-color: color-mix(in srgb, var(--border-soft) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 86%, rgba(255, 255, 255, 0.9));
+  box-shadow: 0 18px 42px -28px rgba(15, 47, 27, 0.36);
+}
+
+html[data-theme="light"] .home-panel {
+  box-shadow: 0 22px 48px -34px rgba(15, 47, 27, 0.3);
+}
+
+html[data-theme="light"] .flow-node {
+  box-shadow: 0 12px 26px -18px rgba(15, 47, 27, 0.26);
 }
 
 a {
@@ -163,6 +266,41 @@ html[data-theme="dark"] .guide-section::after {
   }
 }
 
+@keyframes poster-grid-shift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-46px, -46px, 0);
+  }
+}
+
+@keyframes scan-sweep {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+  45% {
+    opacity: 0.7;
+    transform: translate3d(0, 0, 0);
+  }
+  60% {
+    opacity: 0.18;
+    transform: translate3d(0, 5px, 0);
+  }
+}
+
+@keyframes orbit-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -12px, 0) scale(1.06);
+  }
+}
+
 @keyframes panel-rise {
   from {
     opacity: 0;
@@ -171,6 +309,75 @@ html[data-theme="dark"] .guide-section::after {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ticker-run {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes policy-spin {
+  from {
+    transform: translate3d(-50%, -50%, 0) rotate(0deg);
+  }
+  to {
+    transform: translate3d(-50%, -50%, 0) rotate(360deg);
+  }
+}
+
+@keyframes policy-pulse {
+  0%,
+  100% {
+    transform: translate3d(-50%, -50%, 0) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate3d(-50%, -50%, 0) scale(1.06);
+    opacity: 1;
+  }
+}
+
+@keyframes pipeline-run {
+  from {
+    transform: translate3d(0, -50%, 0);
+  }
+  to {
+    transform: translate3d(980%, -50%, 0);
+  }
+}
+
+@keyframes lane-shift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes sheen-slide {
+  from {
+    transform: translate3d(-130%, 0, 0);
+  }
+  to {
+    transform: translate3d(260%, 0, 0);
   }
 }
 
@@ -209,6 +416,20 @@ html[data-theme="dark"] .guide-section::after {
   .signal-drift,
   .animate-rise,
   .animate-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .poster-grid,
+  .scan-line,
+  .orbit-float,
+  .marquee-track,
+  .policy-ring-spin,
+  .policy-pulse,
+  .pipeline-packet,
+  .lane-glide,
+  .console-caret,
+  .feature-sheen {
     animation: none !important;
     transition: none !important;
   }

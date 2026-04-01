@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, IBM_Plex_Mono } from "next/font/google";
+import { Inter, IBM_Plex_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const displayFont = Space_Grotesk({
+const displayFont = Inter({
   variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 const monoFont = IBM_Plex_Mono({
@@ -15,14 +17,16 @@ const monoFont = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini Stadoor Developer Portal",
-  description: "Developer website for registering services and creating dynamic routes in the Mini Stadoor demo.",
+  title: "Stadoor Developer Security Platform",
+  description: "Developer platform for identity, dynamic API gateway routing, and security policy orchestration.",
 };
 
 const themeInitScript = `
 (() => {
   try {
-    const storedTheme = window.localStorage.getItem("mini-stadoor-theme");
+    const storedTheme =
+      window.localStorage.getItem("stadoor-theme") ??
+      window.localStorage.getItem("mini-stadoor-theme");
     const resolvedTheme =
       storedTheme === "light" || storedTheme === "dark"
         ? storedTheme
