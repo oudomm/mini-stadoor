@@ -18,19 +18,26 @@ export async function SiteHeader({ active, ctaLabel, ctaHref }: SiteHeaderProps)
   const navItems = [
     { key: "home" as const, label: "Home", href: "/" },
     { key: "about" as const, label: "About", href: "/about" },
+    { key: "docs" as const, label: "Docs", href: "https://nextra.site/" },
     { key: "dashboard" as const, label: "Dashboard", href: "/dashboard" },
   ];
 
   return (
-    <header className="site-header flex items-center justify-between border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_78%,transparent)] px-5 py-4 backdrop-blur-sm">
+    <header className="site-header flex items-center justify-between rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_78%,transparent)] px-5 py-4 backdrop-blur-sm">
       <StadoorLogo subtitleClassName="text-[var(--text-faint)]" wordmarkClassName="text-xl text-[var(--text-strong)]" />
 
-      <nav className="hidden items-center gap-8 text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--text-muted)] md:flex">
+      <nav className="hidden items-center gap-2 rounded-[0.95rem] border border-[color:color-mix(in_srgb,var(--border-soft)_72%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] p-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-[var(--text-muted)] md:flex">
         {navItems.map((item) => (
           <Link
             key={item.key}
             href={item.href}
-            className={active === item.key ? "text-[var(--text-strong)]" : "transition hover:text-[var(--text-strong)]"}
+            target={item.key === "docs" ? "_blank" : undefined}
+            rel={item.key === "docs" ? "noreferrer" : undefined}
+            className={
+              active === item.key
+                ? "rounded-[0.72rem] bg-[color:color-mix(in_srgb,var(--surface-soft)_92%,transparent)] px-4 py-2 text-[var(--text-strong)]"
+                : "rounded-[0.72rem] px-4 py-2 transition hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]"
+            }
           >
             {item.label}
           </Link>

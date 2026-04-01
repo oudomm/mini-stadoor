@@ -637,7 +637,7 @@ function FlowPipeline() {
       <div className="pipeline-packet absolute left-[8%] top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-[var(--accent)] bg-[var(--background)] shadow-[0_0_24px_var(--glow)]" />
       <div className="relative grid gap-4 sm:grid-cols-5">
         {flowNodes.map((node) => (
-          <div key={node.label} className="flow-node border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] px-3 py-3 text-center">
+          <div key={node.label} className="flow-node rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_78%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] px-3 py-3 text-center">
             <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--accent)_22%,transparent)] bg-[var(--surface-soft)] text-[var(--accent)]">
               <node.icon className="h-4 w-4" />
             </div>

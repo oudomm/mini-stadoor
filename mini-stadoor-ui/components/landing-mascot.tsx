@@ -42,7 +42,7 @@ const fallbackStages: MascotStage[] = [
   {
     id: "cta",
     title: "Open the workspace",
-    detail: "Use the dashboard to run the full Mini Stadoor flow after the landing page.",
+    detail: "Use the dashboard to run the full Stadoor flow after the landing page.",
     x: "78vw",
     y: "66vh",
     align: "right",

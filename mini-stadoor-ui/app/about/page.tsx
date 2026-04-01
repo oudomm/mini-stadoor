@@ -1,291 +1,399 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import {
   ArrowRight,
   BookOpen,
-  Globe2,
+  Compass,
+  Globe,
   GraduationCap,
-  Layers3,
-  ShieldCheck,
-  Users,
+  Mail,
+  Rocket,
+  Sparkles,
+  Target,
   Waypoints,
+  type LucideIcon,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { Button } from "@/components/ui/button";
+import { HeroTeamLineup } from "@/components/about/hero-team-lineup";
+import { MemberShowcase } from "@/components/about/member-showcase";
 
-const mentors = [
-  {
-    name: "Chan Chhaya",
-    image: "/images/team/teacher-chhaya.jpeg",
-    title: "Lead Mentor",
-    role: "Spring Microservices Mentor",
-    focus: "Architecture guidance, domain design, and system direction",
-    tags: ["Architecture", "DDD", "Mentorship"],
-    accent: "green" as const,
-    socials: {
-      github: "#",
-      linkedin: "#",
-      portfolio: "#",
-    },
-  },
-  {
-    name: "Eung Lyzhia",
-    image: "/images/team/teacher-lyzhia.jpeg",
-    title: "Technical Mentor",
-    role: "Backend & Delivery Mentor",
-    focus: "Backend review, project coaching, and delivery guidance",
-    tags: ["Backend", "Review", "Coaching"],
-    accent: "cyan" as const,
-    socials: {
-      github: "#",
-      linkedin: "#",
-      portfolio: "#",
-    },
-  },
-];
+type MemberProfile = {
+  name: string;
+  image: string;
+  role: string;
+  track: string;
+  bio: string;
+  skills: readonly string[];
+  position: string;
+};
 
-const members = [
+type MentorProfile = {
+  name: string;
+  image: string;
+  role: string;
+  specialties: readonly string[];
+  quote: string;
+  impact: string;
+  position: string;
+};
+
+const projectFacts = [
+  { label: "Program", value: "ITP at ISTAD" },
+  { label: "Course", value: "Spring Microservices" },
+  { label: "Team", value: "9 builders" },
+  { label: "Mentors", value: "2 mentors" },
+] as const;
+
+const members: readonly MemberProfile[] = [
   {
-    name: "Chey Somatra",
-    image: "/images/team/somatra.jpeg",
-    title: "Team Leader",
-    role: "Full Stack Developer",
-    focus: "Project coordination, backend integration, and product delivery",
-    tags: ["Leadership", "Full Stack", "Integration"],
-    accent: "green" as const,
-  },
-  {
-    name: "Som Sokunsreypich",
-    image: "/images/team/sokunsreypich.jpg",
-    title: "Full Stack Developer",
-    role: "Gateway & Discovery",
-    focus: "Dynamic route flow, service registration, and discovery handling",
-    tags: ["Gateway", "Discovery", "Java"],
-    accent: "cyan" as const,
-  },
-  {
-    name: "Kong Chan",
-    image: "/images/team/chan.jpeg",
-    title: "Full Stack Developer",
-    role: "Security Workflow",
-    focus: "Basic Auth, API Key flow, and security policy behavior",
-    tags: ["Security", "Policies", "Spring"],
-    accent: "green" as const,
-  },
-  {
-    name: "But Seavthong",
-    image: "/images/team/seavthong.jpeg",
-    title: "Full Stack Developer",
-    role: "Developer Portal",
-    focus: "Landing page, dashboard experience, and product-facing UI",
-    tags: ["Next.js", "UI", "UX"],
-    accent: "cyan" as const,
-  },
-  {
-    name: "Chao Vanthoung",
-    image: "/images/team/vanthoung.jpeg",
-    title: "Full Stack Developer",
-    role: "Service Management",
-    focus: "Service onboarding flow and management APIs",
-    tags: ["Services", "APIs", "Postgres"],
-    accent: "green" as const,
-  },
-  {
-    name: "Ren Makara",
-    image: "/images/team/makara.jpeg",
-    title: "Full Stack Developer",
-    role: "Portal & Control Plane",
-    focus: "Bridging backend prototype capabilities into the web portal",
-    tags: ["Control Plane", "Web", "Integration"],
-    accent: "cyan" as const,
-  },
-  {
-    name: "Chan Somnang",
-    image: "/images/team/somnang.jpeg",
-    title: "Full Stack Developer",
-    role: "Runtime Gateway",
-    focus: "Runtime routing flow and gateway behavior verification",
-    tags: ["Routing", "Gateway", "Testing"],
-    accent: "green" as const,
-  },
-  {
-    name: "Teng Meng Houy",
-    image: "/images/team/menghouy.jpeg",
-    title: "Full Stack Developer",
-    role: "Validation & Demo Flow",
-    focus: "Scenario testing, Postman validation, and demo readiness",
-    tags: ["QA", "Validation", "Demo"],
-    accent: "cyan" as const,
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Team Lead · Full Stack",
+    track: "Delivery Architecture",
+    bio: "Coordinated execution and aligned backend integration milestones.",
+    skills: ["Leadership", "Frontend", "Backend"],
+    position: "50% 18%",
   },
   {
     name: "Phoem Oudom",
-    image: "/images/team/oudom.jpg",
-    title: "Full Stack Developer",
-    role: "Documentation Support",
-    focus: "Architecture explanation, feature framing, and project communication",
-    tags: ["Research", "Docs", "Analysis"],
-    accent: "green" as const,
+    image: "/images/team/phoem-oudom.png",
+    role: "Gateway Engineer",
+    track: "Gateway Runtime",
+    bio: "Built dynamic route + service discovery runtime behavior.",
+    skills: ["Gateway", "Discovery", "Java"],
+    position: "50% 22%",
   },
-].map((member) => ({
-  ...member,
-  socials: {
-    github: "#",
-    linkedin: "#",
-    portfolio: "#",
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Security Engineer",
+    track: "Policy Enforcement",
+    bio: "Implemented route-level security and policy behavior.",
+    skills: ["Auth", "JWT", "Policy"],
+    position: "50% 20%",
   },
-}));
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Frontend Engineer",
+    track: "Developer Portal",
+    bio: "Shaped product-facing portal and interaction flow.",
+    skills: ["UX", "Portal", "React"],
+    position: "50% 24%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Backend Engineer",
+    track: "Service Plane",
+    bio: "Built service onboarding and management API behavior.",
+    skills: ["API", "Services", "PostgreSQL"],
+    position: "50% 24%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Integration Engineer",
+    track: "Control Plane",
+    bio: "Connected backend control-plane flows into portal UI.",
+    skills: ["BFF", "Integration", "Next.js"],
+    position: "50% 28%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Runtime Engineer",
+    track: "Gateway Validation",
+    bio: "Verified routing behavior and forwarding paths.",
+    skills: ["Testing", "Routing", "Observability"],
+    position: "50% 20%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Validation Engineer",
+    track: "Demo Reliability",
+    bio: "Prepared end-to-end scenario checks and demo readiness.",
+    skills: ["Validation", "QA", "Scenario"],
+    position: "50% 26%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Documentation Engineer",
+    track: "Technical Narrative",
+    bio: "Framed architecture explanations and delivery story.",
+    skills: ["Docs", "Architecture", "Communication"],
+    position: "50% 22%",
+  },
+] as const;
+
+const mentors: readonly MentorProfile[] = [
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Spring Microservices Mentor",
+    specialties: ["System Design", "Bounded Context", "Delivery Guidance"],
+    quote: "Guided architecture direction and bounded-context decisions.",
+    impact: "Kept domain boundaries clear while we built dynamic gateway behavior.",
+    position: "50% 24%",
+  },
+  {
+    name: "Phoem Oudom",
+    image: "/images/team/phoem-oudom.png",
+    role: "Backend & Delivery Mentor",
+    specialties: ["Engineering Quality", "Service Behavior", "Code Review"],
+    quote: "Pushed our team to turn ideas into working, testable flows.",
+    impact: "Raised implementation rigor and delivery confidence across milestones.",
+    position: "50% 22%",
+  },
+] as const;
+
+const storySteps = [
+  {
+    phase: "01",
+    title: "Foundation",
+    detail: "We came from a full-stack foundation where frontend speed often depended on backend availability.",
+    icon: BookOpen,
+  },
+  {
+    phase: "02",
+    title: "Challenge",
+    detail: "In Spring Microservices, we reframed the problem: one platform to simplify identity, routes, and security.",
+    icon: Compass,
+  },
+  {
+    phase: "03",
+    title: "Execution",
+    detail: "We built Stadoor around tenant onboarding, dynamic route publishing, and policy-per-route enforcement.",
+    icon: Rocket,
+  },
+  {
+    phase: "04",
+    title: "Direction",
+    detail: "The next direction expands to OAuth2/OIDC federation, traffic controls, and stronger network protection.",
+    icon: Target,
+  },
+] as const;
+
+const techStack = [
+  "Java",
+  "Reactive Spring",
+  "Axon Framework",
+  "Debezium",
+  "Confluent Schema Registry",
+  "RabbitMQ",
+  "Apache Kafka",
+  "PostgreSQL",
+  "MongoDB",
+  "Docker",
+  "Git",
+  "Next.js",
+  "OAuth2",
+  "OIDC",
+] as const;
 
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--text-strong)]">
-      <div className="bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--accent)_8%,transparent),transparent_28%),linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_88%,var(--background))_18%,var(--background)_100%)]">
-        <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-          <SiteHeader active="about" ctaLabel="Open portal" ctaHref="/dashboard" />
-
-          <section className="grid gap-8 px-2 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <div className="space-y-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
-                academic_project_context
-              </p>
-              <h1 className="max-w-4xl text-4xl font-semibold uppercase leading-[0.92] tracking-[-0.05em] text-[var(--text-strong)] sm:text-5xl lg:text-6xl">
-                About
-                <span className="mt-2 block text-[var(--accent)]">Mini Stadoor.</span>
-              </h1>
-              <p className="max-w-2xl text-base leading-8 text-[var(--text-muted)] sm:text-lg">
-                Mini Stadoor is the final project of the ITP Program at ISTAD for the subject
-                <span className="text-[var(--text-strong)]"> Spring Microservices</span>. The project is guided by
-                2 mentors and built by a team of 9 students as a developer security SaaS prototype.
-              </p>
-
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  asChild
-                  variant="brand"
-                  size="lg"
-                  className="border border-[var(--border-strong)] bg-[var(--accent)] px-7 text-[var(--accent-contrast)] shadow-[0_0_32px_var(--glow)] hover:bg-[var(--accent-bright)]"
-                >
-                  <Link href="/dashboard">
-                    View prototype
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="secondary"
-                  size="lg"
-                  className="border-white/10 bg-transparent text-[var(--text-strong)] hover:border-white/20 hover:bg-white/5"
-                >
-                  <Link href="/">Back to landing</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="border-t border-white/8 pt-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--accent-soft)]">
-                project_snapshot
-              </p>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <AboutStat icon={<GraduationCap className="h-4 w-4" />} label="Program" value="ITP at ISTAD" />
-                <AboutStat icon={<BookOpen className="h-4 w-4" />} label="Subject" value="Spring Microservices" />
-                <AboutStat icon={<Users className="h-4 w-4" />} label="Team" value="9 students" />
-                <AboutStat icon={<ShieldCheck className="h-4 w-4" />} label="Mentors" value="2 mentors" />
-              </div>
-            </div>
-          </section>
+      <section className="relative min-h-[100svh] overflow-hidden border-b border-[color:color-mix(in_srgb,var(--border-soft)_90%,transparent)] bg-[radial-gradient(circle_at_22%_12%,color-mix(in_srgb,var(--accent)_20%,transparent),transparent_34%),radial-gradient(circle_at_88%_4%,color-mix(in_srgb,var(--accent)_10%,transparent),transparent_38%),linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_88%,var(--background))_58%,var(--background)_100%)]">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--accent)_7%,transparent)_1px,transparent_1px),linear-gradient(180deg,color-mix(in_srgb,var(--accent)_7%,transparent)_1px,transparent_1px)] bg-[size:96px_96px] opacity-55" />
+        <div className="absolute inset-x-0 top-0 z-30 px-4 pt-5 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <SiteHeader active="about" ctaLabel="Open Dashboard" ctaHref="/dashboard" />
+          </div>
         </div>
-      </div>
 
-      <section className="border-t border-white/6 bg-[color:color-mix(in_srgb,var(--background)_92%,black)]">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-20 sm:px-6 lg:grid-cols-3 lg:px-8">
-          <AboutCard
-            icon={<ShieldCheck className="h-5 w-5" />}
-            title="What Mini Stadoor is"
-            body="A developer security SaaS prototype where developers can register an API or frontend, publish dynamic routes, and apply security policies through one platform."
-          />
-          <AboutCard
-            icon={<Waypoints className="h-5 w-5" />}
-            title="What this prototype proves"
-            body="Dynamic service registration, dynamic routing, Basic Authentication, API Key enforcement, and JWT working together through the Mini Stadoor control plane."
-          />
-          <AboutCard
-            icon={<BookOpen className="h-5 w-5" />}
-            title="What comes next"
-            body="The wider Mini Stadoor vision includes IAM, OAuth2 with OIDC, BFF as a Service, compliance features, traffic management, and more platform modules."
-          />
+        <div className="relative mx-auto flex min-h-[100svh] max-w-[1320px] flex-col justify-end px-4 pb-8 pt-28 sm:px-6 sm:pb-10 sm:pt-32 lg:px-8 lg:pb-12">
+          <div className="max-w-3xl">
+            <p className="inline-flex w-fit items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--accent)_52%,transparent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,transparent)] px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)]">
+              <GraduationCap className="h-3.5 w-3.5" />
+              ISTAD Spring Microservices Final Project
+            </p>
+            <h1 className="mt-6 text-[2.6rem] font-semibold leading-[0.9] tracking-[-0.04em] text-[var(--text-strong)] sm:text-6xl sm:leading-[0.88] lg:text-7xl">
+              About
+              <span className="block text-[var(--accent)]">Stadoor</span>
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--text-muted)] sm:text-xl">
+              A developer security platform where identity, dynamic API gateway routing, and route-level protection are managed as one flow.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              <Button
+                asChild
+                variant="brand"
+                size="lg"
+                className="w-full justify-between border border-[var(--border-strong)] bg-[var(--accent)] px-7 text-[var(--accent-contrast)] shadow-[0_0_36px_var(--glow)] hover:bg-[var(--accent-bright)] sm:w-auto sm:justify-center"
+              >
+                <Link href="/dashboard">
+                  Explore Stadoor
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="secondary"
+                size="lg"
+                className="w-full border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] bg-transparent text-[var(--text-strong)] hover:border-[color:color-mix(in_srgb,var(--accent)_35%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] sm:w-auto"
+              >
+                <Link href="/">Back to home</Link>
+              </Button>
+            </div>
+            <ul className="mt-8 grid gap-3 border-t border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] pt-5 sm:grid-cols-2 lg:max-w-2xl lg:grid-cols-4">
+              {projectFacts.map((fact) => (
+                <li key={fact.label}>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-faint)]">{fact.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-[var(--text-strong)]">{fact.value}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <HeroTeamLineup members={members} />
         </div>
       </section>
 
-      <section className="border-t border-white/6 bg-[color:color-mix(in_srgb,var(--surface)_90%,var(--background))]">
-        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+      <section className="relative border-b border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_88%,var(--background))_0%,var(--background)_100%)]">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.08fr_0.92fr] lg:gap-14">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)] sm:text-[11px]">Project Story</p>
+              <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-[var(--text-strong)] sm:text-5xl sm:leading-[0.94]">
+                From full-stack foundation to security platform architecture.
+              </h2>
+              <p className="mt-5 max-w-2xl text-[15px] leading-7 text-[var(--text-muted)] sm:text-lg sm:leading-8">
+                Stadoor started from a practical classroom constraint and evolved into a working control plane for developer identity and gateway security.
+              </p>
+
+              <div className="mt-9 space-y-4">
+                {storySteps.map((step) => (
+                  <StoryStep key={step.phase} phase={step.phase} title={step.title} detail={step.detail} Icon={step.icon} />
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              <article className="overflow-hidden rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_92%,var(--background))_100%)]">
+                <div className="grid sm:grid-cols-[1fr_220px]">
+                  <div className="px-5 py-6 sm:px-6 sm:py-7">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">Mission</p>
+                    <h3 className="mt-3 text-2xl font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--text-strong)]">Make secure infrastructure ready from day one.</h3>
+                    <p className="mt-3 text-[14px] leading-7 text-[var(--text-muted)] sm:text-sm">
+                      Register application surfaces, publish routes, and apply per-route policy without rebuilding auth infrastructure from scratch.
+                    </p>
+                  </div>
+                  <MissionVisualPanel />
+                </div>
+              </article>
+
+              <article className="overflow-hidden rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_92%,var(--background))_100%)]">
+                <div className="grid sm:grid-cols-[220px_1fr]">
+                  <VisionVisualPanel />
+                  <div className="px-5 py-6 sm:px-6 sm:py-7">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--accent-soft)]">Vision</p>
+                    <h3 className="mt-3 text-2xl font-semibold leading-[1.08] tracking-[-0.02em] text-[var(--text-strong)]">Grow Stadoor into a production-grade developer security platform.</h3>
+                    <p className="mt-3 text-[14px] leading-7 text-[var(--text-muted)] sm:text-sm">
+                      Extend from demo-ready foundations into OAuth2/OIDC federation, stronger traffic controls, and network hardening capabilities.
+                    </p>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative overflow-hidden border-b border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] bg-[linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_92%,var(--background))_100%)] py-16 sm:py-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_srgb,var(--accent)_14%,transparent),transparent_44%)]" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)] sm:text-[11px]">Built With Modern Stack</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-[var(--text-strong)] sm:text-5xl sm:leading-[0.94]">Technologies powering Stadoor.</h2>
+          </div>
+          <div className="marquee-wrap mt-8 border-y border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] py-4">
+            <div className="marquee-track gap-3">
+              {[...techStack, ...techStack].map((item, index) => (
+                <span
+                  key={`${item}-${index}`}
+                  className="inline-flex items-center rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_90%,transparent)] px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-muted)]"
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-b border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_92%,var(--background))_0%,var(--background)_100%)]">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--accent-soft)]">
-              project_team
+            <p className="inline-flex w-fit items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)] sm:text-[11px]">
+              <Sparkles className="h-3.5 w-3.5" />
+              Mentor Guidance
             </p>
-            <h2 className="mt-4 text-3xl font-semibold uppercase tracking-[-0.04em] text-[var(--text-strong)] sm:text-4xl">
-              Mentors and
-              <span className="text-[var(--accent)]"> team members.</span>
+            <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-[var(--text-strong)] sm:text-5xl sm:leading-[0.94]">
+              Experienced direction behind the build.
             </h2>
-            <p className="mt-5 text-base leading-8 text-[var(--text-muted)]">
-              Mini Stadoor is built as a team project. This section presents the project structure with
-              mentor and member profile cards. You can replace the placeholder names with the real
-              team list any time.
+          </div>
+
+          <div className="mt-10 grid gap-5 lg:grid-cols-2">
+            {mentors.map((mentor) => (
+              <MentorPanel key={mentor.name} mentor={mentor} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative border-b border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] bg-[linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_92%,var(--background))_100%)]">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)] sm:text-[11px]">Team Members</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-[var(--text-strong)] sm:text-5xl sm:leading-[0.94]">
+              The builders behind Stadoor.
+            </h2>
+            <p className="mt-5 text-[15px] leading-7 text-[var(--text-muted)] sm:text-sm">
+              Each member owned a concrete product surface, from gateway runtime to developer portal delivery.
             </p>
           </div>
 
-          <div className="mt-12">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Mentor group</p>
-                <p className="text-xl font-semibold text-[var(--text-strong)]">2 project mentors</p>
-              </div>
-            </div>
+          <div className="mt-10">
+            <MemberShowcase members={members} />
+          </div>
+        </div>
+      </section>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              {mentors.map((mentor, index) => (
-                <ProfileCard
-                  key={mentor.name}
-                  name={mentor.name}
-                  image={mentor.image}
-                  title={mentor.title}
-                  role={mentor.role}
-                  focus={mentor.focus}
-                  tags={mentor.tags}
-                  accent={mentor.accent}
-                  socials={mentor.socials}
-                />
-              ))}
-            </div>
+      <section className="relative overflow-hidden bg-[linear-gradient(180deg,var(--background)_0%,color-mix(in_srgb,var(--surface)_88%,var(--background))_100%)]">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_srgb,var(--accent)_14%,transparent),transparent_42%)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-2 lg:items-start lg:px-8">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent-soft)] sm:text-[11px]">Get In Touch</p>
+            <h2 className="mt-4 text-3xl font-semibold leading-[1.02] tracking-[-0.03em] text-[var(--text-strong)] sm:text-6xl sm:leading-[0.94]">
+              Build secure developer products with us.
+            </h2>
+            <p className="mt-5 max-w-xl text-[15px] leading-7 text-[var(--text-muted)] sm:text-lg sm:leading-8">
+              If you want to collaborate, test Stadoor, or discuss architecture, we are open for conversations and technical exchange.
+            </p>
           </div>
 
-          <div className="mt-14">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--text-faint)]">Student team</p>
-                <p className="text-xl font-semibold text-[var(--text-strong)]">9 project members</p>
-              </div>
-            </div>
-
-            <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {members.map((member) => (
-                <ProfileCard
-                  key={member.name}
-                  name={member.name}
-                  image={member.image}
-                  title={member.title}
-                  role={member.role}
-                  focus={member.focus}
-                  tags={member.tags}
-                  accent={member.accent}
-                  socials={member.socials}
-                />
-              ))}
+          <div className="space-y-4 border-t border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+            <ContactRow icon={<Mail className="h-4 w-4" />} label="Email" value="team@stadoor.dev" />
+            <ContactRow icon={<Globe className="h-4 w-4" />} label="Location" value="ISTAD, Phnom Penh, Cambodia" />
+            <ContactRow icon={<Waypoints className="h-4 w-4" />} label="Focus" value="IAM, dynamic gateway routing, and route-level security" />
+            <div className="pt-2">
+              <Button
+                asChild
+                variant="brand"
+                size="lg"
+                className="w-full border border-[var(--border-strong)] bg-[var(--accent)] text-[var(--accent-contrast)] shadow-[0_0_36px_var(--glow)] hover:bg-[var(--accent-bright)] sm:w-auto"
+              >
+                <Link href="/dashboard">
+                  Open Stadoor Dashboard
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -296,172 +404,150 @@ export default function AboutPage() {
   );
 }
 
-function AboutStat({
+function StoryStep({
+  phase,
+  title,
+  detail,
+  Icon,
+}: {
+  phase: string;
+  title: string;
+  detail: string;
+  Icon: LucideIcon;
+}) {
+  return (
+    <article className="grid gap-3 border-l border-[color:color-mix(in_srgb,var(--accent)_35%,transparent)] pl-4 sm:grid-cols-[52px_1fr] sm:pl-5">
+      <div className="flex items-center gap-3 sm:block">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--accent)_38%,transparent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]">
+          <Icon className="h-4 w-4" />
+        </span>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-faint)] sm:mt-2">phase {phase}</p>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold tracking-[-0.015em] text-[var(--text-strong)]">{title}</h3>
+        <p className="mt-2 text-[14px] leading-7 text-[var(--text-muted)] sm:text-sm">{detail}</p>
+      </div>
+    </article>
+  );
+}
+
+function MissionVisualPanel() {
+  return (
+    <div className="relative min-h-[180px] overflow-hidden rounded-b-[1rem] border-t border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[linear-gradient(170deg,color-mix(in_srgb,var(--surface)_90%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_96%,var(--background))_100%)] sm:rounded-b-none sm:rounded-r-[1rem] sm:border-l sm:border-t-0">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_18%,color-mix(in_srgb,var(--accent)_20%,transparent),transparent_44%)]" />
+      <div className="relative flex h-full flex-col justify-between p-4">
+        <div className="flex items-center justify-between">
+          <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-soft)]">
+            <Target className="h-3.5 w-3.5" />
+            Security workflow
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-faint)]">active</span>
+        </div>
+        <div className="space-y-2">
+          <div className="h-2 w-[86%] bg-[color:color-mix(in_srgb,var(--accent)_42%,transparent)]" />
+          <div className="h-2 w-[64%] bg-[color:color-mix(in_srgb,var(--accent)_24%,transparent)]" />
+          <div className="h-2 w-[74%] bg-[color:color-mix(in_srgb,var(--accent)_30%,transparent)]" />
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+          <div className="border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] px-2 py-1.5">Basic</div>
+          <div className="border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] px-2 py-1.5">JWT</div>
+          <div className="border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] px-2 py-1.5">API Key</div>
+          <div className="border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] px-2 py-1.5">OAuth2</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VisionVisualPanel() {
+  return (
+    <div className="relative min-h-[180px] overflow-hidden rounded-t-[1rem] border-b border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[linear-gradient(170deg,color-mix(in_srgb,var(--surface)_90%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_96%,var(--background))_100%)] sm:rounded-r-none sm:rounded-l-[1rem] sm:border-b-0 sm:border-r">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_20%,color-mix(in_srgb,var(--accent)_18%,transparent),transparent_42%)]" />
+      <div className="relative flex h-full flex-col justify-between p-4">
+        <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-soft)]">
+          <Waypoints className="h-3.5 w-3.5" />
+          Gateway runtime
+        </span>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[var(--accent)]" />
+            <div className="h-1.5 flex-1 bg-[color:color-mix(in_srgb,var(--accent)_34%,transparent)]" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[color:color-mix(in_srgb,var(--accent)_60%,transparent)]" />
+            <div className="h-1.5 w-[72%] bg-[color:color-mix(in_srgb,var(--accent)_26%,transparent)]" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[color:color-mix(in_srgb,var(--accent)_52%,transparent)]" />
+            <div className="h-1.5 w-[84%] bg-[color:color-mix(in_srgb,var(--accent)_20%,transparent)]" />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] pt-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-faint)]">
+          <span>services</span>
+          <span>routes</span>
+          <span>runtime</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MentorPanel({ mentor }: { mentor: MentorProfile }) {
+  return (
+    <article className="home-panel group grid gap-4 border border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[linear-gradient(160deg,color-mix(in_srgb,var(--surface)_94%,var(--background))_0%,color-mix(in_srgb,var(--surface-muted)_92%,var(--background))_100%)] p-4 transition duration-300 hover:-translate-y-0.5 hover:border-[color:color-mix(in_srgb,var(--accent)_35%,transparent)] sm:grid-cols-[140px_1fr] sm:p-5">
+      <figure className="relative flex h-[170px] items-end justify-center overflow-hidden rounded-[1.1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_82%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_68%,transparent)_0%,color-mix(in_srgb,var(--surface-soft)_90%,transparent)_100%)]">
+        <div className="absolute inset-x-5 top-4 h-16 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--accent)_14%,transparent),transparent_74%)] blur-xl" />
+        <div className="absolute inset-x-5 bottom-3 h-5 rounded-full bg-[radial-gradient(circle,color-mix(in_srgb,var(--accent)_24%,transparent),transparent_72%)] blur-md" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={mentor.image}
+          alt={mentor.name}
+          loading="lazy"
+          className="relative z-10 h-[148px] w-auto max-w-none object-contain transition duration-700 group-hover:scale-[1.04]"
+          style={{ objectPosition: mentor.position }}
+        />
+      </figure>
+
+      <div>
+        <p className="text-xl font-semibold tracking-[-0.02em] text-[var(--text-strong)]">{mentor.name}</p>
+        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--accent-soft)]">{mentor.role}</p>
+        <p className="mt-4 text-[15px] font-medium leading-7 text-[var(--text-strong)]">“{mentor.quote}”</p>
+        <p className="mt-3 text-[13px] leading-6 text-[var(--text-muted)]">{mentor.impact}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {mentor.specialties.map((specialty) => (
+            <span
+              key={specialty}
+              className="inline-flex items-center rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_95%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_90%,transparent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-faint)]"
+            >
+              {specialty}
+            </span>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ContactRow({
   icon,
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
   return (
-    <div className="border-l border-white/8 pl-4">
-      <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
+    <div className="flex items-start gap-3 rounded-[1rem] border border-[color:color-mix(in_srgb,var(--border-soft)_88%,transparent)] bg-[color:color-mix(in_srgb,var(--surface)_90%,transparent)] px-4 py-3">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[color:color-mix(in_srgb,var(--accent)_38%,transparent)] bg-[color:color-mix(in_srgb,var(--accent)_12%,transparent)] text-[var(--accent)]">
         {icon}
-      </div>
-      <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">{label}</p>
-      <p className="mt-2 text-xl font-semibold text-[var(--text-strong)]">{value}</p>
-    </div>
-  );
-}
-
-function AboutCard({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="border-t border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] pt-5 text-[var(--text-strong)]">
-      <div className="flex h-11 w-11 items-center justify-center rounded-md bg-[var(--surface-soft)] text-[var(--accent-soft)]">
-        {icon}
-      </div>
-      <h3 className="mt-6 text-lg font-semibold uppercase tracking-tight text-[var(--text-strong)]">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{body}</p>
-    </div>
-  );
-}
-
-function ProfileCard({
-  name,
-  image,
-  title,
-  role,
-  focus,
-  tags,
-  accent,
-  socials,
-}: {
-  name: string;
-  image?: string;
-  title: string;
-  role: string;
-  focus: string;
-  tags: string[];
-  accent: "green" | "cyan";
-  socials: {
-    github: string;
-    linkedin: string;
-    portfolio: string;
-  };
-}) {
-  const accentClasses =
-    accent === "green"
-      ? "border-[color:color-mix(in_srgb,var(--accent)_20%,transparent)] bg-[var(--surface-soft)] text-[var(--accent)]"
-      : "border-[color:color-mix(in_srgb,var(--accent)_16%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_72%,var(--background))] text-[color:color-mix(in_srgb,var(--accent)_72%,var(--text-strong))]";
-  const bannerClasses =
-    accent === "green"
-      ? "from-[color:color-mix(in_srgb,var(--surface-soft)_92%,var(--accent))] via-[var(--surface)] to-[var(--background)]"
-      : "from-[color:color-mix(in_srgb,var(--surface-soft)_88%,var(--accent))] via-[var(--surface)] to-[var(--background)]";
-
-  const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return (
-    <div className="overflow-hidden border border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--surface)_96%,var(--background))_0%,var(--surface-muted)_100%)] text-[var(--text-strong)]">
-      <div className={`h-24 bg-gradient-to-br ${bannerClasses}`} />
-      <div className="p-6 pt-0">
-        <div className="-mt-10 flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <ProfileAvatar image={image} initials={initials} accentClasses={accentClasses} />
-            <div>
-              <p className="text-lg font-semibold text-[var(--text-strong)]">{name}</p>
-              <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">{title}</p>
-              <p className="mt-2 text-sm text-[var(--text-muted)]">{role}</p>
-            </div>
-          </div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-[color:color-mix(in_srgb,var(--surface-soft)_72%,transparent)] text-[var(--text-faint)]">
-            <Layers3 className="h-4 w-4" />
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${
-                accent === "green"
-                  ? "border-[color:color-mix(in_srgb,var(--accent)_18%,transparent)] bg-[var(--surface-soft)] text-[var(--accent)]"
-                  : "border-[color:color-mix(in_srgb,var(--accent)_14%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_65%,var(--background))] text-[color:color-mix(in_srgb,var(--accent)_72%,var(--text-strong))]"
-              }`}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-6 border-t border-[color:color-mix(in_srgb,var(--border-soft)_75%,transparent)] pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--text-faint)]">Project focus</p>
-          <p className="mt-3 text-sm leading-7 text-[var(--text-muted)]">{focus}</p>
-        </div>
-
-        <div className="mt-5 flex items-center gap-3">
-          <SocialPill href={socials.github} label="GitHub" />
-          <SocialPill href={socials.linkedin} label="LinkedIn" />
-          <SocialPill href={socials.portfolio} label="Portfolio" />
-        </div>
+      </span>
+      <div>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-faint)]">{label}</p>
+        <p className="mt-1 text-sm text-[var(--text-strong)]">{value}</p>
       </div>
     </div>
-  );
-}
-
-function ProfileAvatar({
-  image,
-  initials,
-  accentClasses,
-}: {
-  image?: string;
-  initials: string;
-  accentClasses: string;
-}) {
-  if (image) {
-    return (
-      <div className="h-20 w-20 overflow-hidden rounded-[1.35rem] border border-[color:color-mix(in_srgb,var(--border-soft)_85%,transparent)] shadow-[0_12px_30px_rgba(0,0,0,0.16)]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={image} alt="" className="h-full w-full object-cover" />
-      </div>
-    );
-  }
-
-  return (
-    <div className={`flex h-20 w-20 items-center justify-center rounded-[1.35rem] border text-xl font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.16)] ${accentClasses}`}>
-      {initials}
-    </div>
-  );
-}
-
-function SocialPill({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--border-soft)_80%,transparent)] bg-[color:color-mix(in_srgb,var(--surface-soft)_64%,transparent)] px-3 py-2 text-xs font-medium text-[var(--text-muted)] transition hover:border-[color:color-mix(in_srgb,var(--border-soft)_100%,transparent)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-strong)]"
-    >
-      <Globe2 className="h-4 w-4" />
-      {label}
-    </Link>
   );
 }

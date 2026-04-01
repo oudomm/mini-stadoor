@@ -57,7 +57,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 </p>
                 <h1 className="mt-4 max-w-lg text-5xl font-semibold leading-[0.92] tracking-[-0.05em] text-[var(--text-strong)]">
                   Access the
-                  <span className="block text-[var(--accent)]">Mini Stadoor control plane.</span>
+                  <span className="block text-[var(--accent)]">Stadoor control plane.</span>
                 </h1>
                 <p className="mt-5 max-w-lg text-lg leading-8 text-[var(--text-muted)]">
                   Sign in to manage developer services, dynamic routes, and route-level security from
